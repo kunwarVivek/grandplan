@@ -1,0 +1,3 @@
+{
+  "extends": "@grandplan/config/tsconfig.base.json"
+}

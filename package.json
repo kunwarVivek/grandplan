@@ -1,0 +1,39 @@
+{
+  "name": "grandplan",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "check": "biome check --write .",
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:native": "turbo -F native dev",
+    "dev:web": "turbo -F web dev",
+    "dev:server": "turbo -F server dev",
+    "db:push": "turbo -F @grandplan/db db:push",
+    "db:studio": "turbo -F @grandplan/db db:studio",
+    "db:generate": "turbo -F @grandplan/db db:generate",
+    "db:migrate": "turbo -F @grandplan/db db:migrate",
+    "db:start": "turbo -F @grandplan/db db:start",
+    "db:watch": "turbo -F @grandplan/db db:watch",
+    "db:stop": "turbo -F @grandplan/db db:stop",
+    "db:down": "turbo -F @grandplan/db db:down"
+  },
+  "dependencies": {
+    "dotenv": "catalog:",
+    "zod": "catalog:",
+    "@grandplan/env": "workspace:*"
+  },
+  "devDependencies": {
+    "turbo": "^2.6.3",
+    "@biomejs/biome": "^2.2.0",
+    "typescript": "catalog:",
+    "@types/node": "catalog:",
+    "@grandplan/config": "workspace:*"
+  },
+  "packageManager": "pnpm@10.20.0"
+}
