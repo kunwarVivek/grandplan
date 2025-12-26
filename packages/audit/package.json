@@ -1,0 +1,28 @@
+{
+	"name": "@grandplan/audit",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@grandplan/core": "workspace:*",
+		"@grandplan/tenant": "workspace:*",
+		"@grandplan/db": "workspace:*"
+	},
+	"devDependencies": {
+		"@grandplan/config": "workspace:*",
+		"typescript": "^5.7.2"
+	}
+}

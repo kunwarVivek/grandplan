@@ -1,0 +1,27 @@
+{
+	"name": "@grandplan/core",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./errors": {
+			"default": "./src/errors/index.ts"
+		},
+		"./types": {
+			"default": "./src/types/index.ts"
+		},
+		"./utils": {
+			"default": "./src/utils/index.ts"
+		}
+	},
+	"scripts": {},
+	"devDependencies": {
+		"typescript": "catalog:",
+		"@grandplan/config": "workspace:*"
+	},
+	"dependencies": {
+		"zod": "catalog:",
+		"nanoid": "^5.1.5"
+	}
+}

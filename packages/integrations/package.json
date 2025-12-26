@@ -1,0 +1,30 @@
+{
+	"name": "@grandplan/integrations",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@grandplan/core": "workspace:*",
+		"@grandplan/db": "workspace:*",
+		"@grandplan/queue": "workspace:*",
+		"@slack/web-api": "^7.8.0",
+		"@slack/oauth": "^3.0.2"
+	},
+	"devDependencies": {
+		"@grandplan/config": "workspace:*",
+		"typescript": "^5.7.2"
+	}
+}

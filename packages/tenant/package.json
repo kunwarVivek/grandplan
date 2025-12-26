@@ -1,0 +1,27 @@
+{
+	"name": "@grandplan/tenant",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@grandplan/core": "workspace:*",
+		"@prisma/client": "^6.2.1"
+	},
+	"devDependencies": {
+		"@grandplan/config": "workspace:*",
+		"typescript": "^5.7.2"
+	}
+}

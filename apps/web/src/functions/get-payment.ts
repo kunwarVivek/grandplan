@@ -5,12 +5,12 @@ import { authClient } from "@/lib/auth-client";
 import { authMiddleware } from "@/middleware/auth";
 
 export const getPayment = createServerFn({ method: "GET" })
-  .middleware([authMiddleware])
-  .handler(async () => {
-    const { data: customerState } = await authClient.customer.state({
-      fetchOptions: {
-        headers: getRequestHeaders(),
-      },
-    });
-    return customerState;
-  });
+	.middleware([authMiddleware])
+	.handler(async () => {
+		const { data: customerState } = await authClient.customer.state({
+			fetchOptions: {
+				headers: getRequestHeaders(),
+			},
+		});
+		return customerState;
+	});

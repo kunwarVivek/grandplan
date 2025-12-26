@@ -1,0 +1,366 @@
+// ============================================
+// WORKSPACE & PROJECT
+// ============================================
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  ownerId     String
+  owner       User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+
+  members     WorkspaceMember[]
+  projects    Project[]
+  aiConfigs   WorkspaceAIConfig[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([ownerId])
+  @@map("workspace")
+}
+
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("workspace_member")
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// ============================================
+// PROJECT
+// ============================================
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  color       String?      // Hex color for UI
+  icon        String?      // Icon identifier
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  tasks       TaskNode[]
+  yjsDocument YjsDocument?
+
+  @@index([workspaceId])
+  @@index([status])
+  @@map("project")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+  COMPLETED
+}
+
+// ============================================
+// TASK NODE (Hierarchical Task Tree)
+// ============================================
+
+model TaskNode {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  nodeType    TaskNodeType
+  status      TaskStatus @default(DRAFT)
+  priority    TaskPriority @default(MEDIUM)
+  position    Int      @default(0)  // For ordering siblings
+
+  // AI-generated content
+  aiGenerated   Boolean  @default(false)
+  aiConfidence  Float?   // 0-1 confidence score
+
+  // Temporal tracking
+  estimatedHours Float?
+  actualHours    Float?
+  dueDate        DateTime?
+  startedAt      DateTime?
+  completedAt    DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Hierarchy
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      TaskNode? @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    TaskNode[] @relation("TaskHierarchy")
+  depth       Int      @default(0)  // 0=project root, 1=epic, 2=story, etc.
+  path        String   // Materialized path: "parent1.parent2.self" for efficient queries
+
+  // Ownership
+  createdById String
+  createdBy   User     @relation("TaskCreator", fields: [createdById], references: [id])
+  assigneeId  String?
+  assignee    User?    @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  // Relations
+  dependenciesFrom TaskDependency[] @relation("DependencyFrom")
+  dependenciesTo   TaskDependency[] @relation("DependencyTo")
+  history          TaskHistory[]
+  aiDecisions      TaskAIDecision[]
+  comments         TaskComment[]
+  externalLinks    TaskExternalLink[]
+
+  @@index([projectId])
+  @@index([parentId])
+  @@index([status])
+  @@index([assigneeId])
+  @@index([path])
+  @@index([nodeType, projectId])
+  @@index([createdById])
+  @@index([dueDate])
+  @@map("task_node")
+}
+
+enum TaskNodeType {
+  EPIC        // High-level feature/initiative
+  STORY       // User story
+  TASK        // Implementation task
+  SUBTASK     // Granular subtask
+  BUG         // Bug fix
+  SPIKE       // Research/investigation
+}
+
+enum TaskStatus {
+  DRAFT       // Not yet ready
+  PENDING     // Ready to start
+  IN_PROGRESS // Work in progress
+  BLOCKED     // Waiting on dependency
+  IN_REVIEW   // Awaiting review
+  COMPLETED   // Done
+  CANCELLED   // Abandoned
+}
+
+enum TaskPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+// ============================================
+// TASK DEPENDENCIES
+// ============================================
+
+model TaskDependency {
+  id          String   @id @default(cuid())
+  type        DependencyType
+  createdAt   DateTime @default(now())
+
+  fromTaskId  String
+  fromTask    TaskNode @relation("DependencyFrom", fields: [fromTaskId], references: [id], onDelete: Cascade)
+  toTaskId    String
+  toTask      TaskNode @relation("DependencyTo", fields: [toTaskId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?    @relation("DependencyCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([fromTaskId, toTaskId, type])
+  @@index([fromTaskId])
+  @@index([toTaskId])
+  @@map("task_dependency")
+}
+
+enum DependencyType {
+  BLOCKS      // fromTask blocks toTask
+  REQUIRED_BY // fromTask is required by toTask
+  RELATED_TO  // Soft relation
+}
+
+// ============================================
+// TASK HISTORY (Audit Trail)
+// ============================================
+
+model TaskHistory {
+  id          String   @id @default(cuid())
+  action      TaskHistoryAction
+  field       String?  // Which field changed
+  oldValue    Json?    // Previous value
+  newValue    Json?    // New value
+  reason      String?  // Why the change was made
+  createdAt   DateTime @default(now())
+
+  taskId      String
+  task        TaskNode @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorId     String?  // null for system/AI actions
+  actor       User?    @relation("TaskHistoryActor", fields: [actorId], references: [id], onDelete: SetNull)
+  aiTriggered Boolean  @default(false)
+
+  @@index([taskId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("task_history")
+}
+
+enum TaskHistoryAction {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  ASSIGNED
+  UNASSIGNED
+  DECOMPOSED
+  RECOMPOSED
+  DEPENDENCY_ADDED
+  DEPENDENCY_REMOVED
+  PRIORITY_CHANGED
+  ESTIMATE_UPDATED
+  AI_RECALIBRATED
+  MOVED
+  DELETED
+}
+
+// ============================================
+// AI DECISION TRACKING
+// ============================================
+
+model TaskAIDecision {
+  id           String   @id @default(cuid())
+  decisionType AIDecisionType
+  provider     String   // "openai", "anthropic", etc.
+  model        String   // "gpt-4o", "claude-3-5-sonnet", etc.
+  prompt       String   @db.Text
+  response     Json     // Full AI response
+  reasoning    String?  @db.Text  // Extracted reasoning
+  confidence   Float    // 0-1 confidence score
+  tokensUsed   Int
+  latencyMs    Int
+  createdAt    DateTime @default(now())
+
+  taskId       String
+  task         TaskNode @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  requestedById String?
+  requestedBy   User?   @relation("AIDecisionRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+
+  // Was this decision accepted/applied?
+  applied      Boolean  @default(false)
+  appliedAt    DateTime?
+  rejectedReason String?
+
+  @@index([taskId])
+  @@index([decisionType])
+  @@index([createdAt])
+  @@index([applied])
+  @@map("task_ai_decision")
+}
+
+enum AIDecisionType {
+  DECOMPOSITION      // Breaking task into subtasks
+  ESTIMATION         // Time/effort estimation
+  PRIORITIZATION     // Priority recommendation
+  DEPENDENCY_DETECT  // Detecting dependencies
+  STATUS_RECOMMEND   // Status change recommendation
+  RECALIBRATION      // Goal/scope recalibration
+  TITLE_SUGGEST      // Title improvement
+  DESCRIPTION_ENRICH // Description enhancement
+}
+
+// ============================================
+// AI PROVIDER CONFIGURATION
+// ============================================
+
+model WorkspaceAIConfig {
+  id          String   @id @default(cuid())
+  provider    String   // "openai", "anthropic"
+  isDefault   Boolean  @default(false)
+  enabled     Boolean  @default(true)
+
+  // Encrypted API key (use application-level encryption)
+  apiKeyEncrypted String?
+
+  // Model preferences
+  defaultModel     String?
+  maxTokens        Int      @default(4000)
+  temperature      Float    @default(0.7)
+
+  // Rate limiting
+  requestsPerMin   Int      @default(60)
+  tokensPerDay     Int      @default(100000)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, provider])
+  @@index([workspaceId])
+  @@map("workspace_ai_config")
+}
+
+// ============================================
+// TASK COMMENTS
+// ============================================
+
+model TaskComment {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  aiGenerated Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  taskId      String
+  task        TaskNode @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId    String?
+  author      User?    @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  // For threaded comments
+  parentId    String?
+  parent      TaskComment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     TaskComment[] @relation("CommentThread")
+
+  @@index([taskId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("task_comment")
+}
+
+// ============================================
+// YJS DOCUMENT STORAGE (CRDT)
+// ============================================
+
+model YjsDocument {
+  id          String   @id @default(cuid())
+  projectId   String   @unique
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  state       Bytes    // Y.Doc encoded state
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("yjs_document")
+}

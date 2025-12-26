@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files (keep examples)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+!.env.example
+!**/.env.example
+
+# Build outputs (we need dist for some builds)
+.turbo
+**/.turbo
+.tanstack
+**/.tanstack
+
+# IDE and editor files
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+
+# Test coverage
+coverage
+**/coverage
+
+# Documentation (not needed for build)
+AGENTS.md
+CRITICAL_REVIEW.md
+specifications.md
+
+# Development tools
+.beads
+.husky
+
+# Local development
+docker-compose.yml
+docker-compose.*.yml
+!docker-compose.prod.yml

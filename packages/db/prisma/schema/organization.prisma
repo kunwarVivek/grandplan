@@ -1,0 +1,109 @@
+// ============================================
+// ORGANIZATION - Multi-tenancy Core
+// ============================================
+
+model Organization {
+  id                String              @id @default(cuid())
+  name              String
+  slug              String              @unique
+  description       String?
+  logo              String?
+  status            OrganizationStatus  @default(ACTIVE)
+
+  // White-label settings
+  customDomain      String?             @unique
+  brandingConfig    Json?               // { primaryColor, secondaryColor, fontFamily, logo, favicon }
+
+  // Billing identifiers
+  polarCustomerId   String?
+  stripeCustomerId  String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relations
+  members           OrganizationMember[]
+  teams             Team[]
+  invitations       OrganizationInvitation[]
+  subscription      Subscription?
+  featureFlags      OrganizationFeatureFlag[]
+  auditLogs         AuditLog[]
+  emailTemplates    EmailTemplate[]
+  workspaces        Workspace[]
+
+  @@index([slug])
+  @@index([customDomain])
+  @@index([status])
+  @@map("organization")
+}
+
+enum OrganizationStatus {
+  PENDING      // Awaiting setup completion
+  ACTIVE       // Fully operational
+  SUSPENDED    // Temporarily disabled
+  CANCELLED    // Subscription cancelled
+}
+
+// Organization membership - Links users to organizations with roles
+model OrganizationMember {
+  id              String            @id @default(cuid())
+  userId          String
+  organizationId  String
+  roleId          String
+
+  status          MemberStatus      @default(ACTIVE)
+  joinedAt        DateTime          @default(now())
+  invitedById     String?
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role            Role              @relation(fields: [roleId], references: [id])
+  invitedBy       User?             @relation("InvitedMembers", fields: [invitedById], references: [id], onDelete: SetNull)
+  teamMemberships TeamMember[]
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("organization_member")
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// Organization invitations
+model OrganizationInvitation {
+  id              String            @id @default(cuid())
+  email           String
+  organizationId  String
+  roleId          String
+  teamId          String?
+
+  token           String            @unique
+  status          InvitationStatus  @default(PENDING)
+  expiresAt       DateTime
+
+  invitedById     String
+  createdAt       DateTime          @default(now())
+
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role            Role              @relation(fields: [roleId], references: [id])
+  team            Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  invitedBy       User              @relation("SentInvitations", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([organizationId])
+  @@index([token])
+  @@index([status])
+  @@map("organization_invitation")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}

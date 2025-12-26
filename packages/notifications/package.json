@@ -1,0 +1,32 @@
+{
+	"name": "@grandplan/notifications",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@grandplan/core": "workspace:*",
+		"@grandplan/db": "workspace:*",
+		"@grandplan/queue": "workspace:*",
+		"@sendgrid/mail": "^8.1.4",
+		"handlebars": "^4.7.8",
+		"web-push": "^3.6.7"
+	},
+	"devDependencies": {
+		"@grandplan/config": "workspace:*",
+		"@types/web-push": "^3.6.4",
+		"typescript": "^5.7.2"
+	}
+}

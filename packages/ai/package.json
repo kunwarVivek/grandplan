@@ -1,0 +1,32 @@
+{
+	"name": "@grandplan/ai",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./src/index.ts",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@anthropic-ai/sdk": "^0.25.0",
+		"@grandplan/core": "workspace:*",
+		"@grandplan/db": "workspace:*",
+		"openai": "^4.0.0",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@grandplan/config": "workspace:*",
+		"@types/node": "catalog:",
+		"typescript": "catalog:"
+	}
+}

@@ -1,0 +1,39 @@
+// ============================================
+// TEAM - Team Management within Organizations
+// ============================================
+
+model Team {
+  id              String            @id @default(cuid())
+  name            String
+  description     String?
+  organizationId  String
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members         TeamMember[]
+  invitations     OrganizationInvitation[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("team")
+}
+
+model TeamMember {
+  id                      String              @id @default(cuid())
+  teamId                  String
+  organizationMemberId    String
+  teamRoleId              String?             // Optional team-specific role override
+
+  createdAt               DateTime            @default(now())
+
+  team                    Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  organizationMember      OrganizationMember  @relation(fields: [organizationMemberId], references: [id], onDelete: Cascade)
+  teamRole                Role?               @relation("TeamRole", fields: [teamRoleId], references: [id], onDelete: SetNull)
+
+  @@unique([teamId, organizationMemberId])
+  @@index([teamId])
+  @@index([organizationMemberId])
+  @@map("team_member")
+}

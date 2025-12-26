@@ -1,36 +1,36 @@
 {
-  "name": "@grandplan/db",
-  "type": "module",
-  "exports": {
-    ".": {
-      "default": "./src/index.ts"
-    },
-    "./*": {
-      "default": "./src/*.ts"
-    }
-  },
-  "scripts": {
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio",
-    "db:start": "docker compose up -d",
-    "db:watch": "docker compose up",
-    "db:stop": "docker compose stop",
-    "db:down": "docker compose down"
-  },
-  "devDependencies": {
-    "prisma": "^7.1.0",
-    "@types/pg": "^8.15.6",
-    "typescript": "catalog:",
-    "@grandplan/config": "workspace:*"
-  },
-  "dependencies": {
-    "@prisma/client": "catalog:",
-    "@prisma/adapter-pg": "^7.1.0",
-    "pg": "^8.16.3",
-    "dotenv": "catalog:",
-    "zod": "catalog:",
-    "@grandplan/env": "workspace:*"
-  }
+	"name": "@grandplan/db",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		}
+	},
+	"scripts": {
+		"db:push": "prisma db push",
+		"db:generate": "prisma generate",
+		"db:migrate": "prisma migrate dev",
+		"db:studio": "prisma studio",
+		"db:start": "docker compose up -d",
+		"db:watch": "docker compose up",
+		"db:stop": "docker compose stop",
+		"db:down": "docker compose down"
+	},
+	"devDependencies": {
+		"prisma": "^7.1.0",
+		"@types/pg": "^8.15.6",
+		"typescript": "catalog:",
+		"@grandplan/config": "workspace:*"
+	},
+	"dependencies": {
+		"@prisma/client": "catalog:",
+		"@prisma/adapter-pg": "^7.1.0",
+		"pg": "^8.16.3",
+		"dotenv": "catalog:",
+		"zod": "catalog:",
+		"@grandplan/env": "workspace:*"
+	}
 }

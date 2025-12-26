@@ -1,0 +1,36 @@
+{
+	"name": "@grandplan/realtime",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./client": {
+			"import": "./dist/client/index.js",
+			"types": "./dist/client/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@grandplan/core": "workspace:*",
+		"@socket.io/redis-adapter": "^8.3.0",
+		"ioredis": "^5.4.2",
+		"socket.io": "^4.8.1",
+		"yjs": "^13.6.21",
+		"y-protocols": "^1.0.6"
+	},
+	"devDependencies": {
+		"@grandplan/config": "workspace:*",
+		"@types/node": "^22.10.5",
+		"typescript": "^5.7.2"
+	}
+}

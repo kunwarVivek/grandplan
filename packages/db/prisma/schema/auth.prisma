@@ -1,16 +1,71 @@
+// ============================================
+// AUTH - User Authentication & Core User Model
+// ============================================
+
 model User {
   id            String    @id
   name          String
   email         String
   emailVerified Boolean   @default(false)
   image         String?
+
+  // User status
+  status        UserStatus  @default(ACTIVE)
+
+  // Track current active organization (for multi-org users)
+  activeOrganizationId String?
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  // Auth relations
   sessions      Session[]
   accounts      Account[]
 
+  // Organization & Team relations
+  organizationMemberships OrganizationMember[]
+  invitedMembers          OrganizationMember[]     @relation("InvitedMembers")
+  sentInvitations         OrganizationInvitation[] @relation("SentInvitations")
+
+  // Workspace relations
+  ownedWorkspaces         Workspace[]              @relation("WorkspaceOwner")
+  workspaceMemberships    WorkspaceMember[]
+
+  // Task relations
+  createdTasks            TaskNode[]               @relation("TaskCreator")
+  assignedTasks           TaskNode[]               @relation("TaskAssignee")
+  createdDependencies     TaskDependency[]         @relation("DependencyCreator")
+  taskHistory             TaskHistory[]            @relation("TaskHistoryActor")
+  taskComments            TaskComment[]            @relation("CommentAuthor")
+  aiDecisionRequests      TaskAIDecision[]         @relation("AIDecisionRequester")
+
+  // Notification relations
+  notifications           Notification[]           @relation("UserNotifications")
+  triggeredNotifications  Notification[]           @relation("NotificationActor")
+  notificationPreference  NotificationPreference?
+  pushSubscriptions       PushSubscription[]
+  digestQueue             DigestQueue[]
+
+  // Audit relations
+  auditLogs               AuditLog[]               @relation("AuditLogUser")
+
+  // Platform admin
+  platformAdmin           PlatformAdmin?
+
+  // Integration relations
+  integrationConnections  IntegrationConnection[]
+
   @@unique([email])
+  @@index([status])
+  @@index([activeOrganizationId])
   @@map("user")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DELETED
 }
 
 model Session {
@@ -26,6 +81,7 @@ model Session {
 
   @@unique([token])
   @@index([userId])
+  @@index([expiresAt])
   @@map("session")
 }
 
@@ -46,6 +102,7 @@ model Account {
   updatedAt             DateTime  @updatedAt
 
   @@index([userId])
+  @@index([providerId, accountId])
   @@map("account")
 }
 
@@ -58,5 +115,6 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
+  @@index([expiresAt])
   @@map("verification")
 }

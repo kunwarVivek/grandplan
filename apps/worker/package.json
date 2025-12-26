@@ -1,0 +1,31 @@
+{
+	"name": "@grandplan/worker",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc",
+		"start": "node dist/index.js",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@grandplan/core": "workspace:*",
+		"@grandplan/db": "workspace:*",
+		"@grandplan/events": "workspace:*",
+		"@grandplan/queue": "workspace:*",
+		"@grandplan/notifications": "workspace:*",
+		"@grandplan/integrations": "workspace:*",
+		"@grandplan/audit": "workspace:*",
+		"bullmq": "^5.34.8",
+		"ioredis": "^5.4.2",
+		"openai": "^4.77.0",
+		"@anthropic-ai/sdk": "^0.35.0"
+	},
+	"devDependencies": {
+		"@grandplan/config": "workspace:*",
+		"@types/node": "^22.10.5",
+		"tsx": "^4.19.2",
+		"typescript": "^5.7.2"
+	}
+}

@@ -1,12 +1,12 @@
 {
-  "extends": "@grandplan/config/tsconfig.base.json",
-  "compilerOptions": {
-    "composite": true,
-    "outDir": "dist",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "jsx": "react-jsx"
-  }
+	"extends": "@grandplan/config/tsconfig.base.json",
+	"compilerOptions": {
+		"composite": true,
+		"outDir": "dist",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"jsx": "react-jsx"
+	}
 }

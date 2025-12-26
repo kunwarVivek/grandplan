@@ -1,0 +1,20 @@
+{
+	"name": "@grandplan/events",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		}
+	},
+	"scripts": {},
+	"devDependencies": {
+		"typescript": "catalog:",
+		"@grandplan/config": "workspace:*"
+	},
+	"dependencies": {
+		"ioredis": "^5.6.1",
+		"eventemitter3": "^5.0.1",
+		"zod": "catalog:",
+		"@grandplan/core": "workspace:*"
+	}
+}

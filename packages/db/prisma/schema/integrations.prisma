@@ -1,0 +1,191 @@
+// ============================================
+// INTEGRATIONS - External Platform Integrations
+// ============================================
+
+// Integration connection per user/organization
+model IntegrationConnection {
+  id              String              @id @default(cuid())
+
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  organizationId  String?             // Optional org-level connection
+
+  integrationId   String              // "slack", "jira", "asana", "linear", etc.
+
+  // Encrypted credentials
+  accessToken     String?             @db.Text
+  refreshToken    String?             @db.Text
+  tokenExpiresAt  DateTime?
+
+  // Provider-specific data
+  externalUserId  String?             // User ID in external system
+  externalTeamId  String?             // Team/Workspace ID in external system
+  metadata        Json?               // Provider-specific metadata
+
+  status          IntegrationStatus   @default(ACTIVE)
+  lastSyncAt      DateTime?
+  lastErrorAt     DateTime?
+  lastError       String?
+
+  // Webhook configuration (if applicable)
+  webhookId       String?
+  webhookSecret   String?
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  syncConfigs     IntegrationSyncConfig[]
+
+  @@unique([userId, integrationId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([integrationId])
+  @@index([status])
+  @@map("integration_connection")
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  EXPIRED
+  REVOKED
+}
+
+// Sync configuration for bidirectional integrations
+model IntegrationSyncConfig {
+  id                  String              @id @default(cuid())
+  connectionId        String
+  connection          IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  // What to sync
+  syncDirection       SyncDirection       @default(BIDIRECTIONAL)
+  syncTasks           Boolean             @default(true)
+  syncComments        Boolean             @default(false)
+  syncAttachments     Boolean             @default(false)
+
+  // Mapping configuration
+  projectMapping      Json?               // { localProjectId: externalProjectKey }
+  statusMapping       Json?               // { "IN_PROGRESS": "In Progress", ... }
+  priorityMapping     Json?               // { "HIGH": "Highest", ... }
+  typeMapping         Json?               // { "TASK": "Task", "BUG": "Bug", ... }
+  customFieldMapping  Json?               // Custom field mappings
+
+  // Filter which items to sync
+  filterQuery         String?             // JQL for Jira, etc.
+
+  // Sync schedule
+  autoSync            Boolean             @default(true)
+  syncIntervalMinutes Int                 @default(15)
+  lastSyncAt          DateTime?
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([connectionId])
+  @@map("integration_sync_config")
+}
+
+enum SyncDirection {
+  TO_EXTERNAL       // GrandPlan -> External
+  FROM_EXTERNAL     // External -> GrandPlan
+  BIDIRECTIONAL     // Both ways
+}
+
+// Link between GrandPlan tasks and external system items
+model TaskExternalLink {
+  id              String          @id @default(cuid())
+
+  taskId          String
+  task            TaskNode        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  integrationId   String          // "jira", "asana", "linear", etc.
+  externalId      String          // Issue key/ID in external system
+  externalUrl     String?         // Direct link to external item
+
+  // Sync tracking
+  lastSyncedAt    DateTime
+  lastSyncDirection SyncDirection
+  syncStatus      ExternalLinkSyncStatus @default(SYNCED)
+  lastSyncError   String?
+
+  // Version tracking for conflict detection
+  localVersion    Int             @default(0)
+  externalVersion String?         // Version/ETag from external system
+
+  metadata        Json?           // Additional external data
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([taskId, integrationId])
+  @@unique([integrationId, externalId])
+  @@index([taskId])
+  @@index([integrationId, externalId])
+  @@index([syncStatus])
+  @@map("task_external_link")
+}
+
+enum ExternalLinkSyncStatus {
+  SYNCED
+  PENDING_SYNC
+  CONFLICT
+  ERROR
+}
+
+// Webhook events received from external systems
+model IntegrationWebhookEvent {
+  id              String          @id @default(cuid())
+
+  integrationId   String
+  eventType       String          // Provider-specific event type
+  payload         Json            // Raw webhook payload
+
+  // Processing status
+  status          WebhookEventStatus @default(PENDING)
+  processedAt     DateTime?
+  error           String?
+  retryCount      Int             @default(0)
+
+  // Verification
+  signature       String?
+  verified        Boolean         @default(false)
+
+  receivedAt      DateTime        @default(now())
+
+  @@index([integrationId, eventType])
+  @@index([status])
+  @@index([receivedAt])
+  @@map("integration_webhook_event")
+}
+
+enum WebhookEventStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+// OAuth state management
+model IntegrationOAuthState {
+  id              String          @id @default(cuid())
+
+  userId          String
+  integrationId   String
+  state           String          @unique
+
+  redirectUri     String?
+  scopes          String[]
+
+  expiresAt       DateTime
+  usedAt          DateTime?
+
+  createdAt       DateTime        @default(now())
+
+  @@index([state])
+  @@index([userId, integrationId])
+  @@index([expiresAt])
+  @@map("integration_oauth_state")
+}

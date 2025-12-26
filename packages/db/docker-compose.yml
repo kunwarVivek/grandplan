@@ -2,7 +2,7 @@ name: grandplan
 
 services:
   postgres:
-    image: postgres
+    image: postgres:16
     container_name: grandplan-postgres
     environment:
       POSTGRES_DB: grandplan
@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - grandplan_postgres_data:/var/lib/postgresql
+      - grandplan_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -19,5 +19,21 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: grandplan-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - grandplan_redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   grandplan_postgres_data:
+  grandplan_redis_data:

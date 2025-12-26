@@ -1,0 +1,25 @@
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+
+import { AppLayout } from "@/components/layout";
+import { getUser } from "@/functions/get-user";
+
+export const Route = createFileRoute("/_authenticated")({
+	beforeLoad: async () => {
+		const session = await getUser();
+		if (!session) {
+			throw redirect({
+				to: "/login",
+			});
+		}
+		return { session };
+	},
+	component: AuthenticatedLayout,
+});
+
+function AuthenticatedLayout() {
+	return (
+		<AppLayout>
+			<Outlet />
+		</AppLayout>
+	);
+}
