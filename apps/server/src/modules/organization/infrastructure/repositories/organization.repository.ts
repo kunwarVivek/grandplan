@@ -7,7 +7,6 @@ import db from "@grandplan/db";
 import type {
 	InvitationStatus,
 	MemberStatus,
-	OrganizationStatus,
 	Prisma,
 } from "@prisma/client";
 import type {
@@ -17,65 +16,31 @@ import type {
 	OrganizationMemberEntity,
 	OrganizationWithMembers,
 } from "../../domain/entities/organization.entity.js";
+import type {
+	IInvitationRepository,
+	IMemberRepository,
+	IOrganizationRepository,
+	InvitationQueryOptions,
+	InvitationQueryResult,
+	MemberQueryOptions,
+	MemberQueryResult,
+	OrganizationQueryOptions,
+	OrganizationQueryResult,
+} from "./interfaces/index.js";
 
-export interface OrganizationQueryOptions {
-	page?: number;
-	limit?: number;
-	search?: string;
-	status?: OrganizationStatus;
-	sortBy?: "name" | "createdAt" | "updatedAt";
-	sortOrder?: "asc" | "desc";
-}
+// Re-export interfaces for backwards compatibility
+export type {
+	InvitationQueryOptions,
+	InvitationQueryResult,
+	MemberQueryOptions,
+	MemberQueryResult,
+	OrganizationQueryOptions,
+	OrganizationQueryResult,
+} from "./interfaces/index.js";
 
-export interface OrganizationQueryResult {
-	organizations: OrganizationEntity[];
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-}
-
-export interface MemberQueryOptions {
-	page?: number;
-	limit?: number;
-	search?: string;
-	status?: MemberStatus;
-	roleId?: string;
-}
-
-export interface MemberQueryResult {
-	members: Array<
-		OrganizationMemberEntity & {
-			user: {
-				id: string;
-				name: string | null;
-				email: string;
-				image: string | null;
-			};
-			role: { id: string; name: string };
-		}
-	>;
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-}
-
-export interface InvitationQueryOptions {
-	page?: number;
-	limit?: number;
-	status?: InvitationStatus;
-}
-
-export interface InvitationQueryResult {
-	invitations: OrganizationInvitationEntity[];
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-}
-
-export class OrganizationRepository {
+export class OrganizationRepository
+	implements IOrganizationRepository, IMemberRepository, IInvitationRepository
+{
 	async create(data: {
 		name: string;
 		slug: string;
