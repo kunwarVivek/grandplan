@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { AppLayout } from "@/components/layout";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/features/notifications";
 import { getUser } from "@/functions/get-user";
 
@@ -19,7 +20,14 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
 	return (
-		<AppLayout headerRight={<NotificationBell />}>
+		<AppLayout
+			headerRight={
+				<>
+					<ThemeToggle />
+					<NotificationBell />
+				</>
+			}
+		>
 			<Outlet />
 		</AppLayout>
 	);

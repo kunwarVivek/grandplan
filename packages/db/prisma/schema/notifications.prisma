@@ -40,6 +40,8 @@ model Notification {
   @@index([organizationId])
   // Composite index for filtering unread by type
   @@index([userId, read, type])
+  // Index for notification listing by type
+  @@index([userId, type, createdAt])
   @@map("notification")
 }
 

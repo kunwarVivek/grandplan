@@ -375,6 +375,10 @@ model TaskComment {
   content     String   @db.Text
   aiGenerated Boolean  @default(false)
 
+  // Soft delete and edit tracking
+  editedAt    DateTime?
+  deletedAt   DateTime?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -391,6 +395,8 @@ model TaskComment {
   @@index([taskId])
   @@index([authorId])
   @@index([parentId])
+  @@index([deletedAt])
+  @@index([taskId, createdAt])
   @@map("task_comment")
 }
 
