@@ -3,7 +3,9 @@
 import { X } from "lucide-react";
 import type * as React from "react";
 
+import { CommandPalette } from "@/components/command-palette";
 import { Button } from "@/components/ui/button";
+import { AIDecompositionModal } from "@/features/ai";
 import { cn } from "@/lib/utils";
 import { useTaskDetailState, useUIStore } from "@/stores";
 
@@ -64,9 +66,12 @@ export function AppLayout({
 	const showTaskDetail = taskDetailOpen && taskId && taskDetailPanel;
 
 	return (
-		<div className="flex h-screen w-full overflow-hidden bg-background">
-			{/* Sidebar */}
-			<Sidebar />
+		<>
+			<CommandPalette />
+			<AIDecompositionModal />
+			<div className="flex h-screen w-full overflow-hidden bg-background">
+				{/* Sidebar */}
+				<Sidebar />
 
 			{/* Main Content Area */}
 			<div className="flex flex-1 flex-col overflow-hidden">
@@ -106,7 +111,8 @@ export function AppLayout({
 					)}
 				</div>
 			</div>
-		</div>
+			</div>
+		</>
 	);
 }
 

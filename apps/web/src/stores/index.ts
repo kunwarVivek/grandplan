@@ -54,3 +54,16 @@ export {
 	useWorkspaceStore,
 	useWorkspaces,
 } from "./workspace-store";
+export type { TaskViewMode } from "./task-store";
+// Task
+export {
+	filterTasks,
+	sortTasks,
+	useIsDetailPanelOpen,
+	useIsTaskExpanded,
+	useSelectedTask,
+	useSelectedTasks,
+	useTaskFilters,
+	useTaskStore,
+	useTaskViewMode as useTaskStoreViewMode,
+} from "./task-store";

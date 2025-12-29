@@ -16,6 +16,36 @@ enum IntegrationType {
   GITLAB
 }
 
+// Authentication method for integrations
+enum AuthType {
+  OAUTH2
+  API_KEY
+  WEBHOOK_ONLY
+}
+
+// Master definition of available integrations
+model IntegrationDefinition {
+  id           String          @id @default(cuid())
+  code         IntegrationType @unique
+  name         String
+  description  String?
+  iconUrl      String?
+  authType     AuthType
+  scopes       String[]        @default([])
+  capabilities String[]        @default([])
+  isEnabled    Boolean         @default(true)
+  configSchema Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  connections IntegrationConnection[]
+  externalLinks TaskExternalLink[]
+  webhookEvents IntegrationWebhookEvent[]
+  oauthStates IntegrationOAuthState[]
+
+  @@map("integration_definition")
+}
+
 // Integration connection per user/organization
 model IntegrationConnection {
   id              String              @id @default(cuid())
@@ -25,8 +55,8 @@ model IntegrationConnection {
 
   organizationId  String?             // Optional org-level connection
 
-  integrationType IntegrationType     // Type-safe integration identifier
-  integrationId   String              // Legacy string identifier (to be migrated)
+  integrationId   String
+  integration     IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
 
   // Encrypted credentials
   accessToken     String?             @db.Text
@@ -115,7 +145,8 @@ model TaskExternalLink {
   taskId          String
   task            TaskNode        @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  integrationId   String          // "jira", "asana", "linear", etc.
+  integrationId   String
+  integration     IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
   externalId      String          // Issue key/ID in external system
   externalUrl     String?         // Direct link to external item
 
@@ -154,6 +185,7 @@ model IntegrationWebhookEvent {
   id              String          @id @default(cuid())
 
   integrationId   String
+  integration     IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
   eventType       String          // Provider-specific event type
   payload         Json            // Raw webhook payload
 
@@ -191,6 +223,7 @@ model IntegrationOAuthState {
 
   userId          String
   integrationId   String
+  integration     IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
   state           String          @unique
 
   redirectUri     String?
