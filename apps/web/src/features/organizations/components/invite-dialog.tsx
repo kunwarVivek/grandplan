@@ -1,7 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { Loader2, Mail, UserPlus } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +14,9 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-	Form,
 	FormControl,
 	FormDescription,
-	FormField,
+	FormFieldWrapper,
 	FormItem,
 	FormLabel,
 	FormMessage,
@@ -40,8 +38,6 @@ const formSchema = z.object({
 	role: z.enum(["admin", "member"]),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
 type InviteDialogProps = {
 	organizationId: string;
 	organizationName?: string;
@@ -56,27 +52,28 @@ export function InviteDialog({
 	const [open, setOpen] = useState(false);
 	const inviteMember = useInviteMember();
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+	const form = useForm({
 		defaultValues: {
 			email: "",
-			role: "member",
+			role: "member" as "admin" | "member",
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				await inviteMember.mutateAsync({
+					organizationId,
+					email: value.email,
+					role: value.role as OrganizationRole,
+				});
+				form.reset();
+				setOpen(false);
+			} catch {
+				// Error is handled by the mutation
+			}
+		},
+		validators: {
+			onSubmit: formSchema,
 		},
 	});
-
-	const handleSubmit = async (values: FormValues) => {
-		try {
-			await inviteMember.mutateAsync({
-				organizationId,
-				email: values.email,
-				role: values.role as OrganizationRole,
-			});
-			form.reset();
-			setOpen(false);
-		} catch {
-			// Error is handled by the mutation
-		}
-	};
 
 	const handleOpenChange = (newOpen: boolean) => {
 		setOpen(newOpen);
@@ -110,46 +107,50 @@ export function InviteDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(handleSubmit)}
-						className="space-y-4"
-					>
-						<FormField
-							control={form.control}
-							name="email"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Email address</FormLabel>
-									<FormControl>
-										<div className="relative">
-											<Mail className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-											<Input
-												type="email"
-												placeholder="colleague@example.com"
-												className="pl-9"
-												{...field}
-											/>
-										</div>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						form.handleSubmit();
+					}}
+					className="space-y-4"
+				>
+					<form.Field name="email">
+						{(field) => (
+							<FormFieldWrapper field={field} label="Email address">
+								<div className="relative">
+									<Mail className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+									<Input
+										type="email"
+										placeholder="colleague@example.com"
+										className="pl-9"
+										value={field.state.value}
+										onBlur={field.handleBlur}
+										onChange={(e) => field.handleChange(e.target.value)}
+									/>
+								</div>
+							</FormFieldWrapper>
+						)}
+					</form.Field>
 
-						<FormField
-							control={form.control}
-							name="role"
-							render={({ field }) => (
-								<FormItem>
+					<form.Field name="role">
+						{(field) => {
+							const hasError = field.state.meta.errors.length > 0;
+							return (
+								<FormItem hasError={hasError}>
 									<FormLabel>Role</FormLabel>
-									<Select value={field.value} onValueChange={field.onChange}>
+									<Select
+										value={field.state.value}
+										onValueChange={(v) =>
+											field.handleChange(v as "admin" | "member")
+										}
+									>
 										<FormControl>
 											<SelectTrigger>
 												<SelectValue>
-													{field.value
+													{field.state.value
 														? ORGANIZATION_ROLE_CONFIG[
-																field.value as keyof typeof ORGANIZATION_ROLE_CONFIG
+																field.state
+																	.value as keyof typeof ORGANIZATION_ROLE_CONFIG
 															].label
 														: "Select a role"}
 												</SelectValue>
@@ -169,28 +170,28 @@ export function InviteDialog({
 										</SelectContent>
 									</Select>
 									<FormDescription>
-										{field.value === "admin"
+										{field.state.value === "admin"
 											? ORGANIZATION_ROLE_CONFIG.admin.description
 											: ORGANIZATION_ROLE_CONFIG.member.description}
 									</FormDescription>
-									<FormMessage />
+									<FormMessage errors={field.state.meta.errors} />
 								</FormItem>
-							)}
-						/>
+							);
+						}}
+					</form.Field>
 
-						<DialogFooter>
-							<DialogClose render={<Button variant="outline" type="button" />}>
-								Cancel
-							</DialogClose>
-							<Button type="submit" disabled={inviteMember.isPending}>
-								{inviteMember.isPending && (
-									<Loader2 className="size-4 animate-spin" />
-								)}
-								Send invitation
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+					<DialogFooter>
+						<DialogClose render={<Button variant="outline" type="button" />}>
+							Cancel
+						</DialogClose>
+						<Button type="submit" disabled={inviteMember.isPending}>
+							{inviteMember.isPending && (
+								<Loader2 className="size-4 animate-spin" />
+							)}
+							Send invitation
+						</Button>
+					</DialogFooter>
+				</form>
 			</DialogContent>
 		</Dialog>
 	);

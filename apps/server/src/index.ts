@@ -1,6 +1,8 @@
+import { createServer } from "node:http";
 import { auth } from "@grandplan/auth";
 import { db } from "@grandplan/db";
 import { env } from "@grandplan/env/server";
+import { realtimeServer } from "@grandplan/realtime";
 import { toNodeHandler } from "better-auth/node";
 import cors from "cors";
 import express from "express";
@@ -145,18 +147,56 @@ app.use(errorHandler);
 // Register event handlers for cross-module communication
 registerTaskEventHandlers();
 
+// Create HTTP server for both Express and Socket.io
+const httpServer = createServer(app);
+
 const port = env.PORT;
-const server = app.listen(port, () => {
+httpServer.listen(port, async () => {
 	console.log(`Server is running on port ${port}`);
 	console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+
+	// Initialize realtime server with Socket.io
+	try {
+		await realtimeServer.initialize(httpServer, {
+			redisUrl: env.REDIS_URL,
+			corsOrigin: corsOrigins,
+			authHandler: async (token: string) => {
+				// Validate session using better-auth
+				try {
+					const session = await auth.api.getSession({
+						headers: new Headers({ authorization: `Bearer ${token}` }),
+					});
+					if (!session?.user) return null;
+
+					return {
+						userId: session.user.id,
+						organizationId:
+							(session.user as { organizationId?: string }).organizationId ??
+							"",
+						name: session.user.name ?? undefined,
+						avatar: session.user.image ?? undefined,
+					};
+				} catch {
+					return null;
+				}
+			},
+		});
+		console.log("Realtime server initialized");
+	} catch (error) {
+		console.error("Failed to initialize realtime server:", error);
+	}
 });
 
 // Graceful shutdown
 async function shutdown(signal: string) {
 	console.log(`Received ${signal}. Shutting down gracefully...`);
 
-	server.close(async () => {
+	httpServer.close(async () => {
 		console.log("HTTP server closed");
+
+		// Close realtime server
+		await realtimeServer.shutdown();
+		console.log("Realtime server closed");
 
 		// Close Redis connections
 		await closeRateLimiter();

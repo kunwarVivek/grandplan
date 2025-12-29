@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
+import { useTasksSocket } from "@/providers";
 import type {
 	CreateTaskInput,
 	MoveTaskInput,
@@ -269,4 +271,74 @@ export function useBulkUpdateTasks() {
 			});
 		},
 	});
+}
+
+/**
+ * Hook to sync task queries with realtime socket events.
+ * Listens to task:created, task:updated, task:deleted events
+ * and invalidates relevant queries for real-time updates.
+ */
+export function useTasksRealtimeSync(projectId: string | null) {
+	const queryClient = useQueryClient();
+	const socket = useTasksSocket();
+
+	useEffect(() => {
+		if (!socket || !projectId) return;
+
+		// Join project room for task events
+		socket.emit("room:join", `project:${projectId}`);
+
+		const handleTaskCreated = (_data: { id: string; data: unknown }) => {
+			// Invalidate tasks list to show new task
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.all(projectId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.projects.stats(projectId),
+			});
+		};
+
+		const handleTaskUpdated = (data: {
+			taskId: string;
+			changes: Record<string, unknown>;
+		}) => {
+			// Invalidate specific task and list
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.detail(data.taskId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.all(projectId),
+			});
+			// If status changed, update stats
+			if (data.changes.status) {
+				queryClient.invalidateQueries({
+					queryKey: queryKeys.projects.stats(projectId),
+				});
+			}
+		};
+
+		const handleTaskDeleted = (taskId: string) => {
+			// Remove task from cache and invalidate list
+			queryClient.removeQueries({
+				queryKey: queryKeys.tasks.detail(taskId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.all(projectId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.projects.stats(projectId),
+			});
+		};
+
+		socket.on("task:created", handleTaskCreated);
+		socket.on("task:updated", handleTaskUpdated);
+		socket.on("task:deleted", handleTaskDeleted);
+
+		return () => {
+			socket.emit("room:leave", `project:${projectId}`);
+			socket.off("task:created", handleTaskCreated);
+			socket.off("task:updated", handleTaskUpdated);
+			socket.off("task:deleted", handleTaskDeleted);
+		};
+	}, [socket, projectId, queryClient]);
 }

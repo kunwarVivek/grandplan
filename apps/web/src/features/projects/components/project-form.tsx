@@ -1,13 +1,10 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { CalendarIcon, FolderKanban, Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
-	Form,
 	FormControl,
 	FormDescription,
-	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
@@ -71,8 +68,7 @@ export function ProjectForm({
 	onCancel,
 	isSubmitting,
 }: ProjectFormProps) {
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+	const form = useForm({
 		defaultValues: {
 			name: project?.name ?? "",
 			slug: project?.slug ?? "",
@@ -83,77 +79,93 @@ export function ProjectForm({
 			endDate: formatDateForInput(project?.endDate),
 			icon: project?.icon ?? "",
 			color: project?.color ?? PROJECT_COLORS[0].value,
+		} as FormValues,
+		onSubmit: async ({ value }) => {
+			const baseData = {
+				name: value.name,
+				slug: value.slug || undefined,
+				description: value.description || undefined,
+				status: value.status,
+				visibility: value.visibility,
+				startDate: value.startDate ? new Date(value.startDate) : undefined,
+				endDate: value.endDate ? new Date(value.endDate) : undefined,
+				icon: value.icon || undefined,
+				color: value.color || undefined,
+			};
+
+			if (project) {
+				onSubmit(baseData as UpdateProjectInput);
+			} else {
+				onSubmit({
+					...baseData,
+					workspaceId: workspaceId!,
+				} as CreateProjectInput);
+			}
+		},
+		validators: {
+			onSubmit: formSchema,
 		},
 	});
 
-	const handleSubmit = (values: FormValues) => {
-		const baseData = {
-			name: values.name,
-			slug: values.slug || undefined,
-			description: values.description || undefined,
-			status: values.status,
-			visibility: values.visibility,
-			startDate: values.startDate ? new Date(values.startDate) : undefined,
-			endDate: values.endDate ? new Date(values.endDate) : undefined,
-			icon: values.icon || undefined,
-			color: values.color || undefined,
-		};
-
-		if (project) {
-			onSubmit(baseData as UpdateProjectInput);
-		} else {
-			onSubmit({
-				...baseData,
-				workspaceId: workspaceId!,
-			} as CreateProjectInput);
-		}
-	};
-
-	const selectedColor = form.watch("color");
-	const iconValue = form.watch("icon");
-
 	return (
-		<Form {...form}>
-			<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-				<div className="flex items-start gap-6">
-					<div
-						className="flex size-16 shrink-0 items-center justify-center"
-						style={{
-							backgroundColor: selectedColor ? `${selectedColor}20` : undefined,
-							color: selectedColor ?? undefined,
-						}}
-					>
-						{iconValue ? (
-							<span className="text-2xl">{iconValue}</span>
-						) : (
-							<FolderKanban className="size-8" />
-						)}
-					</div>
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				form.handleSubmit();
+			}}
+			className="space-y-6"
+		>
+			<div className="flex items-start gap-6">
+				<form.Subscribe
+					selector={(state) => ({
+						color: state.values.color,
+						icon: state.values.icon,
+					})}
+				>
+					{({ color, icon }) => (
+						<div
+							className="flex size-16 shrink-0 items-center justify-center"
+							style={{
+								backgroundColor: color ? `${color}20` : undefined,
+								color: color ?? undefined,
+							}}
+						>
+							{icon ? (
+								<span className="text-2xl">{icon}</span>
+							) : (
+								<FolderKanban className="size-8" />
+							)}
+						</div>
+					)}
+				</form.Subscribe>
 
-					<div className="flex-1 space-y-4">
-						<FormField
-							control={form.control}
-							name="icon"
-							render={({ field }) => (
-								<FormItem>
+				<div className="flex-1 space-y-4">
+					<form.Field name="icon">
+						{(field) => {
+							const hasError = field.state.meta.errors.length > 0;
+							return (
+								<FormItem hasError={hasError}>
 									<FormLabel>Icon (emoji)</FormLabel>
 									<FormControl>
 										<Input
 											placeholder="e.g., or leave empty"
 											maxLength={2}
-											{...field}
+											value={field.state.value ?? ""}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 									</FormControl>
-									<FormMessage />
+									<FormMessage errors={field.state.meta.errors} />
 								</FormItem>
-							)}
-						/>
+							);
+						}}
+					</form.Field>
 
-						<FormField
-							control={form.control}
-							name="color"
-							render={({ field }) => (
-								<FormItem>
+					<form.Field name="color">
+						{(field) => {
+							const hasError = field.state.meta.errors.length > 0;
+							return (
+								<FormItem hasError={hasError}>
 									<FormLabel>Color</FormLabel>
 									<FormControl>
 										<div className="flex flex-wrap gap-2">
@@ -163,10 +175,10 @@ export function ProjectForm({
 													type="button"
 													className="size-6 ring-offset-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 													style={{ backgroundColor: color.value }}
-													onClick={() => field.onChange(color.value)}
+													onClick={() => field.handleChange(color.value)}
 													title={color.name}
 												>
-													{field.value === color.value && (
+													{field.state.value === color.value && (
 														<span className="flex items-center justify-center text-white text-xs">
 															&#10003;
 														</span>
@@ -175,75 +187,103 @@ export function ProjectForm({
 											))}
 										</div>
 									</FormControl>
-									<FormMessage />
+									<FormMessage errors={field.state.meta.errors} />
 								</FormItem>
-							)}
-						/>
-					</div>
+							);
+						}}
+					</form.Field>
 				</div>
+			</div>
 
-				<FormField
-					control={form.control}
-					name="name"
-					render={({ field }) => (
-						<FormItem>
+			<form.Field name="name">
+				{(field) => {
+					const hasError = field.state.meta.errors.length > 0;
+					return (
+						<FormItem hasError={hasError}>
 							<FormLabel>Project name</FormLabel>
 							<FormControl>
-								<Input placeholder="Website Redesign" {...field} />
+								<Input
+									placeholder="Website Redesign"
+									value={field.state.value}
+									onBlur={field.handleBlur}
+									onChange={(e) => field.handleChange(e.target.value)}
+								/>
 							</FormControl>
-							<FormMessage />
+							<FormMessage errors={field.state.meta.errors} />
 						</FormItem>
-					)}
-				/>
+					);
+				}}
+			</form.Field>
 
-				<FormField
-					control={form.control}
-					name="slug"
-					render={({ field }) => (
-						<FormItem>
+			<form.Field name="slug">
+				{(field) => {
+					const hasError = field.state.meta.errors.length > 0;
+					return (
+						<FormItem hasError={hasError}>
 							<FormLabel>URL slug (optional)</FormLabel>
 							<FormControl>
-								<Input placeholder="website-redesign" {...field} />
+								<Input
+									placeholder="website-redesign"
+									value={field.state.value ?? ""}
+									onBlur={field.handleBlur}
+									onChange={(e) => field.handleChange(e.target.value)}
+								/>
 							</FormControl>
 							<FormDescription>
 								Leave empty to auto-generate from name
 							</FormDescription>
-							<FormMessage />
+							<FormMessage errors={field.state.meta.errors} />
 						</FormItem>
-					)}
-				/>
+					);
+				}}
+			</form.Field>
 
-				<FormField
-					control={form.control}
-					name="description"
-					render={({ field }) => (
-						<FormItem>
+			<form.Field name="description">
+				{(field) => {
+					const hasError = field.state.meta.errors.length > 0;
+					return (
+						<FormItem hasError={hasError}>
 							<FormLabel>Description</FormLabel>
 							<FormControl>
 								<Textarea
 									placeholder="A brief description of this project..."
 									className="min-h-20 resize-none"
-									{...field}
+									value={field.state.value ?? ""}
+									onBlur={field.handleBlur}
+									onChange={(e) => field.handleChange(e.target.value)}
 								/>
 							</FormControl>
-							<FormMessage />
+							<FormMessage errors={field.state.meta.errors} />
 						</FormItem>
-					)}
-				/>
+					);
+				}}
+			</form.Field>
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<FormField
-						control={form.control}
-						name="status"
-						render={({ field }) => (
-							<FormItem>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<form.Field name="status">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>Status</FormLabel>
-								<Select value={field.value} onValueChange={field.onChange}>
+								<Select
+									value={field.state.value}
+									onValueChange={(v) =>
+										field.handleChange(
+											v as
+												| "planning"
+												| "active"
+												| "on_hold"
+												| "completed"
+												| "cancelled",
+										)
+									}
+								>
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue>
-												{field.value
-													? PROJECT_STATUS_CONFIG[field.value].label
+												{field.state.value
+													? PROJECT_STATUS_CONFIG[field.state.value].label
 													: "Select status"}
 											</SelectValue>
 										</SelectTrigger>
@@ -258,23 +298,29 @@ export function ProjectForm({
 										)}
 									</SelectContent>
 								</Select>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
+						);
+					}}
+				</form.Field>
 
-					<FormField
-						control={form.control}
-						name="visibility"
-						render={({ field }) => (
-							<FormItem>
+				<form.Field name="visibility">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>Visibility</FormLabel>
-								<Select value={field.value} onValueChange={field.onChange}>
+								<Select
+									value={field.state.value}
+									onValueChange={(v) =>
+										field.handleChange(v as "public" | "private" | "team")
+									}
+								>
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue>
-												{field.value
-													? PROJECT_VISIBILITY_CONFIG[field.value].label
+												{field.state.value
+													? PROJECT_VISIBILITY_CONFIG[field.state.value].label
 													: "Select visibility"}
 											</SelectValue>
 										</SelectTrigger>
@@ -289,60 +335,80 @@ export function ProjectForm({
 										)}
 									</SelectContent>
 								</Select>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
-				</div>
+						);
+					}}
+				</form.Field>
+			</div>
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<FormField
-						control={form.control}
-						name="startDate"
-						render={({ field }) => (
-							<FormItem>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<form.Field name="startDate">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>Start date</FormLabel>
 								<FormControl>
 									<div className="relative">
 										<CalendarIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-										<Input type="date" className="pl-9" {...field} />
+										<Input
+											type="date"
+											className="pl-9"
+											value={field.state.value ?? ""}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+										/>
 									</div>
 								</FormControl>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
+						);
+					}}
+				</form.Field>
 
-					<FormField
-						control={form.control}
-						name="endDate"
-						render={({ field }) => (
-							<FormItem>
+				<form.Field name="endDate">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>End date</FormLabel>
 								<FormControl>
 									<div className="relative">
 										<CalendarIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-										<Input type="date" className="pl-9" {...field} />
+										<Input
+											type="date"
+											className="pl-9"
+											value={field.state.value ?? ""}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+										/>
 									</div>
 								</FormControl>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
-				</div>
+						);
+					}}
+				</form.Field>
+			</div>
 
-				<div className="flex justify-end gap-2">
-					{onCancel && (
-						<Button type="button" variant="outline" onClick={onCancel}>
-							Cancel
+			<div className="flex justify-end gap-2">
+				{onCancel && (
+					<Button type="button" variant="outline" onClick={onCancel}>
+						Cancel
+					</Button>
+				)}
+				<form.Subscribe selector={(state) => state.isSubmitting}>
+					{(formIsSubmitting) => (
+						<Button type="submit" disabled={isSubmitting || formIsSubmitting}>
+							{(isSubmitting || formIsSubmitting) && (
+								<Loader2 className="size-4 animate-spin" />
+							)}
+							{project ? "Save changes" : "Create project"}
 						</Button>
 					)}
-					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting && <Loader2 className="size-4 animate-spin" />}
-						{project ? "Save changes" : "Create project"}
-					</Button>
-				</div>
-			</form>
-		</Form>
+				</form.Subscribe>
+			</div>
+		</form>
 	);
 }

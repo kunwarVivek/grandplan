@@ -7,6 +7,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useRealtimeNotifications } from "@/features/realtime";
 import { useUnreadCount } from "../hooks/use-notifications";
 import { NotificationList } from "./notification-list";
 
@@ -15,8 +16,18 @@ type NotificationBellProps = {
 };
 
 export function NotificationBell({ className }: NotificationBellProps) {
+	// Initial count from HTTP API
 	const { data } = useUnreadCount();
-	const unreadCount = data?.count ?? 0;
+	const initialCount = data?.count ?? 0;
+
+	// Real-time updates via socket
+	const { unreadCount: realtimeCount } = useRealtimeNotifications({
+		playSound: true,
+		showBrowserNotification: true,
+	});
+
+	// Use realtime count if we have updates, otherwise fall back to initial
+	const unreadCount = realtimeCount > 0 ? realtimeCount : initialCount;
 
 	const formatCount = (count: number) => {
 		if (count > 99) return "99+";

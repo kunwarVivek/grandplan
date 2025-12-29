@@ -1,13 +1,10 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { CalendarIcon, Clock, Flag, Loader2, User } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
-	Form,
 	FormControl,
 	FormDescription,
-	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
@@ -77,8 +74,7 @@ export function TaskForm({
 	onCancel,
 	isSubmitting,
 }: TaskFormProps) {
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+	const form = useForm({
 		defaultValues: {
 			title: task?.title ?? "",
 			description: task?.description ?? "",
@@ -89,90 +85,110 @@ export function TaskForm({
 			dueDate: formatDateForInput(task?.dueDate),
 			estimatedHours: task?.estimatedHours ?? undefined,
 			tags: task?.tags ?? [],
+		} as FormValues,
+		onSubmit: async ({ value }) => {
+			const baseData = {
+				title: value.title,
+				description: value.description || undefined,
+				status: value.status as TaskStatus,
+				priority: value.priority as TaskPriority,
+				assigneeId: value.assigneeId || undefined,
+				startDate: value.startDate ? new Date(value.startDate) : undefined,
+				dueDate: value.dueDate ? new Date(value.dueDate) : undefined,
+				estimatedHours: value.estimatedHours,
+				tags: value.tags,
+			};
+
+			if (task) {
+				onSubmit(baseData as UpdateTaskInput);
+			} else {
+				onSubmit({
+					...baseData,
+					projectId,
+					parentId,
+				} as CreateTaskInput);
+			}
+		},
+		validators: {
+			onSubmit: formSchema,
 		},
 	});
 
-	const handleSubmit = (values: FormValues) => {
-		const baseData = {
-			title: values.title,
-			description: values.description || undefined,
-			status: values.status as TaskStatus,
-			priority: values.priority as TaskPriority,
-			assigneeId: values.assigneeId || undefined,
-			startDate: values.startDate ? new Date(values.startDate) : undefined,
-			dueDate: values.dueDate ? new Date(values.dueDate) : undefined,
-			estimatedHours: values.estimatedHours,
-			tags: values.tags,
-		};
-
-		if (task) {
-			onSubmit(baseData as UpdateTaskInput);
-		} else {
-			onSubmit({
-				...baseData,
-				projectId,
-				parentId,
-			} as CreateTaskInput);
-		}
-	};
-
 	return (
-		<Form {...form}>
-			<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-				<FormField
-					control={form.control}
-					name="title"
-					render={({ field }) => (
-						<FormItem>
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				form.handleSubmit();
+			}}
+			className="space-y-6"
+		>
+			<form.Field name="title">
+				{(field) => {
+					const hasError = field.state.meta.errors.length > 0;
+					return (
+						<FormItem hasError={hasError}>
 							<FormLabel>Task title</FormLabel>
 							<FormControl>
 								<Input
 									placeholder="What needs to be done?"
 									autoFocus
-									{...field}
+									value={field.state.value}
+									onBlur={field.handleBlur}
+									onChange={(e) => field.handleChange(e.target.value)}
 								/>
 							</FormControl>
-							<FormMessage />
+							<FormMessage errors={field.state.meta.errors} />
 						</FormItem>
-					)}
-				/>
+					);
+				}}
+			</form.Field>
 
-				<FormField
-					control={form.control}
-					name="description"
-					render={({ field }) => (
-						<FormItem>
+			<form.Field name="description">
+				{(field) => {
+					const hasError = field.state.meta.errors.length > 0;
+					return (
+						<FormItem hasError={hasError}>
 							<FormLabel>Description</FormLabel>
 							<FormControl>
 								<Textarea
 									placeholder="Add more details about this task..."
 									className="min-h-24 resize-none"
-									{...field}
+									value={field.state.value ?? ""}
+									onBlur={field.handleBlur}
+									onChange={(e) => field.handleChange(e.target.value)}
 								/>
 							</FormControl>
 							<FormDescription>Supports markdown formatting</FormDescription>
-							<FormMessage />
+							<FormMessage errors={field.state.meta.errors} />
 						</FormItem>
-					)}
-				/>
+					);
+				}}
+			</form.Field>
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<FormField
-						control={form.control}
-						name="status"
-						render={({ field }) => (
-							<FormItem>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<form.Field name="status">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>Status</FormLabel>
-								<Select value={field.value} onValueChange={field.onChange}>
+								<Select
+									value={field.state.value}
+									onValueChange={(v) => field.handleChange(v as TaskStatus)}
+								>
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue>
 												<span
 													className={
-														TASK_STATUS_CONFIG[field.value as TaskStatus]?.color
+														TASK_STATUS_CONFIG[field.state.value as TaskStatus]
+															?.color
 													}
 												>
-													{TASK_STATUS_CONFIG[field.value as TaskStatus]?.label}
+													{
+														TASK_STATUS_CONFIG[field.state.value as TaskStatus]
+															?.label
+													}
 												</span>
 											</SelectValue>
 										</SelectTrigger>
@@ -187,31 +203,37 @@ export function TaskForm({
 										)}
 									</SelectContent>
 								</Select>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
+						);
+					}}
+				</form.Field>
 
-					<FormField
-						control={form.control}
-						name="priority"
-						render={({ field }) => (
-							<FormItem>
+				<form.Field name="priority">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>Priority</FormLabel>
-								<Select value={field.value} onValueChange={field.onChange}>
+								<Select
+									value={field.state.value}
+									onValueChange={(v) => field.handleChange(v as TaskPriority)}
+								>
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue>
 												<span className="flex items-center gap-2">
 													<Flag
 														className={`size-4 ${
-															TASK_PRIORITY_CONFIG[field.value as TaskPriority]
-																?.color
+															TASK_PRIORITY_CONFIG[
+																field.state.value as TaskPriority
+															]?.color
 														}`}
 													/>
 													{
-														TASK_PRIORITY_CONFIG[field.value as TaskPriority]
-															?.label
+														TASK_PRIORITY_CONFIG[
+															field.state.value as TaskPriority
+														]?.label
 													}
 												</span>
 											</SelectValue>
@@ -230,23 +252,24 @@ export function TaskForm({
 										)}
 									</SelectContent>
 								</Select>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
-				</div>
+						);
+					}}
+				</form.Field>
+			</div>
 
-				{assignees.length > 0 && (
-					<FormField
-						control={form.control}
-						name="assigneeId"
-						render={({ field }) => (
-							<FormItem>
+			{assignees.length > 0 && (
+				<form.Field name="assigneeId">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>Assignee</FormLabel>
 								<Select
-									value={field.value || "unassigned"}
+									value={field.state.value || "unassigned"}
 									onValueChange={(v) =>
-										field.onChange(v === "unassigned" ? "" : v)
+										field.handleChange(v === "unassigned" || !v ? "" : v)
 									}
 								>
 									<FormControl>
@@ -254,9 +277,10 @@ export function TaskForm({
 											<SelectValue>
 												<span className="flex items-center gap-2">
 													<User className="size-4 text-muted-foreground" />
-													{field.value
-														? (assignees.find((a) => a.id === field.value)
-																?.name ?? "Unknown")
+													{field.state.value
+														? (assignees.find(
+																(a) => a.id === field.state.value,
+															)?.name ?? "Unknown")
 														: "Unassigned"}
 												</span>
 											</SelectValue>
@@ -287,53 +311,68 @@ export function TaskForm({
 										))}
 									</SelectContent>
 								</Select>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
-				)}
+						);
+					}}
+				</form.Field>
+			)}
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<FormField
-						control={form.control}
-						name="startDate"
-						render={({ field }) => (
-							<FormItem>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<form.Field name="startDate">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>Start date</FormLabel>
 								<FormControl>
 									<div className="relative">
 										<CalendarIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-										<Input type="date" className="pl-9" {...field} />
+										<Input
+											type="date"
+											className="pl-9"
+											value={field.state.value ?? ""}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+										/>
 									</div>
 								</FormControl>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
+						);
+					}}
+				</form.Field>
 
-					<FormField
-						control={form.control}
-						name="dueDate"
-						render={({ field }) => (
-							<FormItem>
+				<form.Field name="dueDate">
+					{(field) => {
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<FormItem hasError={hasError}>
 								<FormLabel>Due date</FormLabel>
 								<FormControl>
 									<div className="relative">
 										<CalendarIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-										<Input type="date" className="pl-9" {...field} />
+										<Input
+											type="date"
+											className="pl-9"
+											value={field.state.value ?? ""}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+										/>
 									</div>
 								</FormControl>
-								<FormMessage />
+								<FormMessage errors={field.state.meta.errors} />
 							</FormItem>
-						)}
-					/>
-				</div>
+						);
+					}}
+				</form.Field>
+			</div>
 
-				<FormField
-					control={form.control}
-					name="estimatedHours"
-					render={({ field }) => (
-						<FormItem>
+			<form.Field name="estimatedHours">
+				{(field) => {
+					const hasError = field.state.meta.errors.length > 0;
+					return (
+						<FormItem hasError={hasError}>
 							<FormLabel>Estimated hours</FormLabel>
 							<FormControl>
 								<div className="relative">
@@ -344,9 +383,10 @@ export function TaskForm({
 										placeholder="0"
 										min={0}
 										step={0.5}
-										{...field}
+										value={field.state.value ?? ""}
+										onBlur={field.handleBlur}
 										onChange={(e) =>
-											field.onChange(
+											field.handleChange(
 												e.target.value
 													? Number.parseFloat(e.target.value)
 													: undefined,
@@ -358,23 +398,29 @@ export function TaskForm({
 							<FormDescription>
 								How long do you estimate this will take?
 							</FormDescription>
-							<FormMessage />
+							<FormMessage errors={field.state.meta.errors} />
 						</FormItem>
-					)}
-				/>
+					);
+				}}
+			</form.Field>
 
-				<div className="flex justify-end gap-2 pt-4">
-					{onCancel && (
-						<Button type="button" variant="outline" onClick={onCancel}>
-							Cancel
+			<div className="flex justify-end gap-2 pt-4">
+				{onCancel && (
+					<Button type="button" variant="outline" onClick={onCancel}>
+						Cancel
+					</Button>
+				)}
+				<form.Subscribe selector={(state) => state.isSubmitting}>
+					{(formIsSubmitting) => (
+						<Button type="submit" disabled={isSubmitting || formIsSubmitting}>
+							{(isSubmitting || formIsSubmitting) && (
+								<Loader2 className="mr-2 size-4 animate-spin" />
+							)}
+							{task ? "Save changes" : "Create task"}
 						</Button>
 					)}
-					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-						{task ? "Save changes" : "Create task"}
-					</Button>
-				</div>
-			</form>
-		</Form>
+				</form.Subscribe>
+			</div>
+		</form>
 	);
 }
