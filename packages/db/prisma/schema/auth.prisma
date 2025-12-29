@@ -66,6 +66,9 @@ model User {
   // Integration relations
   integrationConnections  IntegrationConnection[]
 
+  // Attachment relations
+  uploadedAttachments     TaskAttachment[]
+
   @@unique([email])
   @@index([status])
   @@index([activeOrganizationId])

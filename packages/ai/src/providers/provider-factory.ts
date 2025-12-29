@@ -171,3 +171,28 @@ export function createProvider(
 			throw new Error(`Unknown provider: ${name}`);
 	}
 }
+
+// Auto-initialize from environment if running on server
+if (typeof window === "undefined") {
+	const factory = getAIFactory();
+
+	// Check if not already initialized
+	if (factory.getAvailableProviders().length === 0) {
+		const config: AIFactoryConfig = {};
+
+		if (process.env.OPENAI_API_KEY) {
+			config.openai = { apiKey: process.env.OPENAI_API_KEY };
+		}
+		if (process.env.ANTHROPIC_API_KEY) {
+			config.anthropic = { apiKey: process.env.ANTHROPIC_API_KEY };
+		}
+		if (process.env.AI_PROVIDER) {
+			config.defaultProvider = process.env.AI_PROVIDER as "openai" | "anthropic";
+		}
+
+		// Only initialize if we have at least one provider
+		if (config.openai || config.anthropic) {
+			factory.initialize(config);
+		}
+	}
+}

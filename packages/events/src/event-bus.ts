@@ -3,6 +3,7 @@
 // ============================================
 
 import { generateId } from "@grandplan/core/utils";
+import { queueManager } from "@grandplan/queue";
 import EventEmitter from "eventemitter3";
 import Redis from "ioredis";
 import type {
@@ -125,12 +126,37 @@ export class EventBus {
 				await handler.handle(event);
 			} catch (error) {
 				console.error(`Event handler failed for ${type}:`, error);
-				// Could emit to dead letter queue here
+				await this.sendToDeadLetterQueue(
+					event,
+					error instanceof Error ? error : new Error(String(error)),
+					handler.constructor.name,
+				);
 			}
 		};
 
 		this.emitter.on(type, wrappedHandler);
 		return () => this.emitter.off(type, wrappedHandler);
+	}
+
+	private async sendToDeadLetterQueue(
+		event: DomainEvent,
+		error: Error,
+		handler: string,
+	): Promise<void> {
+		try {
+			await queueManager.addJob("events:dlq", {
+				event,
+				error: {
+					name: error.name,
+					message: error.message,
+					stack: error.stack,
+				},
+				handler,
+				failedAt: new Date().toISOString(),
+			});
+		} catch (dlqError) {
+			console.error("Failed to send to DLQ:", dlqError);
+		}
 	}
 }
 

@@ -166,6 +166,8 @@ model TaskNode {
   aiDecisions      TaskAIDecision[]
   comments         TaskComment[]
   externalLinks    TaskExternalLink[]
+  attachments      TaskAttachment[]
+  labels           TaskNodeLabel[]
 
   @@index([projectId])
   @@index([parentId])
@@ -390,6 +392,72 @@ model TaskComment {
   @@index([authorId])
   @@index([parentId])
   @@map("task_comment")
+}
+
+// ============================================
+// TASK ATTACHMENTS
+// ============================================
+
+model TaskAttachment {
+  id          String   @id @default(cuid())
+  taskId      String
+  task        TaskNode @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  storageKey  String   // S3/storage key
+  storageUrl  String?  // CDN URL if available
+
+  uploadedById String
+  uploadedBy   User    @relation(fields: [uploadedById], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  @@index([taskId])
+  @@index([uploadedById])
+  @@index([deletedAt])
+  @@map("task_attachment")
+}
+
+// ============================================
+// TASK LABELS
+// ============================================
+
+model Label {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name            String
+  color           String   @default("#6366f1") // Default indigo
+  description     String?
+
+  tasks           TaskNodeLabel[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("label")
+}
+
+model TaskNodeLabel {
+  taskId    String
+  task      TaskNode @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  labelId   String
+  label     Label    @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@id([taskId, labelId])
+  @@index([taskId])
+  @@index([labelId])
+  @@map("task_node_label")
 }
 
 // ============================================

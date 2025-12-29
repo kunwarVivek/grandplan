@@ -38,6 +38,7 @@ model Organization {
   auditLogs         AuditLog[]
   emailTemplates    EmailTemplate[]
   workspaces        Workspace[]
+  labels            Label[]
 
   @@index([slug])
   @@index([customDomain])
