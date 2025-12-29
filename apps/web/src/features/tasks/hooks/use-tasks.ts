@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
@@ -16,6 +21,15 @@ type TasksResponse = {
 	tasks: Task[];
 	total: number;
 };
+
+// Paginated response type for infinite scroll
+type PaginatedTasksResponse = TasksResponse & {
+	nextCursor?: string | null;
+	hasMore: boolean;
+};
+
+// Default page size for infinite scroll
+const DEFAULT_PAGE_SIZE = 20;
 
 type TaskResponse = Task;
 
@@ -48,6 +62,71 @@ export function useTasks(projectId: string, filters?: TaskFilters) {
 			const endpoint = `/api/projects/${projectId}/tasks${query ? `?${query}` : ""}`;
 			return api.get<TasksResponse>(endpoint, signal);
 		},
+		enabled: !!projectId,
+	});
+}
+
+// Fetch tasks with infinite scroll/pagination
+export function useInfiniteTasksQuery(
+	projectId: string,
+	filters?: TaskFilters,
+	options?: { pageSize?: number },
+) {
+	const pageSize = options?.pageSize ?? DEFAULT_PAGE_SIZE;
+
+	return useInfiniteQuery({
+		queryKey: [...queryKeys.tasks.all(projectId), "infinite", filters],
+		queryFn: async ({ pageParam, signal }) => {
+			const params = new URLSearchParams();
+
+			// Add pagination params
+			params.set("limit", pageSize.toString());
+			if (pageParam) {
+				params.set("cursor", pageParam);
+			}
+
+			// Add filter params
+			if (filters?.status?.length) {
+				params.set("status", filters.status.join(","));
+			}
+			if (filters?.priority?.length) {
+				params.set("priority", filters.priority.join(","));
+			}
+			if (filters?.assigneeId?.length) {
+				params.set("assigneeId", filters.assigneeId.join(","));
+			}
+			if (filters?.search) {
+				params.set("search", filters.search);
+			}
+			if (filters?.dueDateFrom) {
+				params.set("dueDateFrom", filters.dueDateFrom.toISOString());
+			}
+			if (filters?.dueDateTo) {
+				params.set("dueDateTo", filters.dueDateTo.toISOString());
+			}
+
+			const query = params.toString();
+			const endpoint = `/api/projects/${projectId}/tasks${query ? `?${query}` : ""}`;
+
+			// API returns PaginatedTasksResponse with cursor-based pagination
+			// Falls back to calculating hasMore from total if no cursor provided
+			const response = await api.get<PaginatedTasksResponse>(endpoint, signal);
+
+			// If API doesn't return pagination info, calculate it from total
+			if (response.hasMore === undefined) {
+				const currentCount = response.tasks.length;
+				return {
+					...response,
+					hasMore: currentCount >= pageSize,
+					nextCursor: currentCount >= pageSize ? response.tasks[currentCount - 1]?.id : null,
+				};
+			}
+
+			return response;
+		},
+		initialPageParam: undefined as string | undefined,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasMore ? lastPage.nextCursor : undefined,
 		enabled: !!projectId,
 	});
 }
@@ -85,8 +164,66 @@ export function useCreateTask() {
 				input,
 			);
 		},
-		onSuccess: (_, variables) => {
-			// Invalidate project tasks list
+		onMutate: async (input) => {
+			// Cancel outgoing refetches
+			await queryClient.cancelQueries({
+				queryKey: queryKeys.tasks.all(input.projectId),
+			});
+
+			// Snapshot previous value
+			const previousTasks = queryClient.getQueryData<TasksResponse>(
+				queryKeys.tasks.all(input.projectId),
+			);
+
+			// Create optimistic task with temporary ID
+			const optimisticTask: Task = {
+				id: `temp-${Date.now()}`,
+				projectId: input.projectId,
+				title: input.title,
+				description: input.description ?? null,
+				status: input.status ?? "todo",
+				priority: input.priority ?? "medium",
+				assigneeId: input.assigneeId ?? null,
+				parentId: input.parentId ?? null,
+				dueDate: input.dueDate ?? null,
+				startDate: input.startDate ?? null,
+				estimatedHours: input.estimatedHours ?? null,
+				actualHours: null,
+				tags: input.tags ?? [],
+				dependencies: [],
+				progress: 0,
+				position: 0,
+				depth: input.parentId ? 1 : 0,
+				childCount: 0,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+
+			// Optimistically add task to list
+			if (previousTasks) {
+				queryClient.setQueryData<TasksResponse>(
+					queryKeys.tasks.all(input.projectId),
+					{
+						...previousTasks,
+						tasks: [optimisticTask, ...previousTasks.tasks],
+						total: previousTasks.total + 1,
+					},
+				);
+			}
+
+			return { previousTasks, optimisticTask };
+		},
+		onError: (_, variables, context) => {
+			// Rollback on error
+			if (context?.previousTasks) {
+				queryClient.setQueryData(
+					queryKeys.tasks.all(variables.projectId),
+					context.previousTasks,
+				);
+			}
+		},
+		onSettled: (_, __, variables) => {
+			// Refetch to ensure consistency
 			queryClient.invalidateQueries({
 				queryKey: queryKeys.tasks.all(variables.projectId),
 			});
@@ -115,19 +252,80 @@ export function useUpdateTask() {
 		mutationFn: async ({
 			taskId,
 			...input
-		}: UpdateTaskInput & { taskId: string }) => {
+		}: UpdateTaskInput & { taskId: string; projectId: string }) => {
 			return api.patch<TaskResponse>(`/api/tasks/${taskId}`, input);
 		},
-		onSuccess: (data) => {
-			// Update the task in cache
-			queryClient.setQueryData(queryKeys.tasks.detail(data.id), data);
-			// Invalidate tasks list
-			queryClient.invalidateQueries({
-				queryKey: queryKeys.tasks.all(data.projectId),
+		onMutate: async ({ taskId, projectId, ...updates }) => {
+			// Cancel outgoing refetches
+			await queryClient.cancelQueries({
+				queryKey: queryKeys.tasks.all(projectId),
 			});
-			// Invalidate project stats if status changed
+			await queryClient.cancelQueries({
+				queryKey: queryKeys.tasks.detail(taskId),
+			});
+
+			// Snapshot previous values
+			const previousTasks = queryClient.getQueryData<TasksResponse>(
+				queryKeys.tasks.all(projectId),
+			);
+			const previousTask = queryClient.getQueryData<Task>(
+				queryKeys.tasks.detail(taskId),
+			);
+
+			// Optimistically update task in list
+			if (previousTasks) {
+				const updatedTasks = previousTasks.tasks.map((task) =>
+					task.id === taskId ? { ...task, ...updates } : task,
+				);
+				queryClient.setQueryData<TasksResponse>(
+					queryKeys.tasks.all(projectId),
+					{
+						...previousTasks,
+						tasks: updatedTasks,
+					},
+				);
+			}
+
+			// Optimistically update task detail
+			if (previousTask) {
+				queryClient.setQueryData<Task>(queryKeys.tasks.detail(taskId), {
+					...previousTask,
+					...updates,
+				});
+			}
+
+			return { previousTasks, previousTask, projectId };
+		},
+		onError: (_, variables, context) => {
+			// Rollback on error
+			if (context?.previousTasks) {
+				queryClient.setQueryData(
+					queryKeys.tasks.all(context.projectId),
+					context.previousTasks,
+				);
+			}
+			if (context?.previousTask) {
+				queryClient.setQueryData(
+					queryKeys.tasks.detail(variables.taskId),
+					context.previousTask,
+				);
+			}
+		},
+		onSettled: (data, _, variables, context) => {
+			const projectId = data?.projectId ?? context?.projectId;
+			if (projectId) {
+				// Refetch to ensure consistency
+				queryClient.invalidateQueries({
+					queryKey: queryKeys.tasks.all(projectId),
+				});
+				// Invalidate project stats if status changed
+				queryClient.invalidateQueries({
+					queryKey: queryKeys.projects.stats(projectId),
+				});
+			}
+			// Always invalidate the task detail
 			queryClient.invalidateQueries({
-				queryKey: queryKeys.projects.stats(data.projectId),
+				queryKey: queryKeys.tasks.detail(variables.taskId),
 			});
 		},
 	});

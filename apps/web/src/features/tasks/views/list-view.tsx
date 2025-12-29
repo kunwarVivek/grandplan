@@ -20,11 +20,12 @@ import {
 	ChevronsLeft,
 	ChevronsRight,
 	Copy,
+	Loader2,
 	MoreHorizontal,
 	Plus,
 	Trash2,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -69,6 +70,11 @@ type ViewProps = {
 	onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
 	onTaskCreate: (status?: TaskStatus) => void;
 	isLoading?: boolean;
+	// Infinite scroll props (optional for backward compatibility)
+	hasNextPage?: boolean;
+	isFetchingNextPage?: boolean;
+	fetchNextPage?: () => void;
+	totalCount?: number;
 };
 
 // ============================================
@@ -224,9 +230,34 @@ export function ListView({
 	onTaskUpdate,
 	onTaskCreate,
 	isLoading,
+	hasNextPage,
+	isFetchingNextPage,
+	fetchNextPage,
+	totalCount,
 }: ViewProps) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+	// Infinite scroll: intersection observer for loading more
+	const loadMoreRef = useRef<HTMLDivElement>(null);
+	const isInfiniteScrollEnabled = Boolean(fetchNextPage);
+
+	useEffect(() => {
+		if (!isInfiniteScrollEnabled || !loadMoreRef.current) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const [entry] = entries;
+				if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+					fetchNextPage?.();
+				}
+			},
+			{ threshold: 0.1, rootMargin: "100px" },
+		);
+
+		observer.observe(loadMoreRef.current);
+		return () => observer.disconnect();
+	}, [isInfiniteScrollEnabled, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	// Define columns
 	const columns = useMemo<ColumnDef<Task>[]>(
@@ -532,21 +563,56 @@ export function ListView({
 					</TableHeader>
 					<TableBody>
 						{table.getRowModel().rows.length > 0 ? (
-							table.getRowModel().rows.map((row) => (
-								<TableRow
-									key={row.id}
-									data-state={row.getIsSelected() ? "selected" : undefined}
-								>
-									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
-											{flexRender(
-												cell.column.columnDef.cell,
-												cell.getContext(),
-											)}
+							<>
+								{table.getRowModel().rows.map((row) => (
+									<TableRow
+										key={row.id}
+										data-state={row.getIsSelected() ? "selected" : undefined}
+									>
+										{row.getVisibleCells().map((cell) => (
+											<TableCell key={cell.id}>
+												{flexRender(
+													cell.column.columnDef.cell,
+													cell.getContext(),
+												)}
+											</TableCell>
+										))}
+									</TableRow>
+								))}
+								{/* Infinite scroll trigger */}
+								{isInfiniteScrollEnabled && (
+									<TableRow>
+										<TableCell
+											colSpan={columns.length}
+											className="h-12 text-center"
+										>
+											<div
+												ref={loadMoreRef}
+												className="flex items-center justify-center"
+											>
+												{isFetchingNextPage ? (
+													<div className="flex items-center gap-2 text-muted-foreground text-sm">
+														<Loader2 className="h-4 w-4 animate-spin" />
+														Loading more...
+													</div>
+												) : hasNextPage ? (
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() => fetchNextPage?.()}
+													>
+														Load more
+													</Button>
+												) : (
+													<span className="text-muted-foreground text-sm">
+														All tasks loaded
+													</span>
+												)}
+											</div>
 										</TableCell>
-									))}
-								</TableRow>
-							))
+									</TableRow>
+								)}
+							</>
 						) : (
 							<TableRow>
 								<TableCell
@@ -571,70 +637,86 @@ export function ListView({
 				</Table>
 			</div>
 
-			{/* Pagination */}
+			{/* Footer: Infinite scroll info or traditional pagination */}
 			<div className="flex items-center justify-between border-t px-4 py-3">
 				<div className="text-muted-foreground text-sm">
 					{table.getFilteredSelectedRowModel().rows.length} of{" "}
-					{table.getFilteredRowModel().rows.length} row(s) selected
+					{isInfiniteScrollEnabled
+						? `${tasks.length}${totalCount !== undefined ? ` (${totalCount} total)` : ""}`
+						: table.getFilteredRowModel().rows.length}{" "}
+					row(s) selected
 				</div>
-				<div className="flex items-center gap-2">
-					<div className="flex items-center gap-1 text-sm">
-						<span>Rows per page:</span>
-						<Select
-							value={String(table.getState().pagination.pageSize)}
-							onValueChange={(value) => table.setPageSize(Number(value))}
-						>
-							<SelectTrigger size="sm" className="h-7 w-16">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{[10, 20, 30, 50, 100].map((size) => (
-									<SelectItem key={size} value={String(size)}>
-										{size}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+				{/* Show traditional pagination controls only when not in infinite scroll mode */}
+				{!isInfiniteScrollEnabled && (
+					<div className="flex items-center gap-2">
+						<div className="flex items-center gap-1 text-sm">
+							<span>Rows per page:</span>
+							<Select
+								value={String(table.getState().pagination.pageSize)}
+								onValueChange={(value) => table.setPageSize(Number(value))}
+							>
+								<SelectTrigger size="sm" className="h-7 w-16">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{[10, 20, 30, 50, 100].map((size) => (
+										<SelectItem key={size} value={String(size)}>
+											{size}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="flex items-center gap-1 text-sm">
+							Page {table.getState().pagination.pageIndex + 1} of{" "}
+							{table.getPageCount()}
+						</div>
+						<div className="flex items-center gap-1">
+							<Button
+								variant="outline"
+								size="icon-xs"
+								onClick={() => table.setPageIndex(0)}
+								disabled={!table.getCanPreviousPage()}
+							>
+								<ChevronsLeft className="h-4 w-4" />
+							</Button>
+							<Button
+								variant="outline"
+								size="icon-xs"
+								onClick={() => table.previousPage()}
+								disabled={!table.getCanPreviousPage()}
+							>
+								<ChevronLeft className="h-4 w-4" />
+							</Button>
+							<Button
+								variant="outline"
+								size="icon-xs"
+								onClick={() => table.nextPage()}
+								disabled={!table.getCanNextPage()}
+							>
+								<ChevronRight className="h-4 w-4" />
+							</Button>
+							<Button
+								variant="outline"
+								size="icon-xs"
+								onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+								disabled={!table.getCanNextPage()}
+							>
+								<ChevronsRight className="h-4 w-4" />
+							</Button>
+						</div>
 					</div>
-					<div className="flex items-center gap-1 text-sm">
-						Page {table.getState().pagination.pageIndex + 1} of{" "}
-						{table.getPageCount()}
+				)}
+				{/* Show load status for infinite scroll mode */}
+				{isInfiniteScrollEnabled && (
+					<div className="text-muted-foreground text-sm">
+						{isFetchingNextPage
+							? "Loading..."
+							: hasNextPage
+								? "Scroll for more"
+								: `${tasks.length} tasks loaded`}
 					</div>
-					<div className="flex items-center gap-1">
-						<Button
-							variant="outline"
-							size="icon-xs"
-							onClick={() => table.setPageIndex(0)}
-							disabled={!table.getCanPreviousPage()}
-						>
-							<ChevronsLeft className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="outline"
-							size="icon-xs"
-							onClick={() => table.previousPage()}
-							disabled={!table.getCanPreviousPage()}
-						>
-							<ChevronLeft className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="outline"
-							size="icon-xs"
-							onClick={() => table.nextPage()}
-							disabled={!table.getCanNextPage()}
-						>
-							<ChevronRight className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="outline"
-							size="icon-xs"
-							onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-							disabled={!table.getCanNextPage()}
-						>
-							<ChevronsRight className="h-4 w-4" />
-						</Button>
-					</div>
-				</div>
+				)}
 			</div>
 		</div>
 	);

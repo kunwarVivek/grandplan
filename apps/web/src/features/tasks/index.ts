@@ -9,6 +9,7 @@ export {
 	useBulkUpdateTasks,
 	useCreateTask,
 	useDeleteTask,
+	useInfiniteTasksQuery,
 	useMoveTask,
 	useTask,
 	useTaskChildren,

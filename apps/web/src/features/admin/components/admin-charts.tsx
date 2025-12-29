@@ -57,7 +57,7 @@ export function AdminCharts({ className }: AdminChartsProps) {
 							data={data.revenueGrowth}
 							valueKey="amount"
 							label="Revenue"
-							color="hsl(142, 71%, 45%)"
+							color="var(--chart-2)"
 							formatValue={(v) =>
 								new Intl.NumberFormat("en-US", {
 									style: "currency",
