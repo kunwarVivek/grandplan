@@ -1,19 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
-import { useNotificationStore } from "@/stores/notification-store";
 import type { Notification } from "@/stores/notification-store";
+import { useNotificationStore } from "@/stores/notification-store";
 import type {
+	MarkAsReadInput,
 	NotificationPreferences,
 	NotificationSummary,
-	UpdatePreferencesInput,
-	MarkAsReadInput,
 	PushSubscription,
 	RegisterPushInput,
+	UpdatePreferencesInput,
 } from "../types";
 
 // Fetch notifications with pagination
-export function useNotifications(options?: { limit?: number; offset?: number; unreadOnly?: boolean }) {
+export function useNotifications(options?: {
+	limit?: number;
+	offset?: number;
+	unreadOnly?: boolean;
+}) {
 	const store = useNotificationStore();
 
 	return useQuery({
@@ -25,10 +29,11 @@ export function useNotifications(options?: { limit?: number; offset?: number; un
 			if (options?.unreadOnly) params.set("unreadOnly", "true");
 			const query = params.toString();
 
-			const result = await api.get<{ notifications: Notification[]; total: number; hasMore: boolean }>(
-				`/api/notifications${query ? `?${query}` : ""}`,
-				signal
-			);
+			const result = await api.get<{
+				notifications: Notification[];
+				total: number;
+				hasMore: boolean;
+			}>(`/api/notifications${query ? `?${query}` : ""}`, signal);
 
 			// Sync with store
 			if (!options?.offset) {
@@ -50,7 +55,10 @@ export function useUnreadCount() {
 	return useQuery({
 		queryKey: queryKeys.notifications.unreadCount,
 		queryFn: async ({ signal }) => {
-			const result = await api.get<{ count: number }>("/api/notifications/unread-count", signal);
+			const result = await api.get<{ count: number }>(
+				"/api/notifications/unread-count",
+				signal,
+			);
 			store.setUnreadCount(result.count);
 			return result;
 		},
@@ -76,19 +84,25 @@ export function useMarkAsRead() {
 
 	return useMutation({
 		mutationFn: async (notificationId: string) => {
-			return api.patch<Notification>(`/api/notifications/${notificationId}/read`);
+			return api.patch<Notification>(
+				`/api/notifications/${notificationId}/read`,
+			);
 		},
 		onMutate: (notificationId) => {
 			// Optimistic update
 			store.markAsRead(notificationId);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.unreadCount,
+			});
 		},
 		onError: () => {
 			// Refetch to restore correct state
 			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.unreadCount,
+			});
 		},
 	});
 }
@@ -109,11 +123,15 @@ export function useMarkManyAsRead() {
 			}
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.unreadCount,
+			});
 		},
 		onError: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.unreadCount,
+			});
 		},
 	});
 }
@@ -131,11 +149,15 @@ export function useMarkAllAsRead() {
 			store.markAllAsRead();
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.unreadCount,
+			});
 		},
 		onError: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.unreadCount,
+			});
 		},
 	});
 }
@@ -147,7 +169,9 @@ export function useArchiveNotification() {
 
 	return useMutation({
 		mutationFn: async (notificationId: string) => {
-			return api.patch<Notification>(`/api/notifications/${notificationId}/archive`);
+			return api.patch<Notification>(
+				`/api/notifications/${notificationId}/archive`,
+			);
 		},
 		onMutate: (notificationId) => {
 			store.archiveNotification(notificationId);
@@ -172,7 +196,9 @@ export function useDeleteNotification() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.unreadCount,
+			});
 		},
 	});
 }
@@ -182,7 +208,10 @@ export function useNotificationPreferences() {
 	return useQuery({
 		queryKey: queryKeys.notifications.preferences,
 		queryFn: async ({ signal }) => {
-			return api.get<NotificationPreferences>("/api/notifications/preferences", signal);
+			return api.get<NotificationPreferences>(
+				"/api/notifications/preferences",
+				signal,
+			);
 		},
 	});
 }
@@ -193,7 +222,10 @@ export function useUpdatePreferences() {
 
 	return useMutation({
 		mutationFn: async (input: UpdatePreferencesInput) => {
-			return api.patch<NotificationPreferences>("/api/notifications/preferences", input);
+			return api.patch<NotificationPreferences>(
+				"/api/notifications/preferences",
+				input,
+			);
 		},
 		onSuccess: (data) => {
 			queryClient.setQueryData(queryKeys.notifications.preferences, data);
@@ -208,7 +240,7 @@ export function usePushSubscriptions() {
 		queryFn: async ({ signal }) => {
 			return api.get<{ subscriptions: PushSubscription[] }>(
 				"/api/notifications/push/subscriptions",
-				signal
+				signal,
 			);
 		},
 	});
@@ -220,10 +252,15 @@ export function useRegisterPush() {
 
 	return useMutation({
 		mutationFn: async (input: RegisterPushInput) => {
-			return api.post<PushSubscription>("/api/notifications/push/subscribe", input);
+			return api.post<PushSubscription>(
+				"/api/notifications/push/subscribe",
+				input,
+			);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.pushSubscriptions });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.pushSubscriptions,
+			});
 		},
 	});
 }
@@ -234,10 +271,14 @@ export function useUnregisterPush() {
 
 	return useMutation({
 		mutationFn: async (subscriptionId: string) => {
-			return api.delete<void>(`/api/notifications/push/subscriptions/${subscriptionId}`);
+			return api.delete<void>(
+				`/api/notifications/push/subscriptions/${subscriptionId}`,
+			);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.notifications.pushSubscriptions });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.notifications.pushSubscriptions,
+			});
 		},
 	});
 }

@@ -1,14 +1,11 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
-
-import type { authClient } from "./lib/auth-client";
 import Loader from "./components/loader";
+import type { authClient } from "./lib/auth-client";
 import "./index.css";
 import { routeTree } from "./routeTree.gen";
 
 // Type for the session returned by authClient.getSession()
-export type Session = Awaited<
-	ReturnType<typeof authClient.getSession>
->["data"];
+export type Session = Awaited<ReturnType<typeof authClient.getSession>>["data"];
 
 // Router context type - session is provided by _authenticated layout
 export type RouterAppContext = {

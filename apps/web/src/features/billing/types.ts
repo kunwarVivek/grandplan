@@ -124,10 +124,16 @@ export type BillingPortalSession = {
 	url: string;
 };
 
-export const PLAN_TIER_CONFIG: Record<PlanTier, { label: string; color: string }> = {
+export const PLAN_TIER_CONFIG: Record<
+	PlanTier,
+	{ label: string; color: string }
+> = {
 	free: { label: "Free", color: "bg-muted text-muted-foreground" },
 	starter: { label: "Starter", color: "bg-blue-500/10 text-blue-500" },
-	professional: { label: "Professional", color: "bg-purple-500/10 text-purple-500" },
+	professional: {
+		label: "Professional",
+		color: "bg-purple-500/10 text-purple-500",
+	},
 	enterprise: { label: "Enterprise", color: "bg-amber-500/10 text-amber-500" },
 };
 
@@ -141,6 +147,9 @@ export const SUBSCRIPTION_STATUS_CONFIG: Record<
 	canceled: { label: "Canceled", color: "bg-red-500/10 text-red-500" },
 	unpaid: { label: "Unpaid", color: "bg-red-500/10 text-red-500" },
 	incomplete: { label: "Incomplete", color: "bg-amber-500/10 text-amber-500" },
-	incomplete_expired: { label: "Expired", color: "bg-muted text-muted-foreground" },
+	incomplete_expired: {
+		label: "Expired",
+		color: "bg-muted text-muted-foreground",
+	},
 	paused: { label: "Paused", color: "bg-muted text-muted-foreground" },
 };

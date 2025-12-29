@@ -1,4 +1,5 @@
-import { Flag, ToggleLeft, ToggleRight, Info } from "lucide-react";
+import { Flag, Info, ToggleLeft, ToggleRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
@@ -6,9 +7,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
 	Tooltip,
 	TooltipContent,
@@ -16,8 +16,11 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import {
+	useOrganizationFeatureFlags,
+	useToggleFeatureFlag,
+} from "../hooks/use-whitelabel";
 import type { OrganizationFeatureFlag } from "../types";
-import { useOrganizationFeatureFlags, useToggleFeatureFlag } from "../hooks/use-whitelabel";
 
 type FeatureFlagManagerProps = {
 	organizationId: string;
@@ -28,7 +31,8 @@ export function FeatureFlagManager({
 	organizationId,
 	className,
 }: FeatureFlagManagerProps) {
-	const { data: flags, isLoading } = useOrganizationFeatureFlags(organizationId);
+	const { data: flags, isLoading } =
+		useOrganizationFeatureFlags(organizationId);
 	const toggleMutation = useToggleFeatureFlag(organizationId);
 
 	const handleToggle = async (flag: OrganizationFeatureFlag) => {
@@ -56,9 +60,9 @@ export function FeatureFlagManager({
 			<CardContent>
 				{!flags || flags.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-12 text-center">
-						<Flag className="size-12 text-muted-foreground/50 mb-4" />
+						<Flag className="mb-4 size-12 text-muted-foreground/50" />
 						<p className="text-muted-foreground">No feature flags available</p>
-						<p className="text-sm text-muted-foreground/75">
+						<p className="text-muted-foreground/75 text-sm">
 							Contact support to enable feature flags for your organization
 						</p>
 					</div>
@@ -67,13 +71,13 @@ export function FeatureFlagManager({
 						{flags.map((flag) => (
 							<div
 								key={flag.id}
-								className="flex items-center justify-between p-4 border rounded-lg"
+								className="flex items-center justify-between rounded-lg border p-4"
 							>
 								<div className="flex items-center gap-3">
 									<div
 										className={cn(
-											"size-10 rounded-lg flex items-center justify-center",
-											flag.isEnabled ? "bg-emerald-500/10" : "bg-muted"
+											"flex size-10 items-center justify-center rounded-lg",
+											flag.isEnabled ? "bg-emerald-500/10" : "bg-muted",
 										)}
 									>
 										{flag.isEnabled ? (
@@ -92,13 +96,15 @@ export function FeatureFlagManager({
 															<Info className="size-4 text-muted-foreground" />
 														</TooltipTrigger>
 														<TooltipContent>
-															<p className="max-w-xs">{flag.featureFlag.description}</p>
+															<p className="max-w-xs">
+																{flag.featureFlag.description}
+															</p>
 														</TooltipContent>
 													</Tooltip>
 												</TooltipProvider>
 											)}
 										</div>
-										<p className="text-sm text-muted-foreground font-mono">
+										<p className="font-mono text-muted-foreground text-sm">
 											{flag.featureFlag.key}
 										</p>
 									</div>
@@ -108,7 +114,7 @@ export function FeatureFlagManager({
 										className={cn(
 											flag.isEnabled
 												? "bg-emerald-500/10 text-emerald-500"
-												: "bg-muted text-muted-foreground"
+												: "bg-muted text-muted-foreground",
 										)}
 									>
 										{flag.isEnabled ? "Enabled" : "Disabled"}
@@ -138,7 +144,10 @@ function FeatureFlagManagerSkeleton({ className }: { className?: string }) {
 			<CardContent>
 				<div className="space-y-4">
 					{Array.from({ length: 4 }).map((_, i) => (
-						<div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+						<div
+							key={i}
+							className="flex items-center justify-between rounded-lg border p-4"
+						>
 							<div className="flex items-center gap-3">
 								<Skeleton className="size-10 rounded-lg" />
 								<div className="space-y-1">

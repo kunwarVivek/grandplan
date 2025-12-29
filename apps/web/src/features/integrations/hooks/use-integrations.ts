@@ -2,14 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
-	Integration,
-	IntegrationConnection,
-	IntegrationCategory,
 	ConnectIntegrationInput,
-	UpdateConnectionInput,
-	SyncIntegrationInput,
-	OAuthStartResponse,
+	Integration,
+	IntegrationCategory,
+	IntegrationConnection,
 	IntegrationProvider,
+	OAuthStartResponse,
+	SyncIntegrationInput,
+	UpdateConnectionInput,
 } from "../types";
 
 // Fetch active connections
@@ -19,7 +19,7 @@ export function useIntegrations() {
 		queryFn: async ({ signal }) => {
 			return api.get<{ connections: IntegrationConnection[] }>(
 				"/api/integrations/connections",
-				signal
+				signal,
 			);
 		},
 	});
@@ -33,7 +33,7 @@ export function useAvailableIntegrations(category?: IntegrationCategory) {
 			const params = category ? `?category=${category}` : "";
 			return api.get<{ integrations: Integration[] }>(
 				`/api/integrations/available${params}`,
-				signal
+				signal,
 			);
 		},
 	});
@@ -46,7 +46,7 @@ export function useIntegrationConnection(connectionId: string) {
 		queryFn: async ({ signal }) => {
 			return api.get<IntegrationConnection>(
 				`/api/integrations/connections/${connectionId}`,
-				signal
+				signal,
 			);
 		},
 		enabled: !!connectionId,
@@ -77,10 +77,15 @@ export function useConnectIntegration() {
 
 	return useMutation({
 		mutationFn: async (input: ConnectIntegrationInput) => {
-			return api.post<IntegrationConnection>("/api/integrations/connect", input);
+			return api.post<IntegrationConnection>(
+				"/api/integrations/connect",
+				input,
+			);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.integrations.connections });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.integrations.connections,
+			});
 		},
 	});
 }
@@ -94,7 +99,9 @@ export function useDisconnectIntegration() {
 			return api.delete<void>(`/api/integrations/connections/${connectionId}`);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.integrations.connections });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.integrations.connections,
+			});
 		},
 	});
 }
@@ -110,15 +117,17 @@ export function useUpdateConnection() {
 		}: UpdateConnectionInput & { connectionId: string }) => {
 			return api.patch<IntegrationConnection>(
 				`/api/integrations/connections/${connectionId}`,
-				input
+				input,
 			);
 		},
 		onSuccess: (data) => {
 			queryClient.setQueryData(
 				[...queryKeys.integrations.connections, data.id],
-				data
+				data,
 			);
-			queryClient.invalidateQueries({ queryKey: queryKeys.integrations.connections });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.integrations.connections,
+			});
 		},
 	});
 }
@@ -131,12 +140,15 @@ export function useSyncIntegration() {
 		mutationFn: async (input: SyncIntegrationInput) => {
 			return api.post<{ success: boolean; syncedAt: Date }>(
 				`/api/integrations/connections/${input.connectionId}/sync`,
-				{ fullSync: input.fullSync }
+				{ fullSync: input.fullSync },
 			);
 		},
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
-				queryKey: [...queryKeys.integrations.connections, variables.connectionId],
+				queryKey: [
+					...queryKeys.integrations.connections,
+					variables.connectionId,
+				],
 			});
 		},
 	});
@@ -149,15 +161,17 @@ export function useRefreshConnection() {
 	return useMutation({
 		mutationFn: async (connectionId: string) => {
 			return api.post<IntegrationConnection>(
-				`/api/integrations/connections/${connectionId}/refresh`
+				`/api/integrations/connections/${connectionId}/refresh`,
 			);
 		},
 		onSuccess: (data) => {
 			queryClient.setQueryData(
 				[...queryKeys.integrations.connections, data.id],
-				data
+				data,
 			);
-			queryClient.invalidateQueries({ queryKey: queryKeys.integrations.connections });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.integrations.connections,
+			});
 		},
 	});
 }
@@ -167,7 +181,7 @@ export function useTestConnection() {
 	return useMutation({
 		mutationFn: async (connectionId: string) => {
 			return api.post<{ success: boolean; message?: string }>(
-				`/api/integrations/connections/${connectionId}/test`
+				`/api/integrations/connections/${connectionId}/test`,
 			);
 		},
 	});

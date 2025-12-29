@@ -1,27 +1,19 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Mail, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
 	Dialog,
+	DialogClose,
 	DialogContent,
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-	DialogClose,
 } from "@/components/ui/dialog";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {
 	Form,
 	FormControl,
@@ -31,6 +23,14 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { useInviteMember } from "../hooks/use-organizations";
 import type { OrganizationRole } from "../types";
 import { ORGANIZATION_ROLE_CONFIG } from "../types";
@@ -123,7 +123,7 @@ export function InviteDialog({
 									<FormLabel>Email address</FormLabel>
 									<FormControl>
 										<div className="relative">
-											<Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+											<Mail className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 											<Input
 												type="email"
 												placeholder="colleague@example.com"
@@ -143,15 +143,14 @@ export function InviteDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Role</FormLabel>
-									<Select
-										value={field.value}
-										onValueChange={field.onChange}
-									>
+									<Select value={field.value} onValueChange={field.onChange}>
 										<FormControl>
 											<SelectTrigger>
 												<SelectValue>
 													{field.value
-														? ORGANIZATION_ROLE_CONFIG[field.value as keyof typeof ORGANIZATION_ROLE_CONFIG].label
+														? ORGANIZATION_ROLE_CONFIG[
+																field.value as keyof typeof ORGANIZATION_ROLE_CONFIG
+															].label
 														: "Select a role"}
 												</SelectValue>
 											</SelectTrigger>
@@ -183,10 +182,7 @@ export function InviteDialog({
 							<DialogClose render={<Button variant="outline" type="button" />}>
 								Cancel
 							</DialogClose>
-							<Button
-								type="submit"
-								disabled={inviteMember.isPending}
-							>
+							<Button type="submit" disabled={inviteMember.isPending}>
 								{inviteMember.isPending && (
 									<Loader2 className="size-4 animate-spin" />
 								)}

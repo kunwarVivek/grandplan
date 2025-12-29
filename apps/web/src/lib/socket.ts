@@ -1,5 +1,5 @@
 import { env } from "@grandplan/env/web";
-import { io, Socket } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
@@ -64,13 +64,23 @@ export type TaskSocketEvents = {
 	// Client -> Server
 	"task:subscribe": (projectId: string) => void;
 	"task:unsubscribe": (projectId: string) => void;
-	"task:update": (data: { taskId: string; changes: Record<string, unknown> }) => void;
+	"task:update": (data: {
+		taskId: string;
+		changes: Record<string, unknown>;
+	}) => void;
 
 	// Server -> Client
 	"task:created": (task: unknown) => void;
-	"task:updated": (data: { taskId: string; changes: Record<string, unknown> }) => void;
+	"task:updated": (data: {
+		taskId: string;
+		changes: Record<string, unknown>;
+	}) => void;
 	"task:deleted": (taskId: string) => void;
-	"task:moved": (data: { taskId: string; newParentId: string | null; newPosition: number }) => void;
+	"task:moved": (data: {
+		taskId: string;
+		newParentId: string | null;
+		newPosition: number;
+	}) => void;
 };
 
 export type NotificationSocketEvents = {
@@ -84,11 +94,23 @@ export type PresenceSocketEvents = {
 	// Client -> Server
 	"presence:join": (data: { workspaceId: string; projectId?: string }) => void;
 	"presence:leave": (data: { workspaceId: string; projectId?: string }) => void;
-	"presence:cursor": (data: { x: number; y: number; elementId?: string }) => void;
+	"presence:cursor": (data: {
+		x: number;
+		y: number;
+		elementId?: string;
+	}) => void;
 
 	// Server -> Client
-	"presence:users": (users: Array<{ userId: string; name: string; avatar?: string }>) => void;
-	"presence:user_joined": (user: { userId: string; name: string; avatar?: string }) => void;
+	"presence:users": (
+		users: Array<{ userId: string; name: string; avatar?: string }>,
+	) => void;
+	"presence:user_joined": (user: {
+		userId: string;
+		name: string;
+		avatar?: string;
+	}) => void;
 	"presence:user_left": (userId: string) => void;
-	"presence:cursors": (cursors: Record<string, { x: number; y: number; elementId?: string }>) => void;
+	"presence:cursors": (
+		cursors: Record<string, { x: number; y: number; elementId?: string }>,
+	) => void;
 };

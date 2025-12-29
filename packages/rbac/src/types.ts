@@ -6,7 +6,8 @@ export type PermissionScope =
 	| "PLATFORM"
 	| "ORGANIZATION"
 	| "TEAM"
-	| "WORKSPACE";
+	| "WORKSPACE"
+	| "USER";
 
 export interface Permission {
 	code: string;

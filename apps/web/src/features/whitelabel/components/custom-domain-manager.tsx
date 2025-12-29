@@ -1,36 +1,15 @@
-import { useState } from "react";
 import {
+	AlertCircle,
+	CheckCircle2,
+	Copy,
 	Globe,
 	Plus,
-	CheckCircle2,
-	XCircle,
-	AlertCircle,
 	RefreshCw,
-	Trash2,
-	Copy,
 	Shield,
+	Trash2,
+	XCircle,
 } from "lucide-react";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import { useState } from "react";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -41,15 +20,36 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
-import type { CustomDomain, SSLStatus } from "../types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-	useCustomDomains,
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import {
 	useAddCustomDomain,
-	useVerifyCustomDomain,
-	useRemoveCustomDomain,
+	useCustomDomains,
 	useRefreshSSL,
+	useRemoveCustomDomain,
+	useVerifyCustomDomain,
 } from "../hooks/use-whitelabel";
+import type { CustomDomain, SSLStatus } from "../types";
 
 type CustomDomainManagerProps = {
 	organizationId: string;
@@ -129,7 +129,7 @@ export function CustomDomainManager({
 						</div>
 						<Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
 							<DialogTrigger render={<Button size="sm" />}>
-								<Plus className="size-4 mr-2" />
+								<Plus className="mr-2 size-4" />
 								Add Domain
 							</DialogTrigger>
 							<DialogContent>
@@ -164,9 +164,11 @@ export function CustomDomainManager({
 				<CardContent>
 					{!domains || domains.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-12 text-center">
-							<Globe className="size-12 text-muted-foreground/50 mb-4" />
-							<p className="text-muted-foreground">No custom domains configured</p>
-							<p className="text-sm text-muted-foreground/75">
+							<Globe className="mb-4 size-12 text-muted-foreground/50" />
+							<p className="text-muted-foreground">
+								No custom domains configured
+							</p>
+							<p className="text-muted-foreground/75 text-sm">
 								Add a custom domain to white-label your portal
 							</p>
 						</div>
@@ -196,8 +198,8 @@ export function CustomDomainManager({
 					<AlertDialogHeader>
 						<AlertDialogTitle>Remove Domain</AlertDialogTitle>
 						<AlertDialogDescription>
-							Are you sure you want to remove this custom domain? This will disable
-							white-label access through this domain.
+							Are you sure you want to remove this custom domain? This will
+							disable white-label access through this domain.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -239,13 +241,13 @@ function DomainCard({
 	getSSLStatusBadge,
 }: DomainCardProps) {
 	return (
-		<div className="border rounded-lg p-4 space-y-4">
+		<div className="space-y-4 rounded-lg border p-4">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">
 					<div
 						className={cn(
-							"size-10 rounded-lg flex items-center justify-center",
-							domain.isVerified ? "bg-emerald-500/10" : "bg-yellow-500/10"
+							"flex size-10 items-center justify-center rounded-lg",
+							domain.isVerified ? "bg-emerald-500/10" : "bg-yellow-500/10",
 						)}
 					>
 						{domain.isVerified ? (
@@ -256,7 +258,7 @@ function DomainCard({
 					</div>
 					<div>
 						<p className="font-medium">{domain.domain}</p>
-						<p className="text-sm text-muted-foreground">
+						<p className="text-muted-foreground text-sm">
 							{domain.isVerified ? "Verified" : "Pending verification"}
 						</p>
 					</div>
@@ -275,19 +277,21 @@ function DomainCard({
 			</div>
 
 			{!domain.isVerified && (
-				<div className="bg-muted/50 rounded-lg p-4 space-y-3">
-					<p className="text-sm font-medium">DNS Verification Required</p>
-					<p className="text-xs text-muted-foreground">
+				<div className="space-y-3 rounded-lg bg-muted/50 p-4">
+					<p className="font-medium text-sm">DNS Verification Required</p>
+					<p className="text-muted-foreground text-xs">
 						Add the following TXT record to your DNS settings:
 					</p>
-					<div className="flex items-center gap-2 bg-background rounded p-2">
-						<code className="text-xs flex-1 font-mono truncate">
+					<div className="flex items-center gap-2 rounded bg-background p-2">
+						<code className="flex-1 truncate font-mono text-xs">
 							_grandplan-verify={domain.verificationToken}
 						</code>
 						<Button
 							variant="ghost"
 							size="icon-sm"
-							onClick={() => onCopy(`_grandplan-verify=${domain.verificationToken}`)}
+							onClick={() =>
+								onCopy(`_grandplan-verify=${domain.verificationToken}`)
+							}
 						>
 							<Copy className="size-4" />
 						</Button>
@@ -304,7 +308,7 @@ function DomainCard({
 			)}
 
 			{domain.isVerified && domain.sslStatus !== "ACTIVE" && (
-				<div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+				<div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
 					<div className="flex items-center gap-2">
 						<Shield className="size-4 text-muted-foreground" />
 						<span className="text-sm">SSL Certificate</span>
@@ -315,7 +319,9 @@ function DomainCard({
 						onClick={onRefreshSSL}
 						disabled={isRefreshing}
 					>
-						<RefreshCw className={cn("size-4 mr-2", isRefreshing && "animate-spin")} />
+						<RefreshCw
+							className={cn("mr-2 size-4", isRefreshing && "animate-spin")}
+						/>
 						{isRefreshing ? "Refreshing..." : "Refresh SSL"}
 					</Button>
 				</div>

@@ -1,9 +1,15 @@
-import { useState, useEffect } from "react";
 import { ExternalLink, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useStartOAuth, useConnectIntegration } from "../hooks/use-integrations";
-import { INTEGRATION_PROVIDER_CONFIG, type IntegrationProvider } from "../types";
+import { Button } from "@/components/ui/button";
+import {
+	useConnectIntegration,
+	useStartOAuth,
+} from "../hooks/use-integrations";
+import {
+	INTEGRATION_PROVIDER_CONFIG,
+	type IntegrationProvider,
+} from "../types";
 
 type OAuthConnectButtonProps = {
 	provider: IntegrationProvider;
@@ -57,7 +63,8 @@ export function OAuthConnectButton({
 					toast.success(`${providerConfig.label} connected successfully`);
 				} catch (err) {
 					setIsConnecting(false);
-					const error = err instanceof Error ? err : new Error("Connection failed");
+					const error =
+						err instanceof Error ? err : new Error("Connection failed");
 					onError?.(error);
 					toast.error(`Failed to connect ${providerConfig.label}`);
 				}
@@ -83,7 +90,7 @@ export function OAuthConnectButton({
 			const popup = window.open(
 				authUrl,
 				`oauth-${provider}`,
-				`width=${width},height=${height},left=${left},top=${top},popup=yes`
+				`width=${width},height=${height},left=${left},top=${top},popup=yes`,
 			);
 
 			if (!popup) {
@@ -102,7 +109,8 @@ export function OAuthConnectButton({
 			}, 500);
 		} catch (err) {
 			setIsConnecting(false);
-			const error = err instanceof Error ? err : new Error("Failed to start OAuth");
+			const error =
+				err instanceof Error ? err : new Error("Failed to start OAuth");
 			onError?.(error);
 			toast.error(`Failed to connect ${providerConfig.label}`);
 		}

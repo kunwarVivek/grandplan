@@ -88,8 +88,8 @@ function SecuritySettings() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-lg font-medium">Security</h1>
-				<p className="text-sm text-muted-foreground">
+				<h1 className="font-medium text-lg">Security</h1>
+				<p className="text-muted-foreground text-sm">
 					Manage your account security and active sessions.
 				</p>
 			</div>
@@ -156,10 +156,10 @@ function SecuritySettings() {
 				<CardContent>
 					<div className="flex items-center justify-between">
 						<div className="space-y-0.5">
-							<p className="text-sm font-medium">
+							<p className="font-medium text-sm">
 								{twoFactorEnabled ? "Enabled" : "Disabled"}
 							</p>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								{twoFactorEnabled
 									? "Your account is protected with two-factor authentication."
 									: "Enable two-factor authentication for enhanced security."}
@@ -194,12 +194,12 @@ function SecuritySettings() {
 								)}
 								<div>
 									<div className="flex items-center gap-2">
-										<p className="text-sm font-medium">{session.device}</p>
+										<p className="font-medium text-sm">{session.device}</p>
 										{session.current && (
 											<Badge variant="secondary">Current</Badge>
 										)}
 									</div>
-									<p className="text-xs text-muted-foreground">
+									<p className="text-muted-foreground text-xs">
 										{session.location} - {session.lastActive}
 									</p>
 								</div>

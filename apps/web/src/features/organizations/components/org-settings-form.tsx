@@ -1,10 +1,9 @@
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Building2, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
 	Form,
 	FormControl,
@@ -14,7 +13,8 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import { Avatar } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { Organization, UpdateOrganizationInput } from "../types";
 
 const formSchema = z.object({
@@ -89,7 +89,10 @@ export function OrgSettingsForm({
 							<FormItem className="flex-1">
 								<FormLabel>Logo URL</FormLabel>
 								<FormControl>
-									<Input placeholder="https://example.com/logo.png" {...field} />
+									<Input
+										placeholder="https://example.com/logo.png"
+										{...field}
+									/>
 								</FormControl>
 								<FormDescription>
 									Enter a URL for your organization logo

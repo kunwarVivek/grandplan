@@ -23,7 +23,11 @@ export type IntegrationCategory =
 	| "design"
 	| "automation";
 
-export type IntegrationStatus = "connected" | "disconnected" | "expired" | "error";
+export type IntegrationStatus =
+	| "connected"
+	| "disconnected"
+	| "expired"
+	| "error";
 
 export type Integration = {
 	id: string;
@@ -98,16 +102,32 @@ export const INTEGRATION_PROVIDER_CONFIG: Record<
 > = {
 	github: { label: "GitHub", color: "bg-[#24292e]", iconName: "github" },
 	gitlab: { label: "GitLab", color: "bg-[#fc6d26]", iconName: "gitlab" },
-	bitbucket: { label: "Bitbucket", color: "bg-[#0052cc]", iconName: "bitbucket" },
+	bitbucket: {
+		label: "Bitbucket",
+		color: "bg-[#0052cc]",
+		iconName: "bitbucket",
+	},
 	jira: { label: "Jira", color: "bg-[#0052cc]", iconName: "trello" },
 	asana: { label: "Asana", color: "bg-[#f06a6a]", iconName: "kanban" },
 	trello: { label: "Trello", color: "bg-[#0079bf]", iconName: "trello" },
 	linear: { label: "Linear", color: "bg-[#5e6ad2]", iconName: "layout-list" },
 	notion: { label: "Notion", color: "bg-[#000000]", iconName: "file-text" },
 	slack: { label: "Slack", color: "bg-[#4a154b]", iconName: "slack" },
-	discord: { label: "Discord", color: "bg-[#5865f2]", iconName: "message-circle" },
-	google_calendar: { label: "Google Calendar", color: "bg-[#4285f4]", iconName: "calendar" },
-	outlook_calendar: { label: "Outlook Calendar", color: "bg-[#0078d4]", iconName: "calendar" },
+	discord: {
+		label: "Discord",
+		color: "bg-[#5865f2]",
+		iconName: "message-circle",
+	},
+	google_calendar: {
+		label: "Google Calendar",
+		color: "bg-[#4285f4]",
+		iconName: "calendar",
+	},
+	outlook_calendar: {
+		label: "Outlook Calendar",
+		color: "bg-[#0078d4]",
+		iconName: "calendar",
+	},
 	figma: { label: "Figma", color: "bg-[#f24e1e]", iconName: "figma" },
 	zapier: { label: "Zapier", color: "bg-[#ff4a00]", iconName: "zap" },
 	make: { label: "Make", color: "bg-[#6d00cc]", iconName: "workflow" },
@@ -147,8 +167,14 @@ export const INTEGRATION_STATUS_CONFIG: Record<
 	IntegrationStatus,
 	{ label: string; color: string }
 > = {
-	connected: { label: "Connected", color: "bg-emerald-500/10 text-emerald-500" },
-	disconnected: { label: "Disconnected", color: "bg-muted text-muted-foreground" },
+	connected: {
+		label: "Connected",
+		color: "bg-emerald-500/10 text-emerald-500",
+	},
+	disconnected: {
+		label: "Disconnected",
+		color: "bg-muted text-muted-foreground",
+	},
 	expired: { label: "Expired", color: "bg-amber-500/10 text-amber-500" },
 	error: { label: "Error", color: "bg-red-500/10 text-red-500" },
 };

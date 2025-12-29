@@ -10,6 +10,11 @@ model Organization {
   logo              String?
   status            OrganizationStatus  @default(ACTIVE)
 
+  // Organization metadata
+  industry          String?             // Industry classification
+  size              OrganizationSize?   // Company size range
+  timezone          String?             // Default timezone for org
+
   // White-label settings
   customDomain      String?             @unique
   brandingConfig    Json?               // { primaryColor, secondaryColor, fontFamily, logo, favicon }
@@ -17,6 +22,9 @@ model Organization {
   // Billing identifiers
   polarCustomerId   String?
   stripeCustomerId  String?
+
+  // Soft delete for GDPR compliance
+  deletedAt         DateTime?
 
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
@@ -34,7 +42,16 @@ model Organization {
   @@index([slug])
   @@index([customDomain])
   @@index([status])
+  @@index([deletedAt])
   @@map("organization")
+}
+
+enum OrganizationSize {
+  SOLO        // 1 person
+  SMALL       // 2-10
+  MEDIUM      // 11-50
+  LARGE       // 51-200
+  ENTERPRISE  // 201+
 }
 
 enum OrganizationStatus {

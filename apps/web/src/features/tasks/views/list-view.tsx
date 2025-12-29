@@ -1,62 +1,62 @@
-import { useState, useMemo, useCallback } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  getFilteredRowModel,
-  flexRender,
-  type ColumnDef,
-  type SortingState,
-  type RowSelectionState,
+	type ColumnDef,
+	flexRender,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	getSortedRowModel,
+	type RowSelectionState,
+	type SortingState,
+	useReactTable,
 } from "@tanstack/react-table";
 import { format } from "date-fns";
 import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  MoreHorizontal,
-  Trash2,
-  Copy,
-  Archive,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Plus,
+	Archive,
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
+	ChevronLeft,
+	ChevronRight,
+	ChevronsLeft,
+	ChevronsRight,
+	Copy,
+	MoreHorizontal,
+	Plus,
+	Trash2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  type Task,
-  type TaskStatus,
-  type TaskPriority,
-  TASK_STATUS_CONFIG as STATUS_CONFIG,
-  TASK_PRIORITY_CONFIG as PRIORITY_CONFIG,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import {
+	TASK_PRIORITY_CONFIG as PRIORITY_CONFIG,
+	TASK_STATUS_CONFIG as STATUS_CONFIG,
+	type Task,
+	type TaskPriority,
+	type TaskStatus,
 } from "../types";
 
 // ============================================
@@ -64,11 +64,11 @@ import {
 // ============================================
 
 type ViewProps = {
-  tasks: Task[];
-  onTaskClick: (taskId: string) => void;
-  onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
-  onTaskCreate: (status?: TaskStatus) => void;
-  isLoading?: boolean;
+	tasks: Task[];
+	onTaskClick: (taskId: string) => void;
+	onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
+	onTaskCreate: (status?: TaskStatus) => void;
+	isLoading?: boolean;
 };
 
 // ============================================
@@ -76,42 +76,42 @@ type ViewProps = {
 // ============================================
 
 interface StatusSelectProps {
-  value: TaskStatus;
-  onChange: (value: TaskStatus) => void;
+	value: TaskStatus;
+	onChange: (value: TaskStatus) => void;
 }
 
 function StatusSelect({ value, onChange }: StatusSelectProps) {
-  const config = STATUS_CONFIG[value];
-  const statuses: TaskStatus[] = [
-    "backlog",
-    "todo",
-    "in_progress",
-    "in_review",
-    "blocked",
-    "completed",
-    "cancelled",
-  ];
+	const config = STATUS_CONFIG[value];
+	const statuses: TaskStatus[] = [
+		"backlog",
+		"todo",
+		"in_progress",
+		"in_review",
+		"blocked",
+		"completed",
+		"cancelled",
+	];
 
-  return (
-    <Select value={value} onValueChange={(v) => onChange(v as TaskStatus)}>
-      <SelectTrigger
-        size="sm"
-        className={cn("h-7 w-28", config.bgColor, config.color)}
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {statuses.map((status) => {
-          const statusConfig = STATUS_CONFIG[status];
-          return (
-            <SelectItem key={status} value={status}>
-              <span className={statusConfig.color}>{statusConfig.label}</span>
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
-  );
+	return (
+		<Select value={value} onValueChange={(v) => onChange(v as TaskStatus)}>
+			<SelectTrigger
+				size="sm"
+				className={cn("h-7 w-28", config.bgColor, config.color)}
+			>
+				<SelectValue />
+			</SelectTrigger>
+			<SelectContent>
+				{statuses.map((status) => {
+					const statusConfig = STATUS_CONFIG[status];
+					return (
+						<SelectItem key={status} value={status}>
+							<span className={statusConfig.color}>{statusConfig.label}</span>
+						</SelectItem>
+					);
+				})}
+			</SelectContent>
+		</Select>
+	);
 }
 
 // ============================================
@@ -119,32 +119,32 @@ function StatusSelect({ value, onChange }: StatusSelectProps) {
 // ============================================
 
 interface PrioritySelectProps {
-  value: TaskPriority;
-  onChange: (value: TaskPriority) => void;
+	value: TaskPriority;
+	onChange: (value: TaskPriority) => void;
 }
 
 function PrioritySelect({ value, onChange }: PrioritySelectProps) {
-  const priorities: TaskPriority[] = ["low", "medium", "high", "urgent"];
+	const priorities: TaskPriority[] = ["low", "medium", "high", "urgent"];
 
-  return (
-    <Select value={value} onValueChange={(v) => onChange(v as TaskPriority)}>
-      <SelectTrigger size="sm" className="h-7 w-24">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {priorities.map((priority) => {
-          const priorityConfig = PRIORITY_CONFIG[priority];
-          return (
-            <SelectItem key={priority} value={priority}>
-              <span className={priorityConfig.color}>
-                {priorityConfig.icon} {priorityConfig.label}
-              </span>
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
-  );
+	return (
+		<Select value={value} onValueChange={(v) => onChange(v as TaskPriority)}>
+			<SelectTrigger size="sm" className="h-7 w-24">
+				<SelectValue />
+			</SelectTrigger>
+			<SelectContent>
+				{priorities.map((priority) => {
+					const priorityConfig = PRIORITY_CONFIG[priority];
+					return (
+						<SelectItem key={priority} value={priority}>
+							<span className={priorityConfig.color}>
+								{priorityConfig.icon} {priorityConfig.label}
+							</span>
+						</SelectItem>
+					);
+				})}
+			</SelectContent>
+		</Select>
+	);
 }
 
 // ============================================
@@ -152,46 +152,51 @@ function PrioritySelect({ value, onChange }: PrioritySelectProps) {
 // ============================================
 
 interface BulkActionsToolbarProps {
-  selectedCount: number;
-  onDelete: () => void;
-  onDuplicate: () => void;
-  onArchive: () => void;
-  onClearSelection: () => void;
+	selectedCount: number;
+	onDelete: () => void;
+	onDuplicate: () => void;
+	onArchive: () => void;
+	onClearSelection: () => void;
 }
 
 function BulkActionsToolbar({
-  selectedCount,
-  onDelete,
-  onDuplicate,
-  onArchive,
-  onClearSelection,
+	selectedCount,
+	onDelete,
+	onDuplicate,
+	onArchive,
+	onClearSelection,
 }: BulkActionsToolbarProps) {
-  if (selectedCount === 0) return null;
+	if (selectedCount === 0) return null;
 
-  return (
-    <div className="flex items-center gap-2 rounded border bg-muted/50 px-3 py-2">
-      <span className="text-sm font-medium">
-        {selectedCount} task{selectedCount > 1 ? "s" : ""} selected
-      </span>
-      <div className="ml-4 flex items-center gap-1">
-        <Button variant="outline" size="sm" onClick={onDuplicate}>
-          <Copy className="mr-1 h-4 w-4" />
-          Duplicate
-        </Button>
-        <Button variant="outline" size="sm" onClick={onArchive}>
-          <Archive className="mr-1 h-4 w-4" />
-          Archive
-        </Button>
-        <Button variant="destructive" size="sm" onClick={onDelete}>
-          <Trash2 className="mr-1 h-4 w-4" />
-          Delete
-        </Button>
-      </div>
-      <Button variant="ghost" size="sm" onClick={onClearSelection} className="ml-auto">
-        Clear selection
-      </Button>
-    </div>
-  );
+	return (
+		<div className="flex items-center gap-2 rounded border bg-muted/50 px-3 py-2">
+			<span className="font-medium text-sm">
+				{selectedCount} task{selectedCount > 1 ? "s" : ""} selected
+			</span>
+			<div className="ml-4 flex items-center gap-1">
+				<Button variant="outline" size="sm" onClick={onDuplicate}>
+					<Copy className="mr-1 h-4 w-4" />
+					Duplicate
+				</Button>
+				<Button variant="outline" size="sm" onClick={onArchive}>
+					<Archive className="mr-1 h-4 w-4" />
+					Archive
+				</Button>
+				<Button variant="destructive" size="sm" onClick={onDelete}>
+					<Trash2 className="mr-1 h-4 w-4" />
+					Delete
+				</Button>
+			</div>
+			<Button
+				variant="ghost"
+				size="sm"
+				onClick={onClearSelection}
+				className="ml-auto"
+			>
+				Clear selection
+			</Button>
+		</div>
+	);
 }
 
 // ============================================
@@ -199,14 +204,14 @@ function BulkActionsToolbar({
 // ============================================
 
 function ListSkeleton() {
-  return (
-    <div className="flex flex-col gap-2 p-4">
-      <Skeleton className="h-10 w-full" />
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Skeleton key={i} className="h-12 w-full" />
-      ))}
-    </div>
-  );
+	return (
+		<div className="flex flex-col gap-2 p-4">
+			<Skeleton className="h-10 w-full" />
+			{[1, 2, 3, 4, 5].map((i) => (
+				<Skeleton key={i} className="h-12 w-full" />
+			))}
+		</div>
+	);
 }
 
 // ============================================
@@ -214,401 +219,423 @@ function ListSkeleton() {
 // ============================================
 
 export function ListView({
-  tasks,
-  onTaskClick,
-  onTaskUpdate,
-  onTaskCreate,
-  isLoading,
+	tasks,
+	onTaskClick,
+	onTaskUpdate,
+	onTaskCreate,
+	isLoading,
 }: ViewProps) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+	const [sorting, setSorting] = useState<SortingState>([]);
+	const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  // Define columns
-  const columns = useMemo<ColumnDef<Task>[]>(
-    () => [
-      {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={!!table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-        size: 40,
-      },
-      {
-        accessorKey: "title",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="-ml-3"
-            >
-              Title
-              {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-1 h-4 w-4" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-1 h-4 w-4" />
-              ) : (
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => (
-          <button
-            type="button"
-            onClick={() => onTaskClick(row.original.id)}
-            className="max-w-[300px] truncate text-left font-medium hover:underline"
-          >
-            {row.original.title}
-          </button>
-        ),
-      },
-      {
-        accessorKey: "status",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="-ml-3"
-          >
-            Status
-            {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="ml-1 h-4 w-4" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="ml-1 h-4 w-4" />
-            ) : (
-              <ArrowUpDown className="ml-1 h-4 w-4" />
-            )}
-          </Button>
-        ),
-        cell: ({ row }) => (
-          <StatusSelect
-            value={row.original.status}
-            onChange={(status) => onTaskUpdate(row.original.id, { status })}
-          />
-        ),
-      },
-      {
-        accessorKey: "priority",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="-ml-3"
-          >
-            Priority
-            {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="ml-1 h-4 w-4" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="ml-1 h-4 w-4" />
-            ) : (
-              <ArrowUpDown className="ml-1 h-4 w-4" />
-            )}
-          </Button>
-        ),
-        cell: ({ row }) => (
-          <PrioritySelect
-            value={row.original.priority}
-            onChange={(priority) => onTaskUpdate(row.original.id, { priority })}
-          />
-        ),
-      },
-      {
-        accessorKey: "assignee",
-        header: "Assignee",
-        cell: ({ row }) => {
-          const assignee = row.original.assignee;
-          if (!assignee) {
-            return <span className="text-muted-foreground">Unassigned</span>;
-          }
-          return (
-            <div className="flex items-center gap-2">
-              {assignee.avatar ? (
-                <img
-                  src={assignee.avatar}
-                  alt={assignee.name}
-                  className="h-6 w-6 rounded-full"
-                />
-              ) : (
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-xs font-medium text-primary">
-                  {assignee.name.charAt(0)}
-                </div>
-              )}
-              <span className="truncate">{assignee.name}</span>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "dueDate",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="-ml-3"
-          >
-            Due Date
-            {column.getIsSorted() === "asc" ? (
-              <ArrowUp className="ml-1 h-4 w-4" />
-            ) : column.getIsSorted() === "desc" ? (
-              <ArrowDown className="ml-1 h-4 w-4" />
-            ) : (
-              <ArrowUpDown className="ml-1 h-4 w-4" />
-            )}
-          </Button>
-        ),
-        cell: ({ row }) => {
-          const dueDate = row.original.dueDate;
-          if (!dueDate) {
-            return <span className="text-muted-foreground">-</span>;
-          }
-          const isOverdue = new Date(dueDate) < new Date() && row.original.status !== "completed";
-          return (
-            <span className={cn(isOverdue && "text-red-500 font-medium")}>
-              {format(new Date(dueDate), "MMM d, yyyy")}
-            </span>
-          );
-        },
-        sortingFn: (rowA, rowB) => {
-          const a = rowA.original.dueDate;
-          const b = rowB.original.dueDate;
-          if (!a && !b) return 0;
-          if (!a) return 1;
-          if (!b) return -1;
-          return new Date(a).getTime() - new Date(b).getTime();
-        },
-      },
-      {
-        id: "actions",
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="ghost" size="icon-xs">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onTaskClick(row.original.id)}>
-                View details
-              </DropdownMenuItem>
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem>Duplicate</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-        enableSorting: false,
-        enableHiding: false,
-        size: 40,
-      },
-    ],
-    [onTaskClick, onTaskUpdate]
-  );
+	// Define columns
+	const columns = useMemo<ColumnDef<Task>[]>(
+		() => [
+			{
+				id: "select",
+				header: ({ table }) => (
+					<Checkbox
+						checked={!!table.getIsAllPageRowsSelected()}
+						onCheckedChange={(value) =>
+							table.toggleAllPageRowsSelected(!!value)
+						}
+						aria-label="Select all"
+					/>
+				),
+				cell: ({ row }) => (
+					<Checkbox
+						checked={row.getIsSelected()}
+						onCheckedChange={(value) => row.toggleSelected(!!value)}
+						aria-label="Select row"
+					/>
+				),
+				enableSorting: false,
+				enableHiding: false,
+				size: 40,
+			},
+			{
+				accessorKey: "title",
+				header: ({ column }) => {
+					return (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() =>
+								column.toggleSorting(column.getIsSorted() === "asc")
+							}
+							className="-ml-3"
+						>
+							Title
+							{column.getIsSorted() === "asc" ? (
+								<ArrowUp className="ml-1 h-4 w-4" />
+							) : column.getIsSorted() === "desc" ? (
+								<ArrowDown className="ml-1 h-4 w-4" />
+							) : (
+								<ArrowUpDown className="ml-1 h-4 w-4" />
+							)}
+						</Button>
+					);
+				},
+				cell: ({ row }) => (
+					<button
+						type="button"
+						onClick={() => onTaskClick(row.original.id)}
+						className="max-w-[300px] truncate text-left font-medium hover:underline"
+					>
+						{row.original.title}
+					</button>
+				),
+			},
+			{
+				accessorKey: "status",
+				header: ({ column }) => (
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+						className="-ml-3"
+					>
+						Status
+						{column.getIsSorted() === "asc" ? (
+							<ArrowUp className="ml-1 h-4 w-4" />
+						) : column.getIsSorted() === "desc" ? (
+							<ArrowDown className="ml-1 h-4 w-4" />
+						) : (
+							<ArrowUpDown className="ml-1 h-4 w-4" />
+						)}
+					</Button>
+				),
+				cell: ({ row }) => (
+					<StatusSelect
+						value={row.original.status}
+						onChange={(status) => onTaskUpdate(row.original.id, { status })}
+					/>
+				),
+			},
+			{
+				accessorKey: "priority",
+				header: ({ column }) => (
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+						className="-ml-3"
+					>
+						Priority
+						{column.getIsSorted() === "asc" ? (
+							<ArrowUp className="ml-1 h-4 w-4" />
+						) : column.getIsSorted() === "desc" ? (
+							<ArrowDown className="ml-1 h-4 w-4" />
+						) : (
+							<ArrowUpDown className="ml-1 h-4 w-4" />
+						)}
+					</Button>
+				),
+				cell: ({ row }) => (
+					<PrioritySelect
+						value={row.original.priority}
+						onChange={(priority) => onTaskUpdate(row.original.id, { priority })}
+					/>
+				),
+			},
+			{
+				accessorKey: "assignee",
+				header: "Assignee",
+				cell: ({ row }) => {
+					const assignee = row.original.assignee;
+					if (!assignee) {
+						return <span className="text-muted-foreground">Unassigned</span>;
+					}
+					return (
+						<div className="flex items-center gap-2">
+							{assignee.avatar ? (
+								<img
+									src={assignee.avatar}
+									alt={assignee.name}
+									className="h-6 w-6 rounded-full"
+								/>
+							) : (
+								<div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 font-medium text-primary text-xs">
+									{assignee.name.charAt(0)}
+								</div>
+							)}
+							<span className="truncate">{assignee.name}</span>
+						</div>
+					);
+				},
+			},
+			{
+				accessorKey: "dueDate",
+				header: ({ column }) => (
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+						className="-ml-3"
+					>
+						Due Date
+						{column.getIsSorted() === "asc" ? (
+							<ArrowUp className="ml-1 h-4 w-4" />
+						) : column.getIsSorted() === "desc" ? (
+							<ArrowDown className="ml-1 h-4 w-4" />
+						) : (
+							<ArrowUpDown className="ml-1 h-4 w-4" />
+						)}
+					</Button>
+				),
+				cell: ({ row }) => {
+					const dueDate = row.original.dueDate;
+					if (!dueDate) {
+						return <span className="text-muted-foreground">-</span>;
+					}
+					const isOverdue =
+						new Date(dueDate) < new Date() &&
+						row.original.status !== "completed";
+					return (
+						<span className={cn(isOverdue && "font-medium text-red-500")}>
+							{format(new Date(dueDate), "MMM d, yyyy")}
+						</span>
+					);
+				},
+				sortingFn: (rowA, rowB) => {
+					const a = rowA.original.dueDate;
+					const b = rowB.original.dueDate;
+					if (!a && !b) return 0;
+					if (!a) return 1;
+					if (!b) return -1;
+					return new Date(a).getTime() - new Date(b).getTime();
+				},
+			},
+			{
+				id: "actions",
+				cell: ({ row }) => (
+					<DropdownMenu>
+						<DropdownMenuTrigger>
+							<Button variant="ghost" size="icon-xs">
+								<MoreHorizontal className="h-4 w-4" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem onClick={() => onTaskClick(row.original.id)}>
+								View details
+							</DropdownMenuItem>
+							<DropdownMenuItem>Edit</DropdownMenuItem>
+							<DropdownMenuItem>Duplicate</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem className="text-destructive">
+								Delete
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				),
+				enableSorting: false,
+				enableHiding: false,
+				size: 40,
+			},
+		],
+		[onTaskClick, onTaskUpdate],
+	);
 
-  const table = useReactTable({
-    data: tasks,
-    columns,
-    state: {
-      sorting,
-      rowSelection,
-    },
-    onSortingChange: setSorting,
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 20,
-      },
-    },
-  });
+	const table = useReactTable({
+		data: tasks,
+		columns,
+		state: {
+			sorting,
+			rowSelection,
+		},
+		onSortingChange: setSorting,
+		onRowSelectionChange: setRowSelection,
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+		initialState: {
+			pagination: {
+				pageSize: 20,
+			},
+		},
+	});
 
-  const selectedRowIds = useMemo(
-    () => Object.keys(rowSelection).filter((id) => rowSelection[id]),
-    [rowSelection]
-  );
+	const selectedRowIds = useMemo(
+		() => Object.keys(rowSelection).filter((id) => rowSelection[id]),
+		[rowSelection],
+	);
 
-  const handleBulkDelete = useCallback(() => {
-    // Placeholder for bulk delete - would call API
-    console.log("Delete tasks:", selectedRowIds);
-    setRowSelection({});
-  }, [selectedRowIds]);
+	const handleBulkDelete = useCallback(() => {
+		// Placeholder for bulk delete - would call API
+		console.log("Delete tasks:", selectedRowIds);
+		setRowSelection({});
+	}, [selectedRowIds]);
 
-  const handleBulkDuplicate = useCallback(() => {
-    // Placeholder for bulk duplicate
-    console.log("Duplicate tasks:", selectedRowIds);
-    setRowSelection({});
-  }, [selectedRowIds]);
+	const handleBulkDuplicate = useCallback(() => {
+		// Placeholder for bulk duplicate
+		console.log("Duplicate tasks:", selectedRowIds);
+		setRowSelection({});
+	}, [selectedRowIds]);
 
-  const handleBulkArchive = useCallback(() => {
-    // Placeholder for bulk archive
-    console.log("Archive tasks:", selectedRowIds);
-    setRowSelection({});
-  }, [selectedRowIds]);
+	const handleBulkArchive = useCallback(() => {
+		// Placeholder for bulk archive
+		console.log("Archive tasks:", selectedRowIds);
+		setRowSelection({});
+	}, [selectedRowIds]);
 
-  if (isLoading) {
-    return <ListSkeleton />;
-  }
+	if (isLoading) {
+		return <ListSkeleton />;
+	}
 
-  return (
-    <div className="flex h-full flex-col">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 border-b p-3">
-        <BulkActionsToolbar
-          selectedCount={selectedRowIds.length}
-          onDelete={handleBulkDelete}
-          onDuplicate={handleBulkDuplicate}
-          onArchive={handleBulkArchive}
-          onClearSelection={() => setRowSelection({})}
-        />
-        {selectedRowIds.length === 0 && (
-          <>
-            <div className="flex-1" />
-            <Button size="sm" onClick={() => onTaskCreate()}>
-              <Plus className="mr-1 h-4 w-4" />
-              Add Task
-            </Button>
-          </>
-        )}
-      </div>
+	return (
+		<div className="flex h-full flex-col">
+			{/* Toolbar */}
+			<div className="flex items-center gap-2 border-b p-3">
+				<BulkActionsToolbar
+					selectedCount={selectedRowIds.length}
+					onDelete={handleBulkDelete}
+					onDuplicate={handleBulkDuplicate}
+					onArchive={handleBulkArchive}
+					onClearSelection={() => setRowSelection({})}
+				/>
+				{selectedRowIds.length === 0 && (
+					<>
+						<div className="flex-1" />
+						<Button size="sm" onClick={() => onTaskCreate()}>
+							<Plus className="mr-1 h-4 w-4" />
+							Add Task
+						</Button>
+					</>
+				)}
+			</div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() ? "selected" : undefined}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-48 text-center">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <p>No tasks found</p>
-                    <Button variant="outline" size="sm" onClick={() => onTaskCreate()}>
-                      <Plus className="mr-1 h-4 w-4" />
-                      Create your first task
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+			{/* Table */}
+			<div className="flex-1 overflow-auto">
+				<Table>
+					<TableHeader>
+						{table.getHeaderGroups().map((headerGroup) => (
+							<TableRow key={headerGroup.id}>
+								{headerGroup.headers.map((header) => (
+									<TableHead
+										key={header.id}
+										style={{
+											width:
+												header.getSize() !== 150 ? header.getSize() : undefined,
+										}}
+									>
+										{header.isPlaceholder
+											? null
+											: flexRender(
+													header.column.columnDef.header,
+													header.getContext(),
+												)}
+									</TableHead>
+								))}
+							</TableRow>
+						))}
+					</TableHeader>
+					<TableBody>
+						{table.getRowModel().rows.length > 0 ? (
+							table.getRowModel().rows.map((row) => (
+								<TableRow
+									key={row.id}
+									data-state={row.getIsSelected() ? "selected" : undefined}
+								>
+									{row.getVisibleCells().map((cell) => (
+										<TableCell key={cell.id}>
+											{flexRender(
+												cell.column.columnDef.cell,
+												cell.getContext(),
+											)}
+										</TableCell>
+									))}
+								</TableRow>
+							))
+						) : (
+							<TableRow>
+								<TableCell
+									colSpan={columns.length}
+									className="h-48 text-center"
+								>
+									<div className="flex flex-col items-center gap-2 text-muted-foreground">
+										<p>No tasks found</p>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => onTaskCreate()}
+										>
+											<Plus className="mr-1 h-4 w-4" />
+											Create your first task
+										</Button>
+									</div>
+								</TableCell>
+							</TableRow>
+						)}
+					</TableBody>
+				</Table>
+			</div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between border-t px-4 py-3">
-        <div className="text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-sm">
-            <span>Rows per page:</span>
-            <Select
-              value={String(table.getState().pagination.pageSize)}
-              onValueChange={(value) => table.setPageSize(Number(value))}
-            >
-              <SelectTrigger size="sm" className="h-7 w-16">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 20, 30, 50, 100].map((size) => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-1 text-sm">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon-xs"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-xs"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-xs"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-xs"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+			{/* Pagination */}
+			<div className="flex items-center justify-between border-t px-4 py-3">
+				<div className="text-muted-foreground text-sm">
+					{table.getFilteredSelectedRowModel().rows.length} of{" "}
+					{table.getFilteredRowModel().rows.length} row(s) selected
+				</div>
+				<div className="flex items-center gap-2">
+					<div className="flex items-center gap-1 text-sm">
+						<span>Rows per page:</span>
+						<Select
+							value={String(table.getState().pagination.pageSize)}
+							onValueChange={(value) => table.setPageSize(Number(value))}
+						>
+							<SelectTrigger size="sm" className="h-7 w-16">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{[10, 20, 30, 50, 100].map((size) => (
+									<SelectItem key={size} value={String(size)}>
+										{size}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+					<div className="flex items-center gap-1 text-sm">
+						Page {table.getState().pagination.pageIndex + 1} of{" "}
+						{table.getPageCount()}
+					</div>
+					<div className="flex items-center gap-1">
+						<Button
+							variant="outline"
+							size="icon-xs"
+							onClick={() => table.setPageIndex(0)}
+							disabled={!table.getCanPreviousPage()}
+						>
+							<ChevronsLeft className="h-4 w-4" />
+						</Button>
+						<Button
+							variant="outline"
+							size="icon-xs"
+							onClick={() => table.previousPage()}
+							disabled={!table.getCanPreviousPage()}
+						>
+							<ChevronLeft className="h-4 w-4" />
+						</Button>
+						<Button
+							variant="outline"
+							size="icon-xs"
+							onClick={() => table.nextPage()}
+							disabled={!table.getCanNextPage()}
+						>
+							<ChevronRight className="h-4 w-4" />
+						</Button>
+						<Button
+							variant="outline"
+							size="icon-xs"
+							onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+							disabled={!table.getCanNextPage()}
+						>
+							<ChevronsRight className="h-4 w-4" />
+						</Button>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

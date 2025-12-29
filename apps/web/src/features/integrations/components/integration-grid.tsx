@@ -1,5 +1,7 @@
+import { Filter, Search, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { Search, Filter, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -8,8 +10,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -20,14 +20,17 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useAvailableIntegrations, useIntegrations } from "../hooks/use-integrations";
-import { OAuthConnectButton } from "./oauth-connect-button";
 import {
-	INTEGRATION_PROVIDER_CONFIG,
+	useAvailableIntegrations,
+	useIntegrations,
+} from "../hooks/use-integrations";
+import {
 	INTEGRATION_CATEGORY_CONFIG,
+	INTEGRATION_PROVIDER_CONFIG,
 	type Integration,
 	type IntegrationCategory,
 } from "../types";
+import { OAuthConnectButton } from "./oauth-connect-button";
 
 type IntegrationGridProps = {
 	onConnected?: (connectionId: string) => void;
@@ -37,16 +40,15 @@ export function IntegrationGrid({ onConnected }: IntegrationGridProps) {
 	const [search, setSearch] = useState("");
 	const [category, setCategory] = useState<IntegrationCategory | "all">("all");
 
-	const { data: availableData, isLoading: availableLoading } = useAvailableIntegrations(
-		category === "all" ? undefined : category
-	);
+	const { data: availableData, isLoading: availableLoading } =
+		useAvailableIntegrations(category === "all" ? undefined : category);
 	const { data: connectionsData } = useIntegrations();
 
 	const integrations = availableData?.integrations ?? [];
 	const connections = connectionsData?.connections ?? [];
 
 	const connectedProviders = new Set(
-		connections.map((c) => c.integration.provider)
+		connections.map((c) => c.integration.provider),
 	);
 
 	const filteredIntegrations = integrations.filter((integration) => {
@@ -68,7 +70,7 @@ export function IntegrationGrid({ onConnected }: IntegrationGridProps) {
 			acc[cat].push(integration);
 			return acc;
 		},
-		{} as Record<IntegrationCategory, Integration[]>
+		{} as Record<IntegrationCategory, Integration[]>,
 	);
 
 	if (availableLoading) {
@@ -79,8 +81,8 @@ export function IntegrationGrid({ onConnected }: IntegrationGridProps) {
 		<div className="space-y-6">
 			{/* Filters */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div className="relative flex-1 max-w-sm">
-					<Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+				<div className="relative max-w-sm flex-1">
+					<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						placeholder="Search integrations..."
 						value={search}
@@ -105,13 +107,15 @@ export function IntegrationGrid({ onConnected }: IntegrationGridProps) {
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="all">All categories</SelectItem>
-							{(Object.keys(INTEGRATION_CATEGORY_CONFIG) as IntegrationCategory[]).map(
-								(cat) => (
-									<SelectItem key={cat} value={cat}>
-										{INTEGRATION_CATEGORY_CONFIG[cat].label}
-									</SelectItem>
-								)
-							)}
+							{(
+								Object.keys(
+									INTEGRATION_CATEGORY_CONFIG,
+								) as IntegrationCategory[]
+							).map((cat) => (
+								<SelectItem key={cat} value={cat}>
+									{INTEGRATION_CATEGORY_CONFIG[cat].label}
+								</SelectItem>
+							))}
 						</SelectContent>
 					</Select>
 				</div>
@@ -168,8 +172,8 @@ function IntegrationSection({
 	return (
 		<div className="space-y-4">
 			<div>
-				<h3 className="text-sm font-medium">{config.label}</h3>
-				<p className="text-xs text-muted-foreground">{config.description}</p>
+				<h3 className="font-medium text-sm">{config.label}</h3>
+				<p className="text-muted-foreground text-xs">{config.description}</p>
 			</div>
 			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{integrations.map((integration) => (
@@ -204,10 +208,10 @@ function IntegrationItemCard({
 				<div
 					className={cn(
 						"flex size-10 shrink-0 items-center justify-center rounded-lg text-white",
-						providerConfig.color
+						providerConfig.color,
 					)}
 				>
-					<span className="text-lg font-bold">
+					<span className="font-bold text-lg">
 						{integration.name.charAt(0)}
 					</span>
 				</div>
@@ -227,7 +231,7 @@ function IntegrationItemCard({
 				</div>
 			</CardHeader>
 			<CardContent>
-				<ul className="space-y-1 text-xs text-muted-foreground">
+				<ul className="space-y-1 text-muted-foreground text-xs">
 					{integration.features.slice(0, 3).map((feature) => (
 						<li key={feature} className="flex items-center gap-1.5">
 							<span className="size-1 rounded-full bg-muted-foreground" />
@@ -243,7 +247,9 @@ function IntegrationItemCard({
 			</CardContent>
 			<CardFooter>
 				{isConnected ? (
-					<Badge className="bg-emerald-500/10 text-emerald-500">Connected</Badge>
+					<Badge className="bg-emerald-500/10 text-emerald-500">
+						Connected
+					</Badge>
 				) : integration.isAvailable ? (
 					<OAuthConnectButton
 						provider={integration.provider}

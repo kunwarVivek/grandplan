@@ -1,17 +1,8 @@
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { CalendarIcon, FolderKanban, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {
 	Form,
 	FormControl,
@@ -21,11 +12,20 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import type { Project, CreateProjectInput, UpdateProjectInput } from "../types";
+import { Input } from "@/components/ui/input";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import type { CreateProjectInput, Project, UpdateProjectInput } from "../types";
+import {
+	PROJECT_COLORS,
 	PROJECT_STATUS_CONFIG,
 	PROJECT_VISIBILITY_CONFIG,
-	PROJECT_COLORS,
 } from "../types";
 
 const formSchema = z.object({
@@ -119,9 +119,7 @@ export function ProjectForm({
 					<div
 						className="flex size-16 shrink-0 items-center justify-center"
 						style={{
-							backgroundColor: selectedColor
-								? `${selectedColor}20`
-								: undefined,
+							backgroundColor: selectedColor ? `${selectedColor}20` : undefined,
 							color: selectedColor ?? undefined,
 						}}
 					>
@@ -163,7 +161,7 @@ export function ProjectForm({
 												<button
 													key={color.value}
 													type="button"
-													className="size-6 ring-offset-background transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:scale-110"
+													className="size-6 ring-offset-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 													style={{ backgroundColor: color.value }}
 													onClick={() => field.onChange(color.value)}
 													title={color.name}
@@ -240,10 +238,7 @@ export function ProjectForm({
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Status</FormLabel>
-								<Select
-									value={field.value}
-									onValueChange={field.onChange}
-								>
+								<Select value={field.value} onValueChange={field.onChange}>
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue>
@@ -274,10 +269,7 @@ export function ProjectForm({
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Visibility</FormLabel>
-								<Select
-									value={field.value}
-									onValueChange={field.onChange}
-								>
+								<Select value={field.value} onValueChange={field.onChange}>
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue>
@@ -312,12 +304,8 @@ export function ProjectForm({
 								<FormLabel>Start date</FormLabel>
 								<FormControl>
 									<div className="relative">
-										<CalendarIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-										<Input
-											type="date"
-											className="pl-9"
-											{...field}
-										/>
+										<CalendarIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+										<Input type="date" className="pl-9" {...field} />
 									</div>
 								</FormControl>
 								<FormMessage />
@@ -333,12 +321,8 @@ export function ProjectForm({
 								<FormLabel>End date</FormLabel>
 								<FormControl>
 									<div className="relative">
-										<CalendarIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-										<Input
-											type="date"
-											className="pl-9"
-											{...field}
-										/>
+										<CalendarIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+										<Input type="date" className="pl-9" {...field} />
 									</div>
 								</FormControl>
 								<FormMessage />

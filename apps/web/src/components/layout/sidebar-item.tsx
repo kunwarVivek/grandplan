@@ -1,11 +1,10 @@
 "use client";
 
+import { Link, useLocation } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import * as React from "react";
-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Link, useLocation } from "@tanstack/react-router";
 
 export type SidebarItemProps = {
 	/** Icon to display */
@@ -60,7 +59,7 @@ export function SidebarItem({
 				<>
 					<span className="flex-1 truncate text-left">{label}</span>
 					{badge !== undefined && (
-						<span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-medium text-primary">
+						<span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 px-1.5 font-medium text-[10px] text-primary">
 							{badge}
 						</span>
 					)}
@@ -68,7 +67,7 @@ export function SidebarItem({
 						<ChevronRight
 							className={cn(
 								"ml-auto size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-								expanded && "rotate-90"
+								expanded && "rotate-90",
 							)}
 						/>
 					)}
@@ -78,11 +77,11 @@ export function SidebarItem({
 	);
 
 	const itemClasses = cn(
-		"group flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+		"group flex w-full items-center gap-3 rounded-md px-3 py-2 font-medium text-sm transition-colors",
 		"text-muted-foreground hover:bg-accent hover:text-accent-foreground",
 		isActive && "bg-accent text-accent-foreground",
 		collapsed && "justify-center px-2",
-		className
+		className,
 	);
 
 	// If it has children, render as a collapsible button
@@ -98,7 +97,7 @@ export function SidebarItem({
 					{content}
 				</button>
 				{expanded && !collapsed && (
-					<div className="ml-4 space-y-1 border-l border-border pl-3">
+					<div className="ml-4 space-y-1 border-border border-l pl-3">
 						{children}
 					</div>
 				)}
@@ -152,7 +151,7 @@ export function SidebarSection({
 	return (
 		<div className={cn("space-y-1", className)}>
 			{title && !collapsed && (
-				<h4 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+				<h4 className="mb-2 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
 					{title}
 				</h4>
 			)}

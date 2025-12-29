@@ -23,7 +23,9 @@ interface NotificationPreference {
 }
 
 function NotificationSettings() {
-	const [emailPreferences, setEmailPreferences] = useState<NotificationPreference[]>([
+	const [emailPreferences, setEmailPreferences] = useState<
+		NotificationPreference[]
+	>([
 		{
 			id: "marketing",
 			title: "Marketing emails",
@@ -50,7 +52,9 @@ function NotificationSettings() {
 		},
 	]);
 
-	const [pushPreferences, setPushPreferences] = useState<NotificationPreference[]>([
+	const [pushPreferences, setPushPreferences] = useState<
+		NotificationPreference[]
+	>([
 		{
 			id: "push-all",
 			title: "All notifications",
@@ -80,24 +84,24 @@ function NotificationSettings() {
 	function toggleEmailPreference(id: string) {
 		setEmailPreferences((prev) =>
 			prev.map((pref) =>
-				pref.id === id ? { ...pref, enabled: !pref.enabled } : pref
-			)
+				pref.id === id ? { ...pref, enabled: !pref.enabled } : pref,
+			),
 		);
 	}
 
 	function togglePushPreference(id: string) {
 		setPushPreferences((prev) =>
 			prev.map((pref) =>
-				pref.id === id ? { ...pref, enabled: !pref.enabled } : pref
-			)
+				pref.id === id ? { ...pref, enabled: !pref.enabled } : pref,
+			),
 		);
 	}
 
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-lg font-medium">Notifications</h1>
-				<p className="text-sm text-muted-foreground">
+				<h1 className="font-medium text-lg">Notifications</h1>
+				<p className="text-muted-foreground text-sm">
 					Configure how you receive notifications.
 				</p>
 			</div>
@@ -116,10 +120,10 @@ function NotificationSettings() {
 							className="flex items-center justify-between gap-4"
 						>
 							<div className="space-y-0.5">
-								<Label htmlFor={pref.id} className="text-sm font-medium">
+								<Label htmlFor={pref.id} className="font-medium text-sm">
 									{pref.title}
 								</Label>
-								<p className="text-xs text-muted-foreground">
+								<p className="text-muted-foreground text-xs">
 									{pref.description}
 								</p>
 							</div>
@@ -147,10 +151,10 @@ function NotificationSettings() {
 							className="flex items-center justify-between gap-4"
 						>
 							<div className="space-y-0.5">
-								<Label htmlFor={pref.id} className="text-sm font-medium">
+								<Label htmlFor={pref.id} className="font-medium text-sm">
 									{pref.title}
 								</Label>
-								<p className="text-xs text-muted-foreground">
+								<p className="text-muted-foreground text-xs">
 									{pref.description}
 								</p>
 							</div>

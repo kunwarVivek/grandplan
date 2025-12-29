@@ -113,7 +113,8 @@ function AdminUsers() {
 		const matchesSearch =
 			user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 			user.email.toLowerCase().includes(searchQuery.toLowerCase());
-		const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+		const matchesStatus =
+			statusFilter === "all" || user.status === statusFilter;
 		const matchesRole = roleFilter === "all" || user.role === roleFilter;
 		return matchesSearch && matchesStatus && matchesRole;
 	});
@@ -158,8 +159,8 @@ function AdminUsers() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-semibold">Users</h1>
-				<p className="text-sm text-muted-foreground">
+				<h1 className="font-semibold text-2xl">Users</h1>
+				<p className="text-muted-foreground text-sm">
 					Manage all users on the platform.
 				</p>
 			</div>
@@ -174,7 +175,7 @@ function AdminUsers() {
 				<CardContent>
 					<div className="mb-4 flex flex-col gap-4 sm:flex-row">
 						<div className="relative flex-1">
-							<SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+							<SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
 								placeholder="Search users..."
 								value={searchQuery}
@@ -182,9 +183,14 @@ function AdminUsers() {
 								className="pl-8"
 							/>
 						</div>
-						<Select value={statusFilter} onValueChange={(val) => setStatusFilter(val ?? "all")}>
+						<Select
+							value={statusFilter}
+							onValueChange={(val) => setStatusFilter(val ?? "all")}
+						>
 							<SelectTrigger className="w-[150px]">
-								<SelectValue>{statusFilter === "all" ? "Status" : statusFilter}</SelectValue>
+								<SelectValue>
+									{statusFilter === "all" ? "Status" : statusFilter}
+								</SelectValue>
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">All Status</SelectItem>
@@ -193,9 +199,14 @@ function AdminUsers() {
 								<SelectItem value="suspended">Suspended</SelectItem>
 							</SelectContent>
 						</Select>
-						<Select value={roleFilter} onValueChange={(val) => setRoleFilter(val ?? "all")}>
+						<Select
+							value={roleFilter}
+							onValueChange={(val) => setRoleFilter(val ?? "all")}
+						>
 							<SelectTrigger className="w-[150px]">
-								<SelectValue>{roleFilter === "all" ? "Role" : roleFilter}</SelectValue>
+								<SelectValue>
+									{roleFilter === "all" ? "Role" : roleFilter}
+								</SelectValue>
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">All Roles</SelectItem>
@@ -223,18 +234,22 @@ function AdminUsers() {
 										<div className="flex items-center gap-3">
 											<Avatar size="sm">
 												<AvatarImage src={user.avatar} alt={user.name} />
-												<AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+												<AvatarFallback>
+													{getInitials(user.name)}
+												</AvatarFallback>
 											</Avatar>
 											<div>
-												<p className="text-sm font-medium">{user.name}</p>
-												<p className="text-xs text-muted-foreground">
+												<p className="font-medium text-sm">{user.name}</p>
+												<p className="text-muted-foreground text-xs">
 													{user.email}
 												</p>
 											</div>
 										</div>
 									</TableCell>
 									<TableCell>
-										<Badge variant={user.role === "admin" ? "default" : "outline"}>
+										<Badge
+											variant={user.role === "admin" ? "default" : "outline"}
+										>
 											{user.role}
 										</Badge>
 									</TableCell>
@@ -255,10 +270,14 @@ function AdminUsers() {
 												<MoreHorizontalIcon className="size-4" />
 											</DropdownMenuTrigger>
 											<DropdownMenuContent align="end">
-												<DropdownMenuItem onClick={() => handleViewUser(user.id)}>
+												<DropdownMenuItem
+													onClick={() => handleViewUser(user.id)}
+												>
 													View Details
 												</DropdownMenuItem>
-												<DropdownMenuItem onClick={() => handleEditUser(user.id)}>
+												<DropdownMenuItem
+													onClick={() => handleEditUser(user.id)}
+												>
 													Edit User
 												</DropdownMenuItem>
 												<DropdownMenuSeparator />
@@ -283,7 +302,7 @@ function AdminUsers() {
 					</Table>
 
 					<div className="mt-4 flex items-center justify-between">
-						<p className="text-sm text-muted-foreground">
+						<p className="text-muted-foreground text-sm">
 							Showing {filteredUsers.length} of {users.length} users
 						</p>
 						<div className="flex items-center gap-2">

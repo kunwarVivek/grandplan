@@ -31,17 +31,18 @@ function ProfileSettings() {
 		console.log("Update profile:", { name, email });
 	}
 
-	const initials = user?.name
-		?.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase() ?? "U";
+	const initials =
+		user?.name
+			?.split(" ")
+			.map((n) => n[0])
+			.join("")
+			.toUpperCase() ?? "U";
 
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-lg font-medium">Profile</h1>
-				<p className="text-sm text-muted-foreground">
+				<h1 className="font-medium text-lg">Profile</h1>
+				<p className="text-muted-foreground text-sm">
 					Manage your personal information and account settings.
 				</p>
 			</div>
@@ -55,9 +56,12 @@ function ProfileSettings() {
 				</CardHeader>
 				<CardContent>
 					<div className="flex items-center gap-4">
-						<div className="relative group cursor-pointer">
+						<div className="group relative cursor-pointer">
 							<Avatar size="lg">
-								<AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "User"} />
+								<AvatarImage
+									src={user?.image ?? undefined}
+									alt={user?.name ?? "User"}
+								/>
 								<AvatarFallback>{initials}</AvatarFallback>
 							</Avatar>
 							<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
@@ -77,8 +81,8 @@ function ProfileSettings() {
 							/>
 						</div>
 						<div>
-							<p className="text-sm font-medium">{user?.name ?? "User"}</p>
-							<p className="text-xs text-muted-foreground">
+							<p className="font-medium text-sm">{user?.name ?? "User"}</p>
+							<p className="text-muted-foreground text-xs">
 								JPG, GIF or PNG. Max size 2MB.
 							</p>
 						</div>
@@ -89,9 +93,7 @@ function ProfileSettings() {
 			<Card>
 				<CardHeader>
 					<CardTitle>Personal Information</CardTitle>
-					<CardDescription>
-						Update your personal details here.
-					</CardDescription>
+					<CardDescription>Update your personal details here.</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form onSubmit={handleSubmit} className="space-y-4">

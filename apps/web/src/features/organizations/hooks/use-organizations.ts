@@ -2,12 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
+	CreateOrganizationInput,
+	Invitation,
+	InviteMemberInput,
 	Organization,
 	OrganizationMember,
-	Invitation,
-	CreateOrganizationInput,
 	UpdateOrganizationInput,
-	InviteMemberInput,
 } from "../types";
 
 // Types for API responses
@@ -80,10 +80,7 @@ export function useUpdateOrganization() {
 			);
 		},
 		onSuccess: (data) => {
-			queryClient.setQueryData(
-				queryKeys.organizations.detail(data.id),
-				data,
-			);
+			queryClient.setQueryData(queryKeys.organizations.detail(data.id), data);
 			queryClient.invalidateQueries({
 				queryKey: queryKeys.organizations.all,
 			});

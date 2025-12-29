@@ -2,11 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
-	Task,
 	CreateTaskInput,
-	UpdateTaskInput,
 	MoveTaskInput,
+	Task,
 	TaskFilters,
+	UpdateTaskInput,
 } from "../types";
 
 // Types for API responses
@@ -78,7 +78,10 @@ export function useCreateTask() {
 
 	return useMutation({
 		mutationFn: async (input: CreateTaskInput) => {
-			return api.post<TaskResponse>(`/api/projects/${input.projectId}/tasks`, input);
+			return api.post<TaskResponse>(
+				`/api/projects/${input.projectId}/tasks`,
+				input,
+			);
 		},
 		onSuccess: (_, variables) => {
 			// Invalidate project tasks list
@@ -107,7 +110,10 @@ export function useUpdateTask() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async ({ taskId, ...input }: UpdateTaskInput & { taskId: string }) => {
+		mutationFn: async ({
+			taskId,
+			...input
+		}: UpdateTaskInput & { taskId: string }) => {
 			return api.patch<TaskResponse>(`/api/tasks/${taskId}`, input);
 		},
 		onSuccess: (data) => {
@@ -200,10 +206,13 @@ export function useMoveTask() {
 						: task,
 				);
 
-				queryClient.setQueryData<TasksResponse>(queryKeys.tasks.all(projectId), {
-					...previousTasks,
-					tasks: updatedTasks,
-				});
+				queryClient.setQueryData<TasksResponse>(
+					queryKeys.tasks.all(projectId),
+					{
+						...previousTasks,
+						tasks: updatedTasks,
+					},
+				);
 			}
 
 			return { previousTasks };
@@ -243,10 +252,13 @@ export function useBulkUpdateTasks() {
 			projectId: string;
 			updates: UpdateTaskInput;
 		}) => {
-			return api.patch<{ tasks: Task[] }>(`/api/projects/${projectId}/tasks/bulk`, {
-				taskIds,
-				updates,
-			});
+			return api.patch<{ tasks: Task[] }>(
+				`/api/projects/${projectId}/tasks/bulk`,
+				{
+					taskIds,
+					updates,
+				},
+			);
 		},
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({

@@ -217,8 +217,35 @@ export function addHours(date: Date, hours: number): Date {
 	return result;
 }
 
-// Encryption placeholder (implement with proper crypto in production)
+import { createHash, randomBytes } from "crypto";
+
+/**
+ * Hash a token using SHA-256
+ * Use for hashing API keys, session tokens, etc.
+ */
 export function hashToken(token: string): string {
-	// In production, use crypto.createHash('sha256').update(token).digest('hex')
-	return token;
+	return createHash("sha256").update(token).digest("hex");
+}
+
+/**
+ * Generate a cryptographically secure random token
+ */
+export function generateSecureToken(bytes = 32): string {
+	return randomBytes(bytes).toString("hex");
+}
+
+/**
+ * Compare a plain token with a hashed token (constant-time comparison)
+ */
+export function verifyToken(plainToken: string, hashedToken: string): boolean {
+	const hashed = hashToken(plainToken);
+	if (hashed.length !== hashedToken.length) {
+		return false;
+	}
+	// Constant-time comparison to prevent timing attacks
+	let result = 0;
+	for (let i = 0; i < hashed.length; i++) {
+		result |= hashed.charCodeAt(i) ^ hashedToken.charCodeAt(i);
+	}
+	return result === 0;
 }

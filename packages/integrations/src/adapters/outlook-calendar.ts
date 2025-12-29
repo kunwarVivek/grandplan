@@ -58,7 +58,13 @@ interface OutlookEvent {
 	isCancelled: boolean;
 	isOrganizer: boolean;
 	responseRequested: boolean;
-	showAs: "free" | "tentative" | "busy" | "oof" | "workingElsewhere" | "unknown";
+	showAs:
+		| "free"
+		| "tentative"
+		| "busy"
+		| "oof"
+		| "workingElsewhere"
+		| "unknown";
 	importance: "low" | "normal" | "high";
 	sensitivity: "normal" | "personal" | "private" | "confidential";
 	categories: string[];
@@ -79,7 +85,13 @@ interface OutlookEvent {
 	attendees?: Array<{
 		type: "required" | "optional" | "resource";
 		status: {
-			response: "none" | "organizer" | "tentativelyAccepted" | "accepted" | "declined" | "notResponded";
+			response:
+				| "none"
+				| "organizer"
+				| "tentativelyAccepted"
+				| "accepted"
+				| "declined"
+				| "notResponded";
 			time: string;
 		};
 		emailAddress: {
@@ -89,7 +101,13 @@ interface OutlookEvent {
 	}>;
 	recurrence?: {
 		pattern: {
-			type: "daily" | "weekly" | "absoluteMonthly" | "relativeMonthly" | "absoluteYearly" | "relativeYearly";
+			type:
+				| "daily"
+				| "weekly"
+				| "absoluteMonthly"
+				| "relativeMonthly"
+				| "absoluteYearly"
+				| "relativeYearly";
 			interval: number;
 			daysOfWeek?: string[];
 			dayOfMonth?: number;
@@ -591,7 +609,10 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 			isReminderOn?: boolean;
 			categories?: string[];
 			isOnlineMeeting?: boolean;
-			onlineMeetingProvider?: "teamsForBusiness" | "skypeForBusiness" | "skypeForConsumer";
+			onlineMeetingProvider?:
+				| "teamsForBusiness"
+				| "skypeForBusiness"
+				| "skypeForConsumer";
 			singleValueExtendedProperties?: Array<{
 				id: string;
 				value: string;
@@ -892,7 +913,7 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 			"updated",
 			"deleted",
 		],
-		expirationMinutes: number = 4230, // Max is 4230 minutes (~3 days)
+		expirationMinutes = 4230, // Max is 4230 minutes (~3 days)
 		clientState?: string,
 		calendarId?: string,
 	): Promise<GraphSubscription> {
@@ -937,7 +958,7 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 	async renewSubscription(
 		accessToken: string,
 		subscriptionId: string,
-		expirationMinutes: number = 4230,
+		expirationMinutes = 4230,
 	): Promise<GraphSubscription> {
 		const expirationDateTime = new Date(
 			Date.now() + expirationMinutes * 60 * 1000,
@@ -1063,7 +1084,7 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 		emails: string[],
 		startTime: Date,
 		endTime: Date,
-		availabilityViewInterval: number = 30, // minutes
+		availabilityViewInterval = 30, // minutes
 	): Promise<
 		Array<{
 			scheduleId: string;
@@ -1081,26 +1102,29 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 			};
 		}>
 	> {
-		const response = await fetch(`${this.graphBaseUrl}/me/calendar/getSchedule`, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				"Content-Type": "application/json",
-				Prefer: 'outlook.timezone="UTC"',
+		const response = await fetch(
+			`${this.graphBaseUrl}/me/calendar/getSchedule`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					"Content-Type": "application/json",
+					Prefer: 'outlook.timezone="UTC"',
+				},
+				body: JSON.stringify({
+					schedules: emails,
+					startTime: {
+						dateTime: startTime.toISOString().replace("Z", ""),
+						timeZone: "UTC",
+					},
+					endTime: {
+						dateTime: endTime.toISOString().replace("Z", ""),
+						timeZone: "UTC",
+					},
+					availabilityViewInterval,
+				}),
 			},
-			body: JSON.stringify({
-				schedules: emails,
-				startTime: {
-					dateTime: startTime.toISOString().replace("Z", ""),
-					timeZone: "UTC",
-				},
-				endTime: {
-					dateTime: endTime.toISOString().replace("Z", ""),
-					timeZone: "UTC",
-				},
-				availabilityViewInterval,
-			}),
-		});
+		);
 
 		if (!response.ok) {
 			const error = await response.json();
@@ -1139,7 +1163,7 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 			startTime: Date;
 			endTime: Date;
 		},
-		maxCandidates: number = 10,
+		maxCandidates = 10,
 	): Promise<
 		Array<{
 			meetingTimeSlot: {
@@ -1171,7 +1195,9 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 					timeSlots: [
 						{
 							start: {
-								dateTime: timeConstraint.startTime.toISOString().replace("Z", ""),
+								dateTime: timeConstraint.startTime
+									.toISOString()
+									.replace("Z", ""),
 								timeZone: "UTC",
 							},
 							end: {

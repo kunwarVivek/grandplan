@@ -1,4 +1,7 @@
 import { Download, ExternalLink, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
 	TableBody,
@@ -7,18 +10,21 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useInvoices } from "../hooks/use-billing";
 import type { Invoice } from "../types";
 
-const INVOICE_STATUS_CONFIG: Record<Invoice["status"], { label: string; color: string }> = {
+const INVOICE_STATUS_CONFIG: Record<
+	Invoice["status"],
+	{ label: string; color: string }
+> = {
 	draft: { label: "Draft", color: "bg-muted text-muted-foreground" },
 	open: { label: "Open", color: "bg-blue-500/10 text-blue-500" },
 	paid: { label: "Paid", color: "bg-emerald-500/10 text-emerald-500" },
 	void: { label: "Void", color: "bg-muted text-muted-foreground" },
-	uncollectible: { label: "Uncollectible", color: "bg-red-500/10 text-red-500" },
+	uncollectible: {
+		label: "Uncollectible",
+		color: "bg-red-500/10 text-red-500",
+	},
 };
 
 type InvoiceListProps = {
@@ -34,7 +40,7 @@ export function InvoiceList({ limit = 10 }: InvoiceListProps) {
 
 	if (error) {
 		return (
-			<div className="text-center py-8 text-muted-foreground">
+			<div className="py-8 text-center text-muted-foreground">
 				<p>Unable to load invoices. Please try again later.</p>
 			</div>
 		);
@@ -44,8 +50,8 @@ export function InvoiceList({ limit = 10 }: InvoiceListProps) {
 
 	if (invoices.length === 0) {
 		return (
-			<div className="text-center py-8 text-muted-foreground">
-				<FileText className="mx-auto size-8 mb-2 opacity-50" />
+			<div className="py-8 text-center text-muted-foreground">
+				<FileText className="mx-auto mb-2 size-8 opacity-50" />
 				<p>No invoices yet</p>
 			</div>
 		);
@@ -86,7 +92,9 @@ export function InvoiceList({ limit = 10 }: InvoiceListProps) {
 							<TableCell className="font-medium">{invoice.number}</TableCell>
 							<TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
 							<TableCell>
-								<Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+								<Badge className={statusConfig.color}>
+									{statusConfig.label}
+								</Badge>
 							</TableCell>
 							<TableCell className="text-right">
 								{formatAmount(invoice.amountDue, invoice.currency)}

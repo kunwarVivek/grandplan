@@ -1,5 +1,7 @@
-import { useState } from "react";
 import { Check, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -8,12 +10,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { usePlans, useSubscription, useUpgradePlan, useCreateCheckout } from "../hooks/use-billing";
-import type { Plan, BillingInterval } from "../types";
+import {
+	useCreateCheckout,
+	usePlans,
+	useSubscription,
+	useUpgradePlan,
+} from "../hooks/use-billing";
+import type { BillingInterval, Plan } from "../types";
 
 type PlanSelectorProps = {
 	onSuccess?: () => void;
@@ -22,7 +27,8 @@ type PlanSelectorProps = {
 export function PlanSelector({ onSuccess }: PlanSelectorProps) {
 	const [interval, setInterval] = useState<BillingInterval>("monthly");
 	const { data: plansData, isLoading: plansLoading } = usePlans();
-	const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
+	const { data: subscription, isLoading: subscriptionLoading } =
+		useSubscription();
 	const upgradePlan = useUpgradePlan();
 	const createCheckout = useCreateCheckout();
 
@@ -94,7 +100,8 @@ export function PlanSelector({ onSuccess }: PlanSelectorProps) {
 			{/* Plans grid */}
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				{plans.map((plan) => {
-					const price = interval === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
+					const price =
+						interval === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
 					const isCurrentPlan = currentPlanId === plan.id;
 					const savings = interval === "yearly" ? getYearlySavings(plan) : null;
 
@@ -104,7 +111,7 @@ export function PlanSelector({ onSuccess }: PlanSelectorProps) {
 							className={cn(
 								"relative flex flex-col",
 								plan.isPopular && "ring-2 ring-primary",
-								isCurrentPlan && "ring-2 ring-emerald-500"
+								isCurrentPlan && "ring-2 ring-emerald-500",
 							)}
 						>
 							{plan.isPopular && (
@@ -117,7 +124,9 @@ export function PlanSelector({ onSuccess }: PlanSelectorProps) {
 							)}
 							{isCurrentPlan && (
 								<div className="absolute -top-3 left-1/2 -translate-x-1/2">
-									<Badge className="bg-emerald-500 text-white">Current Plan</Badge>
+									<Badge className="bg-emerald-500 text-white">
+										Current Plan
+									</Badge>
 								</div>
 							)}
 
@@ -128,7 +137,9 @@ export function PlanSelector({ onSuccess }: PlanSelectorProps) {
 
 							<CardContent className="flex-1 space-y-4">
 								<div className="flex items-baseline gap-1">
-									<span className="text-3xl font-bold">{formatPrice(price)}</span>
+									<span className="font-bold text-3xl">
+										{formatPrice(price)}
+									</span>
 									<span className="text-muted-foreground text-sm">
 										/{interval === "yearly" ? "year" : "month"}
 									</span>
@@ -145,13 +156,16 @@ export function PlanSelector({ onSuccess }: PlanSelectorProps) {
 											key={feature.name}
 											className={cn(
 												"flex items-start gap-2",
-												!feature.included && "text-muted-foreground line-through"
+												!feature.included &&
+													"text-muted-foreground line-through",
 											)}
 										>
 											<Check
 												className={cn(
 													"mt-0.5 size-4 shrink-0",
-													feature.included ? "text-emerald-500" : "text-muted-foreground"
+													feature.included
+														? "text-emerald-500"
+														: "text-muted-foreground",
 												)}
 											/>
 											<span>

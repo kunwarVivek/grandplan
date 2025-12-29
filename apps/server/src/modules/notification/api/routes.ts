@@ -2,6 +2,7 @@
 // NOTIFICATION MODULE ROUTES
 // ============================================
 
+import { requirePermission } from "@grandplan/rbac";
 import { Router } from "express";
 import {
 	archiveNotification,
@@ -22,28 +23,76 @@ import {
 
 const router = Router();
 
-// Notification listing and details
-router.get("/", listNotifications);
-router.get("/unread-count", getUnreadCount);
-router.get("/summary", getNotificationSummary);
-router.get("/:id", getNotification);
+// Notification listing and details - require notifications:read
+router.get("/", requirePermission("notifications:read"), listNotifications);
+router.get(
+	"/unread-count",
+	requirePermission("notifications:read"),
+	getUnreadCount,
+);
+router.get(
+	"/summary",
+	requirePermission("notifications:read"),
+	getNotificationSummary,
+);
+router.get("/:id", requirePermission("notifications:read"), getNotification);
 
-// Read status management
-router.patch("/:id/read", markAsRead);
-router.post("/read-multiple", markMultipleAsRead);
-router.post("/read-all", markAllAsRead);
+// Read status management - require notifications:manage
+router.patch(
+	"/:id/read",
+	requirePermission("notifications:manage"),
+	markAsRead,
+);
+router.post(
+	"/read-multiple",
+	requirePermission("notifications:manage"),
+	markMultipleAsRead,
+);
+router.post(
+	"/read-all",
+	requirePermission("notifications:manage"),
+	markAllAsRead,
+);
 
-// Archive and delete
-router.post("/:id/archive", archiveNotification);
-router.delete("/:id", deleteNotification);
+// Archive and delete - require notifications:manage
+router.post(
+	"/:id/archive",
+	requirePermission("notifications:manage"),
+	archiveNotification,
+);
+router.delete(
+	"/:id",
+	requirePermission("notifications:manage"),
+	deleteNotification,
+);
 
-// Preferences
-router.get("/preferences", getPreferences);
-router.patch("/preferences", updatePreferences);
+// Preferences - require notifications:preferences
+router.get(
+	"/preferences",
+	requirePermission("notifications:preferences"),
+	getPreferences,
+);
+router.patch(
+	"/preferences",
+	requirePermission("notifications:preferences"),
+	updatePreferences,
+);
 
-// Push notifications
-router.post("/push/subscribe", registerPushSubscription);
-router.post("/push/unsubscribe", unregisterPushSubscription);
-router.get("/push/subscriptions", getPushSubscriptions);
+// Push notifications - require notifications:push
+router.post(
+	"/push/subscribe",
+	requirePermission("notifications:push"),
+	registerPushSubscription,
+);
+router.post(
+	"/push/unsubscribe",
+	requirePermission("notifications:push"),
+	unregisterPushSubscription,
+);
+router.get(
+	"/push/subscriptions",
+	requirePermission("notifications:push"),
+	getPushSubscriptions,
+);
 
 export const notificationRoutes = router;

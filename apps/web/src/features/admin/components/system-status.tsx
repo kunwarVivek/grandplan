@@ -1,13 +1,14 @@
 import {
 	Activity,
-	CheckCircle2,
 	AlertTriangle,
-	XCircle,
+	CheckCircle2,
 	Database,
 	HardDrive,
 	Layers,
 	Server,
+	XCircle,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
@@ -15,7 +16,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useSystemHealth } from "../hooks/use-admin";
@@ -58,8 +58,15 @@ export function SystemStatus({ className }: SystemStatusProps) {
 		return `${minutes}m`;
 	};
 
-	const getOverallStatus = (health: SystemHealth): "healthy" | "degraded" | "down" => {
-		const services = [health.database, health.redis, health.queue, health.storage];
+	const getOverallStatus = (
+		health: SystemHealth,
+	): "healthy" | "degraded" | "down" => {
+		const services = [
+			health.database,
+			health.redis,
+			health.queue,
+			health.storage,
+		];
 		if (services.some((s) => s === "down")) return "down";
 		if (services.some((s) => s === "degraded")) return "degraded";
 		return "healthy";
@@ -83,30 +90,14 @@ export function SystemStatus({ className }: SystemStatusProps) {
 			<CardContent className="space-y-4">
 				{/* Services Grid */}
 				<div className="grid grid-cols-2 gap-4">
-					<ServiceCard
-						name="Database"
-						status={data.database}
-						icon={Database}
-					/>
-					<ServiceCard
-						name="Redis"
-						status={data.redis}
-						icon={Layers}
-					/>
-					<ServiceCard
-						name="Queue"
-						status={data.queue}
-						icon={Server}
-					/>
-					<ServiceCard
-						name="Storage"
-						status={data.storage}
-						icon={HardDrive}
-					/>
+					<ServiceCard name="Database" status={data.database} icon={Database} />
+					<ServiceCard name="Redis" status={data.redis} icon={Layers} />
+					<ServiceCard name="Queue" status={data.queue} icon={Server} />
+					<ServiceCard name="Storage" status={data.storage} icon={HardDrive} />
 				</div>
 
 				{/* System Info */}
-				<div className="border-t pt-4 mt-4">
+				<div className="mt-4 border-t pt-4">
 					<div className="grid grid-cols-2 gap-4 text-sm">
 						<div className="flex items-center gap-2">
 							<Activity className="size-4 text-muted-foreground" />
@@ -116,7 +107,7 @@ export function SystemStatus({ className }: SystemStatusProps) {
 						<div className="flex items-center gap-2">
 							<Server className="size-4 text-muted-foreground" />
 							<span className="text-muted-foreground">Version:</span>
-							<span className="font-mono font-medium">{data.version}</span>
+							<span className="font-medium font-mono">{data.version}</span>
 						</div>
 					</div>
 				</div>
@@ -149,15 +140,15 @@ function ServiceCard({ name, status, icon: Icon }: ServiceCardProps) {
 				: "text-red-500";
 
 	return (
-		<div className="flex items-center gap-3 p-3 border rounded-lg">
-			<div className={cn("p-2 rounded-lg", statusConfig.color)}>
+		<div className="flex items-center gap-3 rounded-lg border p-3">
+			<div className={cn("rounded-lg p-2", statusConfig.color)}>
 				<Icon className="size-4" />
 			</div>
-			<div className="flex-1 min-w-0">
-				<p className="text-sm font-medium">{name}</p>
+			<div className="min-w-0 flex-1">
+				<p className="font-medium text-sm">{name}</p>
 				<div className="flex items-center gap-1">
 					<StatusIcon className={cn("size-3", statusColor)} />
-					<span className="text-xs text-muted-foreground">
+					<span className="text-muted-foreground text-xs">
 						{statusConfig.label}
 					</span>
 				</div>
@@ -195,7 +186,7 @@ function SystemStatusSkeleton({ className }: { className?: string }) {
 				<div className="flex items-center justify-between">
 					<div>
 						<Skeleton className="h-5 w-28" />
-						<Skeleton className="h-4 w-48 mt-1" />
+						<Skeleton className="mt-1 h-4 w-48" />
 					</div>
 					<Skeleton className="h-5 w-32" />
 				</div>
@@ -205,7 +196,7 @@ function SystemStatusSkeleton({ className }: { className?: string }) {
 					{Array.from({ length: 4 }).map((_, i) => (
 						<div
 							key={i}
-							className="flex items-center gap-3 p-3 border rounded-lg"
+							className="flex items-center gap-3 rounded-lg border p-3"
 						>
 							<Skeleton className="size-8 rounded-lg" />
 							<div className="flex-1 space-y-1">
@@ -215,7 +206,7 @@ function SystemStatusSkeleton({ className }: { className?: string }) {
 						</div>
 					))}
 				</div>
-				<div className="border-t pt-4 mt-4">
+				<div className="mt-4 border-t pt-4">
 					<div className="grid grid-cols-2 gap-4">
 						<Skeleton className="h-4 w-24" />
 						<Skeleton className="h-4 w-24" />

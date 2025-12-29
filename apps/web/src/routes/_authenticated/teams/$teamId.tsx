@@ -166,8 +166,8 @@ function TeamDetailPage() {
 	const togglePermission = (permissionId: string) => {
 		setPermissions((prev) =>
 			prev.map((p) =>
-				p.id === permissionId ? { ...p, enabled: !p.enabled } : p
-			)
+				p.id === permissionId ? { ...p, enabled: !p.enabled } : p,
+			),
 		);
 	};
 
@@ -176,10 +176,7 @@ function TeamDetailPage() {
 			<PageHeader
 				title={team.name}
 				description={team.description}
-				breadcrumbs={[
-					{ label: "Teams", href: "/teams" },
-					{ label: team.name },
-				]}
+				breadcrumbs={[{ label: "Teams", href: "/teams" }, { label: team.name }]}
 				actions={
 					<div className="flex items-center gap-2">
 						<Button variant="outline">
@@ -214,14 +211,14 @@ function TeamDetailPage() {
 						<Users className="size-5 text-white" />
 					</div>
 					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Lead:</span>
+						<span className="text-muted-foreground text-sm">Lead:</span>
 						<Avatar size="sm">
 							<AvatarImage src={team.lead.avatar} />
 							<AvatarFallback>{team.lead.initials}</AvatarFallback>
 						</Avatar>
-						<span className="text-sm font-medium">{team.lead.name}</span>
+						<span className="font-medium text-sm">{team.lead.name}</span>
 					</div>
-					<span className="text-sm text-muted-foreground">
+					<span className="text-muted-foreground text-sm">
 						Created {new Date(team.createdAt).toLocaleDateString()}
 					</span>
 				</div>
@@ -245,7 +242,7 @@ function TeamDetailPage() {
 
 				<TabsContent value="members" className="mt-6">
 					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-medium">Team Members</h3>
+						<h3 className="font-medium text-lg">Team Members</h3>
 						<Button size="sm">
 							<UserPlus className="size-4" />
 							Add Member
@@ -270,15 +267,14 @@ function TeamDetailPage() {
 												{member.role}
 											</Badge>
 										</div>
-										<div className="flex items-center gap-4 text-sm text-muted-foreground">
+										<div className="flex items-center gap-4 text-muted-foreground text-sm">
 											<span className="flex items-center gap-1">
 												<Mail className="size-3" />
 												{member.email}
 											</span>
 											<span className="flex items-center gap-1">
 												<Calendar className="size-3" />
-												Joined{" "}
-												{new Date(member.joinedAt).toLocaleDateString()}
+												Joined {new Date(member.joinedAt).toLocaleDateString()}
 											</span>
 										</div>
 									</div>
@@ -311,8 +307,8 @@ function TeamDetailPage() {
 				<TabsContent value="permissions" className="mt-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<h3 className="text-lg font-medium">Team Permissions</h3>
-							<p className="text-sm text-muted-foreground">
+							<h3 className="font-medium text-lg">Team Permissions</h3>
+							<p className="text-muted-foreground text-sm">
 								Configure what this team can do across the organization
 							</p>
 						</div>
@@ -340,7 +336,7 @@ function TeamDetailPage() {
 										</div>
 										<div>
 											<p className="font-medium">{permission.name}</p>
-											<p className="text-sm text-muted-foreground">
+											<p className="text-muted-foreground text-sm">
 												{permission.description}
 											</p>
 										</div>
@@ -366,19 +362,19 @@ function TeamDetailPage() {
 							</CardHeader>
 							<CardContent className="space-y-4">
 								<div>
-									<label className="text-sm font-medium">Team Name</label>
-									<p className="mt-1 text-sm text-muted-foreground">
+									<label className="font-medium text-sm">Team Name</label>
+									<p className="mt-1 text-muted-foreground text-sm">
 										{team.name}
 									</p>
 								</div>
 								<div>
-									<label className="text-sm font-medium">Description</label>
-									<p className="mt-1 text-sm text-muted-foreground">
+									<label className="font-medium text-sm">Description</label>
+									<p className="mt-1 text-muted-foreground text-sm">
 										{team.description}
 									</p>
 								</div>
 								<div>
-									<label className="text-sm font-medium">Team Lead</label>
+									<label className="font-medium text-sm">Team Lead</label>
 									<div className="mt-1 flex items-center gap-2">
 										<Avatar size="sm">
 											<AvatarImage src={team.lead.avatar} />
@@ -402,7 +398,7 @@ function TeamDetailPage() {
 								<div className="flex items-center justify-between">
 									<div>
 										<p className="font-medium">Archive Team</p>
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground text-sm">
 											Archive this team and remove all members
 										</p>
 									</div>
@@ -411,7 +407,7 @@ function TeamDetailPage() {
 								<div className="flex items-center justify-between">
 									<div>
 										<p className="font-medium">Delete Team</p>
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground text-sm">
 											Permanently delete this team and all associated data
 										</p>
 									</div>

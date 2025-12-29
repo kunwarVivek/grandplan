@@ -1,29 +1,13 @@
 import { formatDistanceToNow } from "date-fns";
 import {
-	RefreshCw,
-	Settings,
-	Unlink,
 	AlertTriangle,
 	CheckCircle,
 	Clock,
 	MoreHorizontal,
+	RefreshCw,
+	Settings,
+	Unlink,
 } from "lucide-react";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -35,11 +19,27 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
 	useDisconnectIntegration,
-	useSyncIntegration,
 	useRefreshConnection,
+	useSyncIntegration,
 } from "../hooks/use-integrations";
 import {
 	INTEGRATION_PROVIDER_CONFIG,
@@ -52,12 +52,16 @@ type IntegrationCardProps = {
 	onSettings?: () => void;
 };
 
-export function IntegrationCard({ connection, onSettings }: IntegrationCardProps) {
+export function IntegrationCard({
+	connection,
+	onSettings,
+}: IntegrationCardProps) {
 	const disconnectIntegration = useDisconnectIntegration();
 	const syncIntegration = useSyncIntegration();
 	const refreshConnection = useRefreshConnection();
 
-	const providerConfig = INTEGRATION_PROVIDER_CONFIG[connection.integration.provider];
+	const providerConfig =
+		INTEGRATION_PROVIDER_CONFIG[connection.integration.provider];
 	const statusConfig = INTEGRATION_STATUS_CONFIG[connection.status];
 
 	const handleSync = () => {
@@ -83,10 +87,10 @@ export function IntegrationCard({ connection, onSettings }: IntegrationCardProps
 					<div
 						className={cn(
 							"flex size-10 items-center justify-center rounded-lg text-white",
-							providerConfig.color
+							providerConfig.color,
 						)}
 					>
-						<span className="text-lg font-bold">
+						<span className="font-bold text-lg">
 							{connection.integration.name.charAt(0)}
 						</span>
 					</div>
@@ -121,7 +125,7 @@ export function IntegrationCard({ connection, onSettings }: IntegrationCardProps
 								<RefreshCw
 									className={cn(
 										"mr-2 size-4",
-										syncIntegration.isPending && "animate-spin"
+										syncIntegration.isPending && "animate-spin",
 									)}
 								/>
 								Sync now
@@ -135,7 +139,7 @@ export function IntegrationCard({ connection, onSettings }: IntegrationCardProps
 								<RefreshCw
 									className={cn(
 										"mr-2 size-4",
-										refreshConnection.isPending && "animate-spin"
+										refreshConnection.isPending && "animate-spin",
 									)}
 								/>
 								Refresh token
@@ -179,14 +183,14 @@ export function IntegrationCard({ connection, onSettings }: IntegrationCardProps
 			</CardHeader>
 			<CardContent className="space-y-3">
 				{hasError && connection.error && (
-					<div className="flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-xs text-red-500">
+					<div className="flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-red-500 text-xs">
 						<AlertTriangle className="mt-0.5 size-4 shrink-0" />
 						<span>{connection.error}</span>
 					</div>
 				)}
 
 				{isExpired && (
-					<div className="flex items-start gap-2 rounded-lg bg-amber-500/10 p-3 text-xs text-amber-500">
+					<div className="flex items-start gap-2 rounded-lg bg-amber-500/10 p-3 text-amber-500 text-xs">
 						<Clock className="mt-0.5 size-4 shrink-0" />
 						<span>
 							Your authorization has expired. Please refresh the connection to
@@ -195,7 +199,7 @@ export function IntegrationCard({ connection, onSettings }: IntegrationCardProps
 					</div>
 				)}
 
-				<div className="flex items-center justify-between text-xs text-muted-foreground">
+				<div className="flex items-center justify-between text-muted-foreground text-xs">
 					<div className="flex items-center gap-1">
 						{isConnected && (
 							<>
@@ -215,7 +219,7 @@ export function IntegrationCard({ connection, onSettings }: IntegrationCardProps
 				</div>
 
 				{isConnected && connection.settings?.autoSync && (
-					<div className="flex items-center gap-2 text-xs text-muted-foreground">
+					<div className="flex items-center gap-2 text-muted-foreground text-xs">
 						<RefreshCw className="size-3" />
 						<span>
 							Auto-sync every {connection.settings.syncInterval ?? 60} minutes

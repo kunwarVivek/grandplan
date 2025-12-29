@@ -1,4 +1,11 @@
-export type TaskStatus = "backlog" | "todo" | "in_progress" | "in_review" | "blocked" | "completed" | "cancelled";
+export type TaskStatus =
+	| "backlog"
+	| "todo"
+	| "in_progress"
+	| "in_review"
+	| "blocked"
+	| "completed"
+	| "cancelled";
 export type TaskPriority = "urgent" | "high" | "medium" | "low";
 
 export type Task = {
@@ -66,17 +73,47 @@ export type TaskFilters = {
 	dueDateTo?: Date;
 };
 
-export const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bgColor: string }> = {
-	backlog: { label: "Backlog", color: "text-muted-foreground", bgColor: "bg-muted" },
+export const TASK_STATUS_CONFIG: Record<
+	TaskStatus,
+	{ label: string; color: string; bgColor: string }
+> = {
+	backlog: {
+		label: "Backlog",
+		color: "text-muted-foreground",
+		bgColor: "bg-muted",
+	},
 	todo: { label: "To Do", color: "text-blue-500", bgColor: "bg-blue-500/10" },
-	in_progress: { label: "In Progress", color: "text-amber-500", bgColor: "bg-amber-500/10" },
-	in_review: { label: "In Review", color: "text-purple-500", bgColor: "bg-purple-500/10" },
-	blocked: { label: "Blocked", color: "text-red-500", bgColor: "bg-red-500/10" },
-	completed: { label: "Completed", color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-	cancelled: { label: "Cancelled", color: "text-muted-foreground", bgColor: "bg-muted" },
+	in_progress: {
+		label: "In Progress",
+		color: "text-amber-500",
+		bgColor: "bg-amber-500/10",
+	},
+	in_review: {
+		label: "In Review",
+		color: "text-purple-500",
+		bgColor: "bg-purple-500/10",
+	},
+	blocked: {
+		label: "Blocked",
+		color: "text-red-500",
+		bgColor: "bg-red-500/10",
+	},
+	completed: {
+		label: "Completed",
+		color: "text-emerald-500",
+		bgColor: "bg-emerald-500/10",
+	},
+	cancelled: {
+		label: "Cancelled",
+		color: "text-muted-foreground",
+		bgColor: "bg-muted",
+	},
 };
 
-export const TASK_PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; icon: string }> = {
+export const TASK_PRIORITY_CONFIG: Record<
+	TaskPriority,
+	{ label: string; color: string; icon: string }
+> = {
 	urgent: { label: "Urgent", color: "text-red-500", icon: "!!!" },
 	high: { label: "High", color: "text-orange-500", icon: "!!" },
 	medium: { label: "Medium", color: "text-amber-500", icon: "!" },

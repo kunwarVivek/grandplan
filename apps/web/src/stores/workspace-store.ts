@@ -36,7 +36,10 @@ type WorkspaceState = {
 
 	// Actions
 	setWorkspaces: (workspaces: Workspace[]) => void;
-	setActiveWorkspace: (workspace: Workspace | null, role?: WorkspaceRole | null) => void;
+	setActiveWorkspace: (
+		workspace: Workspace | null,
+		role?: WorkspaceRole | null,
+	) => void;
 	addWorkspace: (workspace: Workspace) => void;
 	updateWorkspace: (id: string, updates: Partial<Workspace>) => void;
 	removeWorkspace: (id: string) => void;
@@ -106,10 +109,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 );
 
 // Selector hooks
-export const useActiveWorkspace = () => useWorkspaceStore((state) => state.activeWorkspace);
+export const useActiveWorkspace = () =>
+	useWorkspaceStore((state) => state.activeWorkspace);
 export const useActiveWorkspaceRole = () =>
 	useWorkspaceStore((state) => state.activeWorkspaceRole);
-export const useWorkspaces = () => useWorkspaceStore((state) => state.workspaces);
+export const useWorkspaces = () =>
+	useWorkspaceStore((state) => state.workspaces);
 export const useIsWorkspaceAdmin = () => {
 	const role = useWorkspaceStore((state) => state.activeWorkspaceRole);
 	return role === "OWNER" || role === "ADMIN";

@@ -113,7 +113,7 @@ function WorkspacesPage() {
 	const filteredWorkspaces = mockWorkspaces.filter(
 		(workspace) =>
 			workspace.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			workspace.description.toLowerCase().includes(searchQuery.toLowerCase())
+			workspace.description.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
 	return (
@@ -132,7 +132,7 @@ function WorkspacesPage() {
 			{/* Search */}
 			<div className="mt-6">
 				<div className="relative max-w-xs">
-					<Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+					<Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						placeholder="Search workspaces..."
 						value={searchQuery}
@@ -146,8 +146,8 @@ function WorkspacesPage() {
 			{filteredWorkspaces.length === 0 ? (
 				<div className="mt-12 flex flex-col items-center justify-center text-center">
 					<Building2 className="size-12 text-muted-foreground" />
-					<h3 className="mt-4 text-lg font-medium">No workspaces found</h3>
-					<p className="mt-2 text-sm text-muted-foreground">
+					<h3 className="mt-4 font-medium text-lg">No workspaces found</h3>
+					<p className="mt-2 text-muted-foreground text-sm">
 						{searchQuery
 							? "Try adjusting your search query"
 							: "Get started by creating your first workspace"}
@@ -211,7 +211,7 @@ function WorkspacesPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-4 text-sm text-muted-foreground">
+										<div className="flex items-center gap-4 text-muted-foreground text-sm">
 											<div className="flex items-center gap-1">
 												<FolderKanban className="size-4" />
 												{workspace.projectCount} projects

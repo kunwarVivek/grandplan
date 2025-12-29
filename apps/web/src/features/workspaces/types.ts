@@ -36,7 +36,9 @@ export type CreateWorkspaceInput = {
 	organizationId: string;
 };
 
-export type UpdateWorkspaceInput = Partial<Omit<CreateWorkspaceInput, "organizationId">>;
+export type UpdateWorkspaceInput = Partial<
+	Omit<CreateWorkspaceInput, "organizationId">
+>;
 
 export const WORKSPACE_ROLE_CONFIG: Record<
 	WorkspaceRole,

@@ -15,6 +15,17 @@ model User {
   // Track current active organization (for multi-org users)
   activeOrganizationId String?
 
+  // User preferences/localization
+  timezone      String?     // IANA timezone (e.g., "America/New_York")
+  locale        String?     // Locale code (e.g., "en-US")
+
+  // Security tracking
+  lastLoginAt   DateTime?
+  lastLoginIp   String?
+
+  // Soft delete for GDPR compliance
+  deletedAt     DateTime?
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -58,6 +69,8 @@ model User {
   @@unique([email])
   @@index([status])
   @@index([activeOrganizationId])
+  @@index([deletedAt])
+  @@index([lastLoginAt])
   @@map("user")
 }
 

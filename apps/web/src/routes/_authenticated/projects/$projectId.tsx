@@ -1,9 +1,5 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import {
-	MoreHorizontal,
-	Settings,
-	Users,
-} from "lucide-react";
+import { MoreHorizontal, Settings, Users } from "lucide-react";
 
 import { ContentContainer, PageHeader } from "@/components/layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,9 +43,27 @@ export const Route = createFileRoute("/_authenticated/projects/$projectId")({
 				"Complete overhaul of the company website with new branding and improved UX",
 			status: "active",
 			members: [
-				{ id: "1", name: "Sarah Chen", avatar: "", initials: "SC", role: "Owner" },
-				{ id: "2", name: "Alex Rivera", avatar: "", initials: "AR", role: "Editor" },
-				{ id: "3", name: "Jordan Kim", avatar: "", initials: "JK", role: "Viewer" },
+				{
+					id: "1",
+					name: "Sarah Chen",
+					avatar: "",
+					initials: "SC",
+					role: "Owner",
+				},
+				{
+					id: "2",
+					name: "Alex Rivera",
+					avatar: "",
+					initials: "AR",
+					role: "Editor",
+				},
+				{
+					id: "3",
+					name: "Jordan Kim",
+					avatar: "",
+					initials: "JK",
+					role: "Viewer",
+				},
 			],
 			createdAt: "2025-01-01",
 			dueDate: "2025-02-15",
@@ -126,7 +140,7 @@ function ProjectLayout() {
 					<Badge variant={statusColors[project.status]}>
 						{project.status.replace("-", " ")}
 					</Badge>
-					<span className="text-sm text-muted-foreground">
+					<span className="text-muted-foreground text-sm">
 						Due {new Date(project.dueDate).toLocaleDateString()}
 					</span>
 				</div>

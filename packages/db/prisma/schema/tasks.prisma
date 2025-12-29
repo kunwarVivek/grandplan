@@ -8,6 +8,13 @@ model Workspace {
   slug        String
   description String?
 
+  // Workspace settings
+  settings    Json?    // { defaultView, defaultPriority, etc. }
+
+  // Soft delete
+  archivedAt  DateTime?
+  deletedAt   DateTime?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -24,6 +31,7 @@ model Workspace {
   @@unique([organizationId, slug])
   @@index([organizationId])
   @@index([ownerId])
+  @@index([deletedAt])
   @@map("workspace")
 }
 
@@ -63,6 +71,13 @@ model Project {
   color       String?      // Hex color for UI
   icon        String?      // Icon identifier
 
+  // Project timeline
+  startDate   DateTime?
+  targetEndDate DateTime?
+
+  // Soft delete
+  deletedAt   DateTime?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -74,6 +89,8 @@ model Project {
 
   @@index([workspaceId])
   @@index([status])
+  @@index([deletedAt])
+  @@index([startDate])
   @@map("project")
 }
 
@@ -101,11 +118,28 @@ model TaskNode {
   aiConfidence  Float?   // 0-1 confidence score
 
   // Temporal tracking
-  estimatedHours Float?
-  actualHours    Float?
-  dueDate        DateTime?
-  startedAt      DateTime?
-  completedAt    DateTime?
+  estimatedHours   Float?
+  originalEstimate Float?   // Initial estimate (for tracking changes)
+  actualHours      Float?
+  storyPoints      Int?     // Agile story points
+  dueDate          DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+
+  // Blocked status
+  blockedReason    String?  @db.Text  // Why task is blocked
+
+  // Acceptance criteria (for stories)
+  acceptanceCriteria String? @db.Text
+
+  // External reference
+  externalUrl      String?  // Link to external documentation/resource
+
+  // Tags/Labels (JSON array of tag IDs or strings)
+  tags             Json?    // ["tag1", "tag2"]
+
+  // Soft delete
+  deletedAt        DateTime?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -141,6 +175,12 @@ model TaskNode {
   @@index([nodeType, projectId])
   @@index([createdById])
   @@index([dueDate])
+  @@index([deletedAt])
+  // Composite indexes for common queries
+  @@index([projectId, status])
+  @@index([projectId, priority, status])
+  @@index([assigneeId, status, dueDate])
+  @@index([createdById, createdAt])
   @@map("task_node")
 }
 
@@ -221,6 +261,8 @@ model TaskHistory {
   @@index([taskId])
   @@index([createdAt])
   @@index([action])
+  // Composite index for task timeline queries
+  @@index([taskId, createdAt])
   @@map("task_history")
 }
 
@@ -273,6 +315,8 @@ model TaskAIDecision {
   @@index([decisionType])
   @@index([createdAt])
   @@index([applied])
+  // Composite index for applied AI decisions per task
+  @@index([taskId, applied, createdAt])
   @@map("task_ai_decision")
 }
 

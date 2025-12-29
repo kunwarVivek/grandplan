@@ -1,5 +1,7 @@
+import { Bell, Mail, MessageSquare, Save, Smartphone } from "lucide-react";
 import { useState } from "react";
-import { Bell, Mail, Smartphone, MessageSquare, Save } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -7,10 +9,9 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -18,20 +19,19 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import {
 	useNotificationPreferences,
 	useUpdatePreferences,
 } from "../hooks/use-notifications";
 import {
+	type DigestFrequency,
 	NOTIFICATION_CATEGORY_CONFIG,
 	NOTIFICATION_CHANNEL_CONFIG,
 	type NotificationCategory,
 	type NotificationChannel,
-	type DigestFrequency,
 } from "../types";
 
 const CHANNEL_ICONS: Record<NotificationChannel, typeof Bell> = {
@@ -53,7 +53,10 @@ export function NotificationPreferences() {
 		setLocalPreferences(preferences);
 	}
 
-	const handleChannelToggle = (channel: NotificationChannel, enabled: boolean) => {
+	const handleChannelToggle = (
+		channel: NotificationChannel,
+		enabled: boolean,
+	) => {
 		if (!localPreferences) return;
 		setLocalPreferences({
 			...localPreferences,
@@ -65,7 +68,10 @@ export function NotificationPreferences() {
 		setIsDirty(true);
 	};
 
-	const handleCategoryToggle = (category: NotificationCategory, enabled: boolean) => {
+	const handleCategoryToggle = (
+		category: NotificationCategory,
+		enabled: boolean,
+	) => {
 		if (!localPreferences) return;
 		setLocalPreferences({
 			...localPreferences,
@@ -83,7 +89,7 @@ export function NotificationPreferences() {
 	const handleCategoryChannelToggle = (
 		category: NotificationCategory,
 		channel: NotificationChannel,
-		enabled: boolean
+		enabled: boolean,
 	) => {
 		if (!localPreferences) return;
 		const currentChannels = localPreferences.categories[category].channels;
@@ -110,7 +116,13 @@ export function NotificationPreferences() {
 			...localPreferences,
 			quietHours: localPreferences.quietHours
 				? { ...localPreferences.quietHours, enabled }
-				: { enabled, startTime: "22:00", endTime: "08:00", timezone: "UTC", weekendsOnly: false },
+				: {
+						enabled,
+						startTime: "22:00",
+						endTime: "08:00",
+						timezone: "UTC",
+						weekendsOnly: false,
+					},
 		});
 		setIsDirty(true);
 	};
@@ -178,39 +190,35 @@ export function NotificationPreferences() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					{(Object.keys(NOTIFICATION_CHANNEL_CONFIG) as NotificationChannel[]).map(
-						(channel) => {
-							const config = NOTIFICATION_CHANNEL_CONFIG[channel];
-							const Icon = CHANNEL_ICONS[channel];
-							const isEnabled = localPreferences.channels[channel]?.enabled ?? true;
+					{(
+						Object.keys(NOTIFICATION_CHANNEL_CONFIG) as NotificationChannel[]
+					).map((channel) => {
+						const config = NOTIFICATION_CHANNEL_CONFIG[channel];
+						const Icon = CHANNEL_ICONS[channel];
+						const isEnabled =
+							localPreferences.channels[channel]?.enabled ?? true;
 
-							return (
-								<div
-									key={channel}
-									className="flex items-center justify-between"
-								>
-									<div className="flex items-center gap-3">
-										<Icon className="size-4 text-muted-foreground" />
-										<div>
-											<Label htmlFor={`channel-${channel}`}>
-												{config.label}
-											</Label>
-											<p className="text-xs text-muted-foreground">
-												{config.description}
-											</p>
-										</div>
+						return (
+							<div key={channel} className="flex items-center justify-between">
+								<div className="flex items-center gap-3">
+									<Icon className="size-4 text-muted-foreground" />
+									<div>
+										<Label htmlFor={`channel-${channel}`}>{config.label}</Label>
+										<p className="text-muted-foreground text-xs">
+											{config.description}
+										</p>
 									</div>
-									<Switch
-										id={`channel-${channel}`}
-										checked={isEnabled}
-										onCheckedChange={(checked) =>
-											handleChannelToggle(channel, checked)
-										}
-									/>
 								</div>
-							);
-						}
-					)}
+								<Switch
+									id={`channel-${channel}`}
+									checked={isEnabled}
+									onCheckedChange={(checked) =>
+										handleChannelToggle(channel, checked)
+									}
+								/>
+							</div>
+						);
+					})}
 				</CardContent>
 			</Card>
 
@@ -223,77 +231,75 @@ export function NotificationPreferences() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
-					{(Object.keys(NOTIFICATION_CATEGORY_CONFIG) as NotificationCategory[]).map(
-						(category) => {
-							const config = NOTIFICATION_CATEGORY_CONFIG[category];
-							const categoryPrefs = localPreferences.categories[category];
-							const isEnabled = categoryPrefs?.enabled ?? true;
-							const enabledChannels = categoryPrefs?.channels ?? [];
+					{(
+						Object.keys(NOTIFICATION_CATEGORY_CONFIG) as NotificationCategory[]
+					).map((category) => {
+						const config = NOTIFICATION_CATEGORY_CONFIG[category];
+						const categoryPrefs = localPreferences.categories[category];
+						const isEnabled = categoryPrefs?.enabled ?? true;
+						const enabledChannels = categoryPrefs?.channels ?? [];
 
-							return (
-								<div key={category} className="space-y-3">
-									<div className="flex items-center justify-between">
-										<div>
-											<Label htmlFor={`category-${category}`}>
-												{config.label}
-											</Label>
-											<p className="text-xs text-muted-foreground">
-												{config.description}
-											</p>
-										</div>
-										<Switch
-											id={`category-${category}`}
-											checked={isEnabled}
-											onCheckedChange={(checked) =>
-												handleCategoryToggle(category, checked)
-											}
-										/>
+						return (
+							<div key={category} className="space-y-3">
+								<div className="flex items-center justify-between">
+									<div>
+										<Label htmlFor={`category-${category}`}>
+											{config.label}
+										</Label>
+										<p className="text-muted-foreground text-xs">
+											{config.description}
+										</p>
 									</div>
-									{isEnabled && (
-										<div className="ml-4 flex flex-wrap gap-4">
-											{(
-												Object.keys(
-													NOTIFICATION_CHANNEL_CONFIG
-												) as NotificationChannel[]
-											).map((channel) => {
-												const channelConfig = NOTIFICATION_CHANNEL_CONFIG[channel];
-												const isChannelEnabled =
-													localPreferences.channels[channel]?.enabled ?? true;
-
-												if (!isChannelEnabled) return null;
-
-												return (
-													<div
-														key={channel}
-														className="flex items-center gap-2"
-													>
-														<Checkbox
-															id={`${category}-${channel}`}
-															checked={enabledChannels.includes(channel)}
-															onCheckedChange={(checked) =>
-																handleCategoryChannelToggle(
-																	category,
-																	channel,
-																	checked === true
-																)
-															}
-														/>
-														<Label
-															htmlFor={`${category}-${channel}`}
-															className="text-xs font-normal"
-														>
-															{channelConfig.label}
-														</Label>
-													</div>
-												);
-											})}
-										</div>
-									)}
-									<Separator />
+									<Switch
+										id={`category-${category}`}
+										checked={isEnabled}
+										onCheckedChange={(checked) =>
+											handleCategoryToggle(category, checked)
+										}
+									/>
 								</div>
-							);
-						}
-					)}
+								{isEnabled && (
+									<div className="ml-4 flex flex-wrap gap-4">
+										{(
+											Object.keys(
+												NOTIFICATION_CHANNEL_CONFIG,
+											) as NotificationChannel[]
+										).map((channel) => {
+											const channelConfig =
+												NOTIFICATION_CHANNEL_CONFIG[channel];
+											const isChannelEnabled =
+												localPreferences.channels[channel]?.enabled ?? true;
+
+											if (!isChannelEnabled) return null;
+
+											return (
+												<div key={channel} className="flex items-center gap-2">
+													<Checkbox
+														id={`${category}-${channel}`}
+														checked={enabledChannels.includes(channel)}
+														onCheckedChange={(checked) =>
+															handleCategoryChannelToggle(
+																category,
+																channel,
+																checked === true,
+															)
+														}
+													/>
+													<Label
+														htmlFor={`${category}-${channel}`}
+														className="font-normal text-xs"
+													>
+														{channelConfig.label}
+													</Label>
+												</div>
+											);
+										})}
+									</div>
+								)}
+								<Separator />
+							</div>
+						);
+					})}
 				</CardContent>
 			</Card>
 

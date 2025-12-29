@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
+	CreateTeamInput,
 	Team,
 	TeamMember,
 	TeamRole,
-	CreateTeamInput,
 	UpdateTeamInput,
 } from "../types";
 
@@ -25,9 +25,7 @@ export function useTeams(organizationId?: string) {
 	return useQuery({
 		queryKey: queryKeys.teams.all,
 		queryFn: async ({ signal }) => {
-			const params = organizationId
-				? `?organizationId=${organizationId}`
-				: "";
+			const params = organizationId ? `?organizationId=${organizationId}` : "";
 			return api.get<TeamsResponse>(`/api/teams${params}`, signal);
 		},
 	});
@@ -192,10 +190,9 @@ export function useUpdateTeamMemberRole() {
 			memberId: string;
 			role: TeamRole;
 		}) => {
-			return api.patch<TeamMember>(
-				`/api/teams/${teamId}/members/${memberId}`,
-				{ role },
-			);
+			return api.patch<TeamMember>(`/api/teams/${teamId}/members/${memberId}`, {
+				role,
+			});
 		},
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({

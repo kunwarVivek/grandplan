@@ -1,7 +1,7 @@
 // Re-export notification types from store for consistency
 export type {
-	NotificationType,
 	Notification,
+	NotificationType,
 } from "@/stores/notification-store";
 
 export type NotificationChannel = "in_app" | "email" | "push" | "slack";

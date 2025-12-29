@@ -1,5 +1,6 @@
-import { useState } from "react";
 import { Building2, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
+import { useState } from "react";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -9,7 +10,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrganizations } from "../hooks/use-organizations";
 import type { Organization } from "../types";
@@ -62,7 +62,7 @@ export function OrgSwitcher({
 							<Building2 className="size-3.5" />
 						</div>
 					)}
-					<span className="truncate text-sm font-medium">
+					<span className="truncate font-medium text-sm">
 						{currentOrg?.name ?? "Select organization"}
 					</span>
 				</div>
@@ -93,14 +93,12 @@ export function OrgSwitcher({
 							)}
 							<span className="truncate">{org.name}</span>
 						</div>
-						{org.id === currentOrgId && (
-							<Check className="ml-auto size-4" />
-						)}
+						{org.id === currentOrgId && <Check className="ml-auto size-4" />}
 					</DropdownMenuItem>
 				))}
 
 				{organizations.length === 0 && (
-					<div className="px-2 py-4 text-center text-xs text-muted-foreground">
+					<div className="px-2 py-4 text-center text-muted-foreground text-xs">
 						No organizations found
 					</div>
 				)}

@@ -134,6 +134,8 @@ model Invoice {
   @@index([subscriptionId])
   @@index([status])
   @@index([externalId])
+  // Composite index for billing period queries
+  @@index([subscriptionId, periodStart])
   @@map("invoice")
 }
 

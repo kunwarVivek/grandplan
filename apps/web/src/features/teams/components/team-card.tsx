@@ -1,12 +1,19 @@
-import { MoreHorizontal, Settings, Trash2, Users2, UserPlus } from "lucide-react";
+import {
+	MoreHorizontal,
+	Settings,
+	Trash2,
+	UserPlus,
+	Users2,
+} from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
+	CardAction,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-	CardAction,
 } from "@/components/ui/card";
 import {
 	DropdownMenu,
@@ -15,7 +22,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar } from "@/components/ui/avatar";
 import type { Team, TeamMember } from "../types";
 
 type TeamCardProps = {
@@ -67,11 +73,9 @@ export function TeamCard({
 			<CardHeader>
 				<div className="flex items-center gap-3">
 					<div
-						className="flex size-10 items-center justify-center shrink-0"
+						className="flex size-10 shrink-0 items-center justify-center"
 						style={{
-							backgroundColor: team.color
-								? `${team.color}20`
-								: undefined,
+							backgroundColor: team.color ? `${team.color}20` : undefined,
 							color: team.color ?? undefined,
 						}}
 					>
@@ -110,15 +114,11 @@ export function TeamCard({
 							<DropdownMenuContent align="end">
 								{canEdit && (
 									<>
-										<DropdownMenuItem
-											onSelect={() => onEdit?.(team)}
-										>
+										<DropdownMenuItem onSelect={() => onEdit?.(team)}>
 											<Settings className="size-4" />
 											Settings
 										</DropdownMenuItem>
-										<DropdownMenuItem
-											onSelect={() => onAddMember?.(team)}
-										>
+										<DropdownMenuItem onSelect={() => onAddMember?.(team)}>
 											<UserPlus className="size-4" />
 											Add member
 										</DropdownMenuItem>
@@ -151,31 +151,26 @@ export function TeamCard({
 										className="size-7 ring-2 ring-background"
 									>
 										{member.user.image ? (
-											<img
-												src={member.user.image}
-												alt={member.user.name}
-											/>
+											<img src={member.user.image} alt={member.user.name} />
 										) : (
-											<div className="flex size-full items-center justify-center bg-muted text-xs font-medium uppercase">
+											<div className="flex size-full items-center justify-center bg-muted font-medium text-xs uppercase">
 												{member.user.name.charAt(0)}
 											</div>
 										)}
 									</Avatar>
 								))}
 								{remainingCount > 0 && (
-									<div className="flex size-7 items-center justify-center bg-muted text-xs font-medium ring-2 ring-background">
+									<div className="flex size-7 items-center justify-center bg-muted font-medium text-xs ring-2 ring-background">
 										+{remainingCount}
 									</div>
 								)}
 							</div>
 						) : (
-							<span className="text-xs text-muted-foreground">
-								No members
-							</span>
+							<span className="text-muted-foreground text-xs">No members</span>
 						)}
 					</div>
 
-					<div className="flex items-center gap-1 text-xs text-muted-foreground">
+					<div className="flex items-center gap-1 text-muted-foreground text-xs">
 						<Users2 className="size-3.5" />
 						<span>
 							{displayMemberCount}{" "}

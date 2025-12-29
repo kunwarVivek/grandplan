@@ -39,7 +39,12 @@ function OrgBilling() {
 			name: "Free",
 			price: "$0",
 			description: "For small teams getting started",
-			features: ["Up to 5 team members", "10 projects", "1GB storage", "Basic support"],
+			features: [
+				"Up to 5 team members",
+				"10 projects",
+				"1GB storage",
+				"Basic support",
+			],
 			current: false,
 		},
 		{
@@ -111,11 +116,15 @@ function OrgBilling() {
 								<span className="font-medium">{stat.name}</span>
 								<span className="text-muted-foreground">
 									{stat.current}{" "}
-									{stat.limit === -1 ? "(Unlimited)" : `/ ${stat.limit} ${stat.unit}`}
+									{stat.limit === -1
+										? "(Unlimited)"
+										: `/ ${stat.limit} ${stat.unit}`}
 								</span>
 							</div>
 							{stat.limit !== -1 && (
-								<Progress value={getUsagePercentage(stat.current, stat.limit)} />
+								<Progress
+									value={getUsagePercentage(stat.current, stat.limit)}
+								/>
 							)}
 						</div>
 					))}
@@ -139,23 +148,30 @@ function OrgBilling() {
 								}`}
 							>
 								{plan.current && (
-									<Badge className="absolute -top-2 right-4">Current Plan</Badge>
+									<Badge className="absolute -top-2 right-4">
+										Current Plan
+									</Badge>
 								)}
 								<div className="mb-4">
-									<h3 className="text-lg font-semibold">{plan.name}</h3>
+									<h3 className="font-semibold text-lg">{plan.name}</h3>
 									<div className="mt-1 flex items-baseline gap-1">
-										<span className="text-2xl font-bold">{plan.price}</span>
+										<span className="font-bold text-2xl">{plan.price}</span>
 										{plan.price !== "Custom" && (
-											<span className="text-sm text-muted-foreground">/month</span>
+											<span className="text-muted-foreground text-sm">
+												/month
+											</span>
 										)}
 									</div>
-									<p className="mt-1 text-xs text-muted-foreground">
+									<p className="mt-1 text-muted-foreground text-xs">
 										{plan.description}
 									</p>
 								</div>
 								<ul className="mb-4 space-y-2">
 									{plan.features.map((feature) => (
-										<li key={feature} className="flex items-center gap-2 text-xs">
+										<li
+											key={feature}
+											className="flex items-center gap-2 text-xs"
+										>
 											<CheckIcon className="size-3 text-primary" />
 											{feature}
 										</li>
@@ -178,7 +194,10 @@ function OrgBilling() {
 										Downgrade
 									</Button>
 								) : (
-									<Button className="w-full" onClick={() => handleUpgrade(plan.id)}>
+									<Button
+										className="w-full"
+										onClick={() => handleUpgrade(plan.id)}
+									>
 										Upgrade
 									</Button>
 								)}

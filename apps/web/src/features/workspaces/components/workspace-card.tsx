@@ -1,12 +1,19 @@
-import { FolderKanban, MoreHorizontal, Settings, Trash2, Users } from "lucide-react";
+import {
+	FolderKanban,
+	MoreHorizontal,
+	Settings,
+	Trash2,
+	Users,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
+	CardAction,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-	CardAction,
 } from "@/components/ui/card";
 import {
 	DropdownMenu,
@@ -15,7 +22,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import type { Workspace } from "../types";
 
 type WorkspaceCardProps = {
@@ -63,7 +69,7 @@ export function WorkspaceCard({
 			<CardHeader>
 				<div className="flex items-center gap-3">
 					<div
-						className="flex size-10 items-center justify-center shrink-0"
+						className="flex size-10 shrink-0 items-center justify-center"
 						style={{
 							backgroundColor: workspace.color
 								? `${workspace.color}20`
@@ -106,9 +112,7 @@ export function WorkspaceCard({
 							<DropdownMenuContent align="end">
 								{canEdit && (
 									<>
-										<DropdownMenuItem
-											onSelect={() => onEdit?.(workspace)}
-										>
+										<DropdownMenuItem onSelect={() => onEdit?.(workspace)}>
 											<Settings className="size-4" />
 											Settings
 										</DropdownMenuItem>
@@ -137,7 +141,7 @@ export function WorkspaceCard({
 			</CardHeader>
 
 			<CardContent>
-				<div className="flex items-center gap-4 text-xs text-muted-foreground">
+				<div className="flex items-center gap-4 text-muted-foreground text-xs">
 					<div className="flex items-center gap-1">
 						<FolderKanban className="size-3.5" />
 						<span>

@@ -16,12 +16,7 @@ import { ContentContainer, PageHeader } from "@/components/layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -105,7 +100,7 @@ export const Route = createFileRoute("/_authenticated/workspaces/$workspaceId")(
 			};
 			return { workspace };
 		},
-	}
+	},
 );
 
 const roleColors = {
@@ -166,7 +161,7 @@ function WorkspaceDetailPage() {
 						<Building2 className="size-5 text-white" />
 					</div>
 					{workspace.isDefault && <Badge variant="secondary">Default</Badge>}
-					<span className="text-sm text-muted-foreground">
+					<span className="text-muted-foreground text-sm">
 						Created {new Date(workspace.createdAt).toLocaleDateString()}
 					</span>
 				</div>
@@ -186,7 +181,7 @@ function WorkspaceDetailPage() {
 
 				<TabsContent value="projects" className="mt-6">
 					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-medium">Projects</h3>
+						<h3 className="font-medium text-lg">Projects</h3>
 						<Button size="sm">
 							<Plus className="size-4" />
 							New Project
@@ -202,9 +197,7 @@ function WorkspaceDetailPage() {
 								<Card className="transition-colors hover:bg-muted/50">
 									<CardHeader className="pb-2">
 										<div className="flex items-center justify-between">
-											<CardTitle className="text-sm">
-												{project.name}
-											</CardTitle>
+											<CardTitle className="text-sm">{project.name}</CardTitle>
 											<Badge variant={statusColors[project.status]}>
 												{project.status.replace("-", " ")}
 											</Badge>
@@ -213,12 +206,8 @@ function WorkspaceDetailPage() {
 									<CardContent>
 										<div className="space-y-2">
 											<div className="flex items-center justify-between text-xs">
-												<span className="text-muted-foreground">
-													Progress
-												</span>
-												<span className="font-medium">
-													{project.progress}%
-												</span>
+												<span className="text-muted-foreground">Progress</span>
+												<span className="font-medium">{project.progress}%</span>
 											</div>
 											<Progress value={project.progress} />
 										</div>
@@ -229,7 +218,7 @@ function WorkspaceDetailPage() {
 						<Card className="flex cursor-pointer items-center justify-center border-dashed transition-colors hover:bg-muted/50">
 							<CardContent className="flex flex-col items-center gap-2 py-8">
 								<Plus className="size-8 text-muted-foreground" />
-								<span className="text-sm text-muted-foreground">
+								<span className="text-muted-foreground text-sm">
 									Create Project
 								</span>
 							</CardContent>
@@ -239,7 +228,7 @@ function WorkspaceDetailPage() {
 
 				<TabsContent value="members" className="mt-6">
 					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-medium">Members</h3>
+						<h3 className="font-medium text-lg">Members</h3>
 						<Button size="sm">
 							<UserPlus className="size-4" />
 							Invite Member
@@ -256,19 +245,22 @@ function WorkspaceDetailPage() {
 									<div className="min-w-0 flex-1">
 										<div className="flex items-center gap-2">
 											<p className="font-medium">{member.name}</p>
-											<Badge variant={roleColors[member.role as keyof typeof roleColors]}>
+											<Badge
+												variant={
+													roleColors[member.role as keyof typeof roleColors]
+												}
+											>
 												{member.role}
 											</Badge>
 										</div>
-										<div className="flex items-center gap-4 text-sm text-muted-foreground">
+										<div className="flex items-center gap-4 text-muted-foreground text-sm">
 											<span className="flex items-center gap-1">
 												<Mail className="size-3" />
 												{member.email}
 											</span>
 											<span className="flex items-center gap-1">
 												<Calendar className="size-3" />
-												Joined{" "}
-												{new Date(member.joinedAt).toLocaleDateString()}
+												Joined {new Date(member.joinedAt).toLocaleDateString()}
 											</span>
 										</div>
 									</div>

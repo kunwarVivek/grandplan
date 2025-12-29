@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
-import type { CollaborativeTaskField, AwarenessUser } from "../types";
+import type { AwarenessUser, CollaborativeTaskField } from "../types";
 
 type TaskData = {
 	id: string;
@@ -29,10 +29,7 @@ type UseCollaborativeTaskOptions = {
 
 type UseCollaborativeTaskReturn = {
 	task: TaskData | null;
-	updateField: <K extends keyof TaskData>(
-		field: K,
-		value: TaskData[K]
-	) => void;
+	updateField: <K extends keyof TaskData>(field: K, value: TaskData[K]) => void;
 	isEditing: boolean;
 	editors: CollaborativeTaskField[];
 	startEditing: (fieldName: string) => void;
@@ -43,7 +40,7 @@ type UseCollaborativeTaskReturn = {
 
 export function useCollaborativeTask(
 	taskId: string | null,
-	options: UseCollaborativeTaskOptions
+	options: UseCollaborativeTaskOptions,
 ): UseCollaborativeTaskReturn {
 	const { doc, awareness, userId } = options;
 
@@ -126,7 +123,7 @@ export function useCollaborativeTask(
 				taskYMap!.set(field as string, value);
 			});
 		},
-		[tasksMap, taskId, doc]
+		[tasksMap, taskId, doc],
 	);
 
 	// Start editing a field
@@ -143,7 +140,7 @@ export function useCollaborativeTask(
 				editingField: fieldName,
 			});
 		},
-		[awareness, taskId]
+		[awareness, taskId],
 	);
 
 	// Stop editing
@@ -206,7 +203,7 @@ export function useCollaborativeTask(
 		(fieldName: string): CollaborativeTaskField | null => {
 			return editors.find((e) => e.fieldName === fieldName) || null;
 		},
-		[editors]
+		[editors],
 	);
 
 	// Check if a field is being edited by someone else
@@ -214,7 +211,7 @@ export function useCollaborativeTask(
 		(fieldName: string): boolean => {
 			return editors.some((e) => e.fieldName === fieldName);
 		},
-		[editors]
+		[editors],
 	);
 
 	return {
@@ -231,7 +228,7 @@ export function useCollaborativeTask(
 
 // Hook for optimistic task updates with conflict resolution
 export function useOptimisticTaskUpdate(
-	updateField: <K extends keyof TaskData>(field: K, value: TaskData[K]) => void
+	updateField: <K extends keyof TaskData>(field: K, value: TaskData[K]) => void,
 ) {
 	const [pendingUpdates, setPendingUpdates] = useState<
 		Map<string, { value: unknown; timestamp: number }>
@@ -258,14 +255,14 @@ export function useOptimisticTaskUpdate(
 				});
 			}, 1000);
 		},
-		[updateField]
+		[updateField],
 	);
 
 	const isPending = useCallback(
 		(field: string): boolean => {
 			return pendingUpdates.has(field);
 		},
-		[pendingUpdates]
+		[pendingUpdates],
 	);
 
 	return {
@@ -279,7 +276,7 @@ export function useOptimisticTaskUpdate(
 export function useCollaborativeText(
 	doc: Y.Doc | null,
 	taskId: string,
-	fieldName: string
+	fieldName: string,
 ) {
 	const [text, setText] = useState<Y.Text | null>(null);
 

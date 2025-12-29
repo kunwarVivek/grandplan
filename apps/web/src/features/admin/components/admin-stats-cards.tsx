@@ -30,7 +30,9 @@ export function AdminStatsCards({ className }: AdminStatsCardsProps) {
 
 	if (error || !data) {
 		return (
-			<div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-4", className)}>
+			<div
+				className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-4", className)}
+			>
 				<Card>
 					<CardHeader>
 						<CardTitle>Statistics</CardTitle>
@@ -62,7 +64,7 @@ export function AdminStatsCards({ className }: AdminStatsCardsProps) {
 
 	// Calculate growth percentages from data
 	const calculateGrowth = (
-		growthData: { date: string; count?: number; amount?: number }[]
+		growthData: { date: string; count?: number; amount?: number }[],
 	): number => {
 		if (growthData.length < 2) return 0;
 		const current = growthData[growthData.length - 1];
@@ -132,26 +134,32 @@ type StatCardProps = {
 	trend: number | null;
 };
 
-function StatCard({ title, value, description, icon: Icon, trend }: StatCardProps) {
+function StatCard({
+	title,
+	value,
+	description,
+	icon: Icon,
+	trend,
+}: StatCardProps) {
 	const isPositive = trend !== null && trend >= 0;
 	const TrendIcon = isPositive ? ArrowUpRight : ArrowDownRight;
 
 	return (
 		<Card>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
-				<CardTitle className="text-sm font-medium text-muted-foreground">
+				<CardTitle className="font-medium text-muted-foreground text-sm">
 					{title}
 				</CardTitle>
 				<Icon className="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
-				<div className="text-2xl font-bold">{value}</div>
-				<div className="flex items-center gap-1 text-xs text-muted-foreground">
+				<div className="font-bold text-2xl">{value}</div>
+				<div className="flex items-center gap-1 text-muted-foreground text-xs">
 					{trend !== null && (
 						<span
 							className={cn(
 								"flex items-center gap-0.5 font-medium",
-								isPositive ? "text-emerald-500" : "text-red-500"
+								isPositive ? "text-emerald-500" : "text-red-500",
 							)}
 						>
 							<TrendIcon className="size-3" />
@@ -175,7 +183,7 @@ function AdminStatsCardsSkeleton({ className }: { className?: string }) {
 						<Skeleton className="size-4" />
 					</CardHeader>
 					<CardContent>
-						<Skeleton className="h-7 w-20 mb-1" />
+						<Skeleton className="mb-1 h-7 w-20" />
 						<Skeleton className="h-3 w-32" />
 					</CardContent>
 				</Card>

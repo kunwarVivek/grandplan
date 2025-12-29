@@ -76,7 +76,11 @@ export const api = {
 	delete: <T>(endpoint: string, signal?: AbortSignal) =>
 		request<T>(endpoint, { method: "DELETE", signal }),
 
-	postForm: async <T>(endpoint: string, formData: FormData, signal?: AbortSignal): Promise<T> => {
+	postForm: async <T>(
+		endpoint: string,
+		formData: FormData,
+		signal?: AbortSignal,
+	): Promise<T> => {
 		const response = await fetch(`${API_BASE_URL}${endpoint}`, {
 			method: "POST",
 			body: formData,

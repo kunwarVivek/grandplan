@@ -37,6 +37,10 @@ model AuditLog {
   @@index([resourceType, resourceId])
   @@index([action])
   @@index([createdAt])
+  // Composite index for organization history queries
+  @@index([organizationId, createdAt])
+  // Composite index for user activity timeline
+  @@index([userId, createdAt])
   @@map("audit_log")
 }
 

@@ -116,7 +116,10 @@ export const USER_ROLE_CONFIG: Record<
 > = {
 	user: { label: "User", color: "bg-muted text-muted-foreground" },
 	admin: { label: "Admin", color: "bg-blue-500/10 text-blue-500" },
-	super_admin: { label: "Super Admin", color: "bg-purple-500/10 text-purple-500" },
+	super_admin: {
+		label: "Super Admin",
+		color: "bg-purple-500/10 text-purple-500",
+	},
 };
 
 export const ORG_STATUS_CONFIG: Record<

@@ -1,7 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type OrganizationStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "CANCELLED";
+export type OrganizationStatus =
+	| "PENDING"
+	| "ACTIVE"
+	| "SUSPENDED"
+	| "CANCELLED";
 export type MemberRole = "OWNER" | "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";
 
 export type BrandingConfig = {
@@ -50,7 +54,10 @@ type OrganizationState = {
 
 	// Actions
 	setOrganizations: (organizations: Organization[]) => void;
-	setActiveOrganization: (organization: Organization | null, role?: MemberRole | null) => void;
+	setActiveOrganization: (
+		organization: Organization | null,
+		role?: MemberRole | null,
+	) => void;
 	addOrganization: (organization: Organization) => void;
 	updateOrganization: (id: string, updates: Partial<Organization>) => void;
 	removeOrganization: (id: string) => void;
@@ -96,7 +103,9 @@ export const useOrganizationStore = create<OrganizationState>()(
 				set((state) => ({
 					organizations: state.organizations.filter((org) => org.id !== id),
 					activeOrganization:
-						state.activeOrganization?.id === id ? null : state.activeOrganization,
+						state.activeOrganization?.id === id
+							? null
+							: state.activeOrganization,
 				})),
 
 			setLoading: (isLoading) => set({ isLoading }),
@@ -122,8 +131,10 @@ export const useOrganizationStore = create<OrganizationState>()(
 // Selector hooks
 export const useActiveOrganization = () =>
 	useOrganizationStore((state) => state.activeOrganization);
-export const useActiveRole = () => useOrganizationStore((state) => state.activeRole);
-export const useOrganizations = () => useOrganizationStore((state) => state.organizations);
+export const useActiveRole = () =>
+	useOrganizationStore((state) => state.activeRole);
+export const useOrganizations = () =>
+	useOrganizationStore((state) => state.organizations);
 export const useIsOrgAdmin = () => {
 	const role = useOrganizationStore((state) => state.activeRole);
 	return role === "OWNER" || role === "ADMIN";

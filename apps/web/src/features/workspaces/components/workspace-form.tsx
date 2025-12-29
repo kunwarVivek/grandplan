@@ -1,10 +1,8 @@
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { FolderKanban, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
 	Form,
 	FormControl,
@@ -14,7 +12,13 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import type { Workspace, CreateWorkspaceInput, UpdateWorkspaceInput } from "../types";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import type {
+	CreateWorkspaceInput,
+	UpdateWorkspaceInput,
+	Workspace,
+} from "../types";
 import { WORKSPACE_COLORS } from "../types";
 
 const formSchema = z.object({
@@ -92,9 +96,7 @@ export function WorkspaceForm({
 					<div
 						className="flex size-16 shrink-0 items-center justify-center"
 						style={{
-							backgroundColor: selectedColor
-								? `${selectedColor}20`
-								: undefined,
+							backgroundColor: selectedColor ? `${selectedColor}20` : undefined,
 							color: selectedColor ?? undefined,
 						}}
 					>
@@ -136,7 +138,7 @@ export function WorkspaceForm({
 												<button
 													key={color.value}
 													type="button"
-													className="size-6 ring-offset-background transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:scale-110"
+													className="size-6 ring-offset-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 													style={{ backgroundColor: color.value }}
 													onClick={() => field.onChange(color.value)}
 													title={color.name}

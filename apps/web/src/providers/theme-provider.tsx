@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
 
-import { useActiveOrganization, useTheme, useUIStore, type Theme } from "@/stores";
+import {
+	type Theme,
+	useActiveOrganization,
+	useTheme,
+	useUIStore,
+} from "@/stores";
 import type { BrandingConfig } from "@/stores/organization-store";
 
 type ThemeContextValue = {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocation } from "@tanstack/react-router";
 import {
 	Building2,
 	CheckSquare,
@@ -10,7 +11,6 @@ import {
 	Users,
 } from "lucide-react";
 import * as React from "react";
-
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -21,6 +21,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import type { Organization, Workspace } from "@/stores";
 import {
 	useActiveOrganization,
 	useActiveWorkspace,
@@ -31,8 +32,6 @@ import {
 	useWorkspaceStore,
 	useWorkspaces,
 } from "@/stores";
-import type { Organization, Workspace } from "@/stores";
-import { useLocation } from "@tanstack/react-router";
 
 import { SidebarItem, SidebarSection } from "./sidebar-item";
 
@@ -51,10 +50,10 @@ function OrganizationSelector({ collapsed }: { collapsed: boolean }) {
 	const organizations = useOrganizations();
 	const workspaces = useWorkspaces();
 	const setActiveOrganization = useOrganizationStore(
-		(state) => state.setActiveOrganization
+		(state) => state.setActiveOrganization,
 	);
 	const setActiveWorkspace = useWorkspaceStore(
-		(state) => state.setActiveWorkspace
+		(state) => state.setActiveWorkspace,
 	);
 
 	const handleOrgChange = (org: Organization) => {
@@ -72,13 +71,13 @@ function OrganizationSelector({ collapsed }: { collapsed: boolean }) {
 		activeOrganization?.brandingConfig?.logo || activeOrganization?.logo;
 
 	return (
-		<div className="space-y-2 border-b border-border p-3">
+		<div className="space-y-2 border-border border-b p-3">
 			{/* Organization Selector */}
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					className={cn(
 						"flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-accent",
-						collapsed && "justify-center px-0"
+						collapsed && "justify-center px-0",
 					)}
 				>
 					<div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
@@ -94,11 +93,11 @@ function OrganizationSelector({ collapsed }: { collapsed: boolean }) {
 					</div>
 					{!collapsed && (
 						<div className="flex-1 overflow-hidden">
-							<p className="truncate text-sm font-medium">
+							<p className="truncate font-medium text-sm">
 								{activeOrganization?.name || "Select Organization"}
 							</p>
 							{activeWorkspace && (
-								<p className="truncate text-xs text-muted-foreground">
+								<p className="truncate text-muted-foreground text-xs">
 									{activeWorkspace.name}
 								</p>
 							)}
@@ -116,9 +115,7 @@ function OrganizationSelector({ collapsed }: { collapsed: boolean }) {
 						<DropdownMenuItem
 							key={org.id}
 							onClick={() => handleOrgChange(org)}
-							className={cn(
-								activeOrganization?.id === org.id && "bg-accent"
-							)}
+							className={cn(activeOrganization?.id === org.id && "bg-accent")}
 						>
 							<Building2 className="mr-2 size-4" />
 							{org.name}
@@ -137,7 +134,7 @@ function OrganizationSelector({ collapsed }: { collapsed: boolean }) {
 								key={workspace.id}
 								onClick={() => handleWorkspaceChange(workspace)}
 								className={cn(
-									activeWorkspace?.id === workspace.id && "bg-accent"
+									activeWorkspace?.id === workspace.id && "bg-accent",
 								)}
 							>
 								<FolderKanban className="mr-2 size-4" />
@@ -145,7 +142,7 @@ function OrganizationSelector({ collapsed }: { collapsed: boolean }) {
 							</DropdownMenuItem>
 						))}
 					{workspaces.filter(
-						(ws) => ws.organizationId === activeOrganization?.id
+						(ws) => ws.organizationId === activeOrganization?.id,
 					).length === 0 && (
 						<DropdownMenuItem disabled>No workspaces</DropdownMenuItem>
 					)}
@@ -160,7 +157,7 @@ function UserSection({ collapsed }: { collapsed: boolean }) {
 	const isSettingsActive = location.pathname.startsWith("/settings");
 
 	return (
-		<div className="border-t border-border p-3">
+		<div className="border-border border-t p-3">
 			<SidebarItem
 				icon={<Settings className="size-5" />}
 				label="Settings"
@@ -247,9 +244,9 @@ export function Sidebar({
 	return (
 		<aside
 			className={cn(
-				"relative hidden h-screen flex-col border-r border-border bg-card transition-all duration-300 lg:flex",
+				"relative hidden h-screen flex-col border-border border-r bg-card transition-all duration-300 lg:flex",
 				collapsed ? "w-16" : "w-64",
-				className
+				className,
 			)}
 		>
 			<SidebarContent collapsed={collapsed} />
@@ -258,13 +255,13 @@ export function Sidebar({
 			<button
 				type="button"
 				onClick={toggleSidebar}
-				className="absolute -right-3 top-6 z-10 flex size-6 items-center justify-center rounded-full border border-border bg-card shadow-sm transition-colors hover:bg-accent"
+				className="absolute top-6 -right-3 z-10 flex size-6 items-center justify-center rounded-full border border-border bg-card shadow-sm transition-colors hover:bg-accent"
 				aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
 			>
 				<ChevronLeft
 					className={cn(
 						"size-4 transition-transform",
-						collapsed && "rotate-180"
+						collapsed && "rotate-180",
 					)}
 				/>
 			</button>
@@ -297,7 +294,7 @@ export function MobileSidebarTrigger() {
 						aria-hidden="true"
 					/>
 					{/* Sheet */}
-					<div className="fixed inset-y-0 left-0 z-50 w-64 animate-in slide-in-from-left lg:hidden">
+					<div className="slide-in-from-left fixed inset-y-0 left-0 z-50 w-64 animate-in lg:hidden">
 						<Sidebar isMobile onMobileClose={() => setOpen(false)} />
 					</div>
 				</>

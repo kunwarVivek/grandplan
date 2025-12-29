@@ -8,6 +8,10 @@ model Team {
   description     String?
   organizationId  String
 
+  // Soft delete
+  archivedAt      DateTime?
+  deletedAt       DateTime?
+
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -17,6 +21,7 @@ model Team {
 
   @@unique([organizationId, name])
   @@index([organizationId])
+  @@index([deletedAt])
   @@map("team")
 }
 

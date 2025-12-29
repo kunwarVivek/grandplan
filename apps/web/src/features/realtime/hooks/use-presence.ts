@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Awareness } from "y-protocols/awareness";
 
 import { usePresenceSocket } from "@/providers";
-import type { UserPresence, CursorData, AwarenessUser } from "../types";
+import type { AwarenessUser, CursorData, UserPresence } from "../types";
 import { getColorForUser } from "../types";
 
 type PresenceData = {
@@ -34,17 +34,17 @@ type UsePresenceReturn = {
 
 export function usePresence(
 	_projectId: string | null,
-	options: UsePresenceOptions = {}
+	options: UsePresenceOptions = {},
 ): UsePresenceReturn {
 	const { awareness, currentPage } = options;
 	const socket = usePresenceSocket();
 
 	const [presenceUsers, setPresenceUsers] = useState<Map<string, PresenceData>>(
-		new Map()
+		new Map(),
 	);
-	const [awarenessUsers, setAwarenessUsers] = useState<Map<number, AwarenessUser>>(
-		new Map()
-	);
+	const [awarenessUsers, setAwarenessUsers] = useState<
+		Map<number, AwarenessUser>
+	>(new Map());
 
 	// Combine presence and awareness data
 	const users = useMemo((): UserPresence[] => {
@@ -116,7 +116,7 @@ export function usePresence(
 				cursor: { x, y, elementId },
 			});
 		},
-		[awareness]
+		[awareness],
 	);
 
 	// Update user status
@@ -134,7 +134,7 @@ export function usePresence(
 				socket.emit("presence:update", { status });
 			}
 		},
-		[awareness, socket]
+		[awareness, socket],
 	);
 
 	// Update current page
@@ -152,7 +152,7 @@ export function usePresence(
 				socket.emit("presence:update", { currentPage: page });
 			}
 		},
-		[awareness, socket]
+		[awareness, socket],
 	);
 
 	// Check if user is online
@@ -160,7 +160,7 @@ export function usePresence(
 		(userId: string): boolean => {
 			return users.some((u) => u.userId === userId && u.status === "online");
 		},
-		[users]
+		[users],
 	);
 
 	// Listen to socket presence events
@@ -258,7 +258,7 @@ export function usePresence(
 // Hook for tracking cursor positions with throttling
 export function useCursorTracking(
 	updateCursor: (x: number, y: number, elementId?: string) => void,
-	enabled = true
+	enabled = true,
 ) {
 	useEffect(() => {
 		if (!enabled) return;
@@ -288,7 +288,7 @@ export function useCursorTracking(
 // Hook to get presence for a specific user
 export function useUserPresence(
 	users: UserPresence[],
-	userId: string
+	userId: string,
 ): UserPresence | null {
 	return useMemo(() => {
 		return users.find((u) => u.userId === userId) || null;

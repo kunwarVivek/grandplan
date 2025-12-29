@@ -62,7 +62,7 @@ function OrgGeneralSettings() {
 								onChange={(e) => setSlug(e.target.value)}
 								placeholder="org-slug"
 							/>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								This is used in URLs and must be unique.
 							</p>
 						</div>
@@ -93,8 +93,8 @@ function OrgGeneralSettings() {
 				<CardContent>
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium">Delete Organization</p>
-							<p className="text-xs text-muted-foreground">
+							<p className="font-medium text-sm">Delete Organization</p>
+							<p className="text-muted-foreground text-xs">
 								Permanently delete this organization and all its data.
 							</p>
 						</div>

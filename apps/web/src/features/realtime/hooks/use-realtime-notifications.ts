@@ -6,9 +6,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useNotificationsSocket } from "@/providers";
 import {
-	useNotificationStore,
 	type Notification,
 	type NotificationType,
+	useNotificationStore,
 } from "@/stores";
 import type { RealtimeNotification } from "../types";
 
@@ -29,7 +29,7 @@ type UseRealtimeNotificationsReturn = {
 const DEFAULT_NOTIFICATION_SOUND = "/sounds/notification.mp3";
 
 export function useRealtimeNotifications(
-	options: UseRealtimeNotificationsOptions = {}
+	options: UseRealtimeNotificationsOptions = {},
 ): UseRealtimeNotificationsReturn {
 	const {
 		playSound = true,
@@ -45,8 +45,12 @@ export function useRealtimeNotifications(
 	const [unreadCount, setUnreadCount] = useState(0);
 
 	// Store actions
-	const { addNotification, markAsRead: storeMarkAsRead, markAllAsRead: storeMarkAllAsRead, setUnreadCount: storeSetUnreadCount } =
-		useNotificationStore();
+	const {
+		addNotification,
+		markAsRead: storeMarkAsRead,
+		markAllAsRead: storeMarkAllAsRead,
+		setUnreadCount: storeSetUnreadCount,
+	} = useNotificationStore();
 
 	// Initialize audio element
 	useEffect(() => {
@@ -91,7 +95,7 @@ export function useRealtimeNotifications(
 				});
 			}
 		},
-		[showBrowserNotification]
+		[showBrowserNotification],
 	);
 
 	// Mark notification as read
@@ -102,7 +106,7 @@ export function useRealtimeNotifications(
 			}
 			storeMarkAsRead(notificationId);
 		},
-		[socket, storeMarkAsRead]
+		[socket, storeMarkAsRead],
 	);
 
 	// Mark all as read
@@ -158,7 +162,7 @@ export function useRealtimeNotifications(
 			// Auto-clear new notification after 5 seconds
 			setTimeout(() => {
 				setNewNotification((current) =>
-					current?.id === notification.id ? null : current
+					current?.id === notification.id ? null : current,
 				);
 			}, 5000);
 		};

@@ -95,9 +95,7 @@ const mockProjects: Project[] = [
 		progress: 45,
 		tasksCompleted: 9,
 		totalTasks: 20,
-		members: [
-			{ id: "3", name: "Jordan Kim", avatar: "", initials: "JK" },
-		],
+		members: [{ id: "3", name: "Jordan Kim", avatar: "", initials: "JK" }],
 		dueDate: "2025-02-28",
 		color: "bg-green-500",
 	},
@@ -109,9 +107,7 @@ const mockProjects: Project[] = [
 		progress: 100,
 		tasksCompleted: 15,
 		totalTasks: 15,
-		members: [
-			{ id: "1", name: "Sarah Chen", avatar: "", initials: "SC" },
-		],
+		members: [{ id: "1", name: "Sarah Chen", avatar: "", initials: "SC" }],
 		dueDate: "2025-01-15",
 		color: "bg-orange-500",
 	},
@@ -131,7 +127,7 @@ function ProjectsPage() {
 	const filteredProjects = mockProjects.filter(
 		(project) =>
 			project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			project.description.toLowerCase().includes(searchQuery.toLowerCase())
+			project.description.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
 	return (
@@ -150,7 +146,7 @@ function ProjectsPage() {
 			{/* Toolbar */}
 			<div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="relative flex-1 sm:max-w-xs">
-					<Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+					<Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						placeholder="Search projects..."
 						value={searchQuery}
@@ -186,8 +182,8 @@ function ProjectsPage() {
 			{filteredProjects.length === 0 ? (
 				<div className="mt-12 flex flex-col items-center justify-center text-center">
 					<FolderKanban className="size-12 text-muted-foreground" />
-					<h3 className="mt-4 text-lg font-medium">No projects found</h3>
-					<p className="mt-2 text-sm text-muted-foreground">
+					<h3 className="mt-4 font-medium text-lg">No projects found</h3>
+					<p className="mt-2 text-muted-foreground text-sm">
 						{searchQuery
 							? "Try adjusting your search query"
 							: "Get started by creating your first project"}
@@ -211,9 +207,7 @@ function ProjectsPage() {
 								<CardHeader className="pb-3">
 									<div className="flex items-start justify-between">
 										<div className="flex items-center gap-2">
-											<div
-												className={`size-3 rounded-full ${project.color}`}
-											/>
+											<div className={`size-3 rounded-full ${project.color}`} />
 											<CardTitle className="line-clamp-1">
 												{project.name}
 											</CardTitle>
@@ -255,16 +249,14 @@ function ProjectsPage() {
 											>
 												{project.status.replace("-", " ")}
 											</Badge>
-											<div className="flex items-center gap-1 text-xs text-muted-foreground">
+											<div className="flex items-center gap-1 text-muted-foreground text-xs">
 												<Calendar className="size-3" />
 												{new Date(project.dueDate).toLocaleDateString()}
 											</div>
 										</div>
 										<div className="space-y-2">
 											<div className="flex items-center justify-between text-xs">
-												<span className="text-muted-foreground">
-													Progress
-												</span>
+												<span className="text-muted-foreground">Progress</span>
 												<span className="font-medium">
 													{project.tasksCompleted}/{project.totalTasks} tasks
 												</span>
@@ -276,9 +268,7 @@ function ProjectsPage() {
 												{project.members.slice(0, 3).map((member) => (
 													<Avatar key={member.id} size="sm">
 														<AvatarImage src={member.avatar} />
-														<AvatarFallback>
-															{member.initials}
-														</AvatarFallback>
+														<AvatarFallback>{member.initials}</AvatarFallback>
 													</Avatar>
 												))}
 												{project.members.length > 3 && (
@@ -287,7 +277,7 @@ function ProjectsPage() {
 													</div>
 												)}
 											</div>
-											<div className="flex items-center gap-1 text-xs text-muted-foreground">
+											<div className="flex items-center gap-1 text-muted-foreground text-xs">
 												<Users className="size-3" />
 												{project.members.length}
 											</div>
@@ -325,7 +315,7 @@ function ProjectsPage() {
 												{project.status.replace("-", " ")}
 											</Badge>
 										</div>
-										<p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+										<p className="mt-1 line-clamp-1 text-muted-foreground text-sm">
 											{project.description}
 										</p>
 									</div>
@@ -337,13 +327,11 @@ function ProjectsPage() {
 											{project.members.slice(0, 3).map((member) => (
 												<Avatar key={member.id} size="sm">
 													<AvatarImage src={member.avatar} />
-													<AvatarFallback>
-														{member.initials}
-													</AvatarFallback>
+													<AvatarFallback>{member.initials}</AvatarFallback>
 												</Avatar>
 											))}
 										</div>
-										<div className="text-sm text-muted-foreground">
+										<div className="text-muted-foreground text-sm">
 											{new Date(project.dueDate).toLocaleDateString()}
 										</div>
 									</div>

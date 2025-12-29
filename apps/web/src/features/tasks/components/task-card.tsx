@@ -1,18 +1,3 @@
-import { useMemo } from "react";
-import { cn } from "@/lib/utils";
-import { useUIStore } from "@/stores";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-	ContextMenu,
-	ContextMenuContent,
-	ContextMenuItem,
-	ContextMenuSeparator,
-	ContextMenuSub,
-	ContextMenuSubContent,
-	ContextMenuSubTrigger,
-	ContextMenuTrigger,
-} from "@/components/ui/context-menu";
 import {
 	CalendarIcon,
 	CircleCheckIcon,
@@ -25,6 +10,21 @@ import {
 	Trash2Icon,
 	UserIcon,
 } from "lucide-react";
+import { useMemo } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuSeparator,
+	ContextMenuSub,
+	ContextMenuSubContent,
+	ContextMenuSubTrigger,
+	ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { cn } from "@/lib/utils";
+import { useUIStore } from "@/stores";
 import type { Task, TaskPriority, TaskStatus } from "../types";
 import { TASK_PRIORITY_CONFIG, TASK_STATUS_CONFIG } from "../types";
 
@@ -120,27 +120,27 @@ export function TaskCard({
 					data-draggable="true"
 					data-status={task.status}
 					className={cn(
-						"group/card bg-card hover:bg-muted/50 border-border cursor-pointer border p-3 transition-all",
-						"focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1 outline-none",
+						"group/card cursor-pointer border border-border bg-card p-3 transition-all hover:bg-muted/50",
+						"outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50",
 						isDragging && "opacity-50 ring-2 ring-primary",
 						className,
 					)}
 				>
 					{/* Header: Priority badge */}
 					<div className="flex items-start justify-between gap-2">
-						<div className="flex-1 min-w-0">
+						<div className="min-w-0 flex-1">
 							{task.priority && (
 								<Badge
 									variant="outline"
 									className={cn("mb-2 text-[10px]", priorityConfig.color)}
 								>
-									<FlagIcon className="size-2.5 mr-1" />
+									<FlagIcon className="mr-1 size-2.5" />
 									{priorityConfig.label}
 								</Badge>
 							)}
 
 							{/* Title */}
-							<h4 className="text-sm font-medium leading-tight line-clamp-2">
+							<h4 className="line-clamp-2 font-medium text-sm leading-tight">
 								{task.title}
 							</h4>
 						</div>
@@ -151,7 +151,7 @@ export function TaskCard({
 							onClick={(e) => {
 								e.stopPropagation();
 							}}
-							className="opacity-0 group-hover/card:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-0.5"
+							className="p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover/card:opacity-100"
 						>
 							<MoreHorizontalIcon className="size-4" />
 						</button>
@@ -159,7 +159,7 @@ export function TaskCard({
 
 					{/* Footer: Metadata */}
 					<div className="mt-3 flex items-center justify-between gap-2">
-						<div className="flex items-center gap-2 text-xs text-muted-foreground">
+						<div className="flex items-center gap-2 text-muted-foreground text-xs">
 							{/* Due date */}
 							{task.dueDate && (
 								<span

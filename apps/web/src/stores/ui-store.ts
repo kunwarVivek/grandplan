@@ -125,7 +125,8 @@ export const useUIStore = create<UIState>()(
 );
 
 // Selector hooks
-export const useSidebarCollapsed = () => useUIStore((state) => state.sidebarCollapsed);
+export const useSidebarCollapsed = () =>
+	useUIStore((state) => state.sidebarCollapsed);
 export const useTheme = () => useUIStore((state) => state.theme);
 export const useActiveModal = () => useUIStore((state) => state.activeModal);
 export const useModalData = () => useUIStore((state) => state.modalData);

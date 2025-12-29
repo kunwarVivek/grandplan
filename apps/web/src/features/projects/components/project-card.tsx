@@ -1,12 +1,21 @@
-import { Calendar, FolderKanban, MoreHorizontal, Settings, Trash2, Copy, Archive } from "lucide-react";
+import {
+	Archive,
+	Calendar,
+	Copy,
+	FolderKanban,
+	MoreHorizontal,
+	Settings,
+	Trash2,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
+	CardAction,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-	CardAction,
 } from "@/components/ui/card";
 import {
 	DropdownMenu,
@@ -15,7 +24,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { Project, ProjectStats } from "../types";
 import { PROJECT_STATUS_CONFIG } from "../types";
@@ -76,11 +84,9 @@ export function ProjectCard({
 			<CardHeader>
 				<div className="flex items-center gap-3">
 					<div
-						className="flex size-10 items-center justify-center shrink-0"
+						className="flex size-10 shrink-0 items-center justify-center"
 						style={{
-							backgroundColor: project.color
-								? `${project.color}20`
-								: undefined,
+							backgroundColor: project.color ? `${project.color}20` : undefined,
 							color: project.color ?? undefined,
 						}}
 					>
@@ -123,21 +129,15 @@ export function ProjectCard({
 								<DropdownMenuContent align="end">
 									{canEdit && (
 										<>
-											<DropdownMenuItem
-												onSelect={() => onEdit?.(project)}
-											>
+											<DropdownMenuItem onSelect={() => onEdit?.(project)}>
 												<Settings className="size-4" />
 												Settings
 											</DropdownMenuItem>
-											<DropdownMenuItem
-												onSelect={() => onDuplicate?.(project)}
-											>
+											<DropdownMenuItem onSelect={() => onDuplicate?.(project)}>
 												<Copy className="size-4" />
 												Duplicate
 											</DropdownMenuItem>
-											<DropdownMenuItem
-												onSelect={() => onArchive?.(project)}
-											>
+											<DropdownMenuItem onSelect={() => onArchive?.(project)}>
 												<Archive className="size-4" />
 												Archive
 											</DropdownMenuItem>
@@ -170,14 +170,11 @@ export function ProjectCard({
 									{stats.completedTasks}/{stats.totalTasks} tasks
 								</span>
 							</div>
-							<Progress
-								value={stats.completionPercentage}
-								className="h-1.5"
-							/>
+							<Progress value={stats.completionPercentage} className="h-1.5" />
 						</div>
 					)}
 
-					<div className="flex items-center justify-between text-xs text-muted-foreground">
+					<div className="flex items-center justify-between text-muted-foreground text-xs">
 						{(project.startDate || project.endDate) && (
 							<div className="flex items-center gap-1">
 								<Calendar className="size-3.5" />

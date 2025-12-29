@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Clock, AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,10 +28,10 @@ function StatCard({ title, value, icon, color, description }: StatCardProps) {
 						{icon}
 					</div>
 					<div className="min-w-0 flex-1">
-						<p className="text-2xl font-semibold">{value}</p>
-						<p className="text-xs text-muted-foreground">{title}</p>
+						<p className="font-semibold text-2xl">{value}</p>
+						<p className="text-muted-foreground text-xs">{title}</p>
 						{description && (
-							<p className="text-xs text-muted-foreground mt-0.5">
+							<p className="mt-0.5 text-muted-foreground text-xs">
 								{description}
 							</p>
 						)}
@@ -131,7 +131,7 @@ export function ProjectStats({ projectId }: ProjectStatsProps) {
 
 	if (!stats) {
 		return (
-			<div className="text-center py-8 text-muted-foreground">
+			<div className="py-8 text-center text-muted-foreground">
 				No stats available
 			</div>
 		);

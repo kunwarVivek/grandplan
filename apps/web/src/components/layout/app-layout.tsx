@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -32,9 +32,9 @@ function TaskDetailPanel({
 	onClose: () => void;
 }) {
 	return (
-		<aside className="flex h-full w-full max-w-md flex-col border-l border-border bg-card lg:max-w-lg xl:max-w-xl">
-			<div className="flex items-center justify-between border-b border-border px-4 py-3">
-				<h2 className="text-sm font-semibold">Task Details</h2>
+		<aside className="flex h-full w-full max-w-md flex-col border-border border-l bg-card lg:max-w-lg xl:max-w-xl">
+			<div className="flex items-center justify-between border-border border-b px-4 py-3">
+				<h2 className="font-semibold text-sm">Task Details</h2>
 				<Button
 					variant="ghost"
 					size="icon-sm"
@@ -72,12 +72,10 @@ export function AppLayout({
 			<div className="flex flex-1 flex-col overflow-hidden">
 				{/* Top Header Bar (for mobile nav trigger and other controls) */}
 				{showHeader && (
-					<header className="flex h-14 shrink-0 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
+					<header className="flex h-14 shrink-0 items-center gap-4 border-border border-b bg-card px-4 lg:px-6">
 						<MobileSidebarTrigger />
 						{headerLeft && (
-							<div className="flex flex-1 items-center gap-4">
-								{headerLeft}
-							</div>
+							<div className="flex flex-1 items-center gap-4">{headerLeft}</div>
 						)}
 						{headerRight && (
 							<div className="ml-auto flex items-center gap-2">
@@ -94,7 +92,7 @@ export function AppLayout({
 						className={cn(
 							"flex-1 overflow-y-auto",
 							showTaskDetail && "hidden lg:block",
-							className
+							className,
 						)}
 					>
 						{children}
@@ -151,7 +149,7 @@ export function ContentContainer({
 				"mx-auto w-full",
 				maxWidthClasses[maxWidth],
 				paddingClasses[padding],
-				className
+				className,
 			)}
 		>
 			{children}

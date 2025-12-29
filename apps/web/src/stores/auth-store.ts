@@ -68,5 +68,6 @@ export const useAuthStore = create<AuthState>()(
 
 // Selector hooks for convenience
 export const useUser = () => useAuthStore((state) => state.session?.user);
-export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
+export const useIsAuthenticated = () =>
+	useAuthStore((state) => state.isAuthenticated);
 export const useIsAuthLoading = () => useAuthStore((state) => state.isLoading);

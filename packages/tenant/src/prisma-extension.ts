@@ -2,6 +2,7 @@
 // PRISMA EXTENSION - Auto-filtering for multi-tenancy
 // ============================================
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { Prisma } from "@prisma/client";
 import { tryGetCurrentTenant } from "./context.js";
 
@@ -37,6 +38,47 @@ function isTenantModel(model: string): model is TenantModel {
 	return TENANT_MODELS.includes(model as TenantModel);
 }
 
+// ============================================
+// TENANT FILTER BYPASS
+// ============================================
+
+// Storage flag for bypassing tenant filter
+const bypassStorage = new AsyncLocalStorage<boolean>();
+
+/**
+ * Check if tenant filtering should be bypassed
+ */
+export function isTenantFilterBypassed(): boolean {
+	return bypassStorage.getStore() === true;
+}
+
+/**
+ * Bypass tenant filtering for specific operations
+ * Use with caution - only for platform admin operations
+ *
+ * @example
+ * // Get all organizations (platform admin only)
+ * const allOrgs = await bypassTenantFilter(() =>
+ *   prisma.organization.findMany()
+ * );
+ */
+export function bypassTenantFilter<T>(fn: () => T): T {
+	return bypassStorage.run(true, fn);
+}
+
+/**
+ * Async version of bypassTenantFilter for async operations
+ */
+export async function bypassTenantFilterAsync<T>(
+	fn: () => Promise<T>,
+): Promise<T> {
+	return bypassStorage.run(true, fn);
+}
+
+// ============================================
+// PRISMA EXTENSION
+// ============================================
+
 /**
  * Prisma extension for automatic tenant filtering
  * Automatically adds organizationId filter to all queries on tenant-scoped models
@@ -47,6 +89,11 @@ export function createTenantExtension() {
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
+					// Check if bypass is enabled (for platform admin operations)
+					if (isTenantFilterBypassed()) {
+						return query(args);
+					}
+
 					const tenant = tryGetCurrentTenant();
 
 					// Skip if no tenant context or not a tenant model
@@ -108,14 +155,4 @@ export function createTenantExtension() {
 			},
 		},
 	});
-}
-
-/**
- * Bypass tenant filtering for specific operations
- * Use with caution - only for platform admin operations
- */
-export function bypassTenantFilter<T>(fn: () => T): T {
-	// This removes the tenant context for the duration of the function
-	// Implementation would require a separate storage flag
-	return fn();
 }

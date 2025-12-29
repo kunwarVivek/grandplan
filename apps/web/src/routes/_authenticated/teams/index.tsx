@@ -1,11 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	MoreHorizontal,
-	Plus,
-	Search,
-	Shield,
-	Users,
-} from "lucide-react";
+import { MoreHorizontal, Plus, Search, Shield, Users } from "lucide-react";
 import { useState } from "react";
 
 import { ContentContainer, PageHeader } from "@/components/layout";
@@ -57,7 +51,8 @@ const mockTeams: Team[] = [
 	{
 		id: "1",
 		name: "Frontend Team",
-		description: "Responsible for all client-side development and UI/UX implementation",
+		description:
+			"Responsible for all client-side development and UI/UX implementation",
 		memberCount: 5,
 		members: [
 			{ id: "1", name: "Sarah Chen", avatar: "", initials: "SC" },
@@ -71,7 +66,8 @@ const mockTeams: Team[] = [
 	{
 		id: "2",
 		name: "Backend Team",
-		description: "API development, database management, and server infrastructure",
+		description:
+			"API development, database management, and server infrastructure",
 		memberCount: 4,
 		members: [
 			{ id: "4", name: "Taylor Morgan", avatar: "", initials: "TM" },
@@ -99,9 +95,7 @@ const mockTeams: Team[] = [
 		name: "DevOps",
 		description: "CI/CD, infrastructure, and deployment automation",
 		memberCount: 2,
-		members: [
-			{ id: "8", name: "Jamie Chen", avatar: "", initials: "JC" },
-		],
+		members: [{ id: "8", name: "Jamie Chen", avatar: "", initials: "JC" }],
 		lead: { id: "8", name: "Jamie Chen", avatar: "", initials: "JC" },
 		color: "bg-orange-500",
 		permissions: ["projects.admin", "settings.admin"],
@@ -114,7 +108,7 @@ function TeamsPage() {
 	const filteredTeams = mockTeams.filter(
 		(team) =>
 			team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			team.description.toLowerCase().includes(searchQuery.toLowerCase())
+			team.description.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
 	return (
@@ -133,7 +127,7 @@ function TeamsPage() {
 			{/* Search */}
 			<div className="mt-6">
 				<div className="relative max-w-xs">
-					<Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+					<Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						placeholder="Search teams..."
 						value={searchQuery}
@@ -147,8 +141,8 @@ function TeamsPage() {
 			{filteredTeams.length === 0 ? (
 				<div className="mt-12 flex flex-col items-center justify-center text-center">
 					<Users className="size-12 text-muted-foreground" />
-					<h3 className="mt-4 text-lg font-medium">No teams found</h3>
-					<p className="mt-2 text-sm text-muted-foreground">
+					<h3 className="mt-4 font-medium text-lg">No teams found</h3>
+					<p className="mt-2 text-muted-foreground text-sm">
 						{searchQuery
 							? "Try adjusting your search query"
 							: "Get started by creating your first team"}
@@ -207,15 +201,13 @@ function TeamsPage() {
 									</div>
 								</CardHeader>
 								<CardContent className="space-y-4">
-									<p className="line-clamp-2 text-sm text-muted-foreground">
+									<p className="line-clamp-2 text-muted-foreground text-sm">
 										{team.description}
 									</p>
 
 									{/* Team Lead */}
 									<div className="flex items-center gap-2">
-										<span className="text-xs text-muted-foreground">
-											Lead:
-										</span>
+										<span className="text-muted-foreground text-xs">Lead:</span>
 										<div className="flex items-center gap-2">
 											<Avatar size="sm">
 												<AvatarImage src={team.lead.avatar} />

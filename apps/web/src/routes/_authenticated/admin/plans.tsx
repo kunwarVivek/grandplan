@@ -63,7 +63,12 @@ function AdminPlans() {
 			slug: "free",
 			price: 0,
 			interval: "month",
-			features: ["Up to 5 team members", "10 projects", "1GB storage", "Basic support"],
+			features: [
+				"Up to 5 team members",
+				"10 projects",
+				"1GB storage",
+				"Basic support",
+			],
 			isActive: true,
 			subscribers: 8432,
 		},
@@ -146,8 +151,8 @@ function AdminPlans() {
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-semibold">Subscription Plans</h1>
-					<p className="text-sm text-muted-foreground">
+					<h1 className="font-semibold text-2xl">Subscription Plans</h1>
+					<p className="text-muted-foreground text-sm">
 						Manage subscription plans and pricing.
 					</p>
 				</div>
@@ -245,8 +250,8 @@ function AdminPlans() {
 								<TableRow key={plan.id}>
 									<TableCell>
 										<div>
-											<p className="text-sm font-medium">{plan.name}</p>
-											<p className="text-xs text-muted-foreground">
+											<p className="font-medium text-sm">{plan.name}</p>
+											<p className="text-muted-foreground text-xs">
 												/{plan.slug}
 											</p>
 										</div>
@@ -322,7 +327,7 @@ function AdminPlans() {
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<p className="mb-3 text-sm text-muted-foreground">
+							<p className="mb-3 text-muted-foreground text-sm">
 								{plan.subscribers.toLocaleString()} active subscribers
 							</p>
 							<ul className="space-y-2">

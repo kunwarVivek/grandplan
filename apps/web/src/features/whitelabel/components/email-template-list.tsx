@@ -1,23 +1,12 @@
+import {
+	Mail,
+	Pencil,
+	Plus,
+	ToggleLeft,
+	ToggleRight,
+	Trash2,
+} from "lucide-react";
 import { useState } from "react";
-import { Mail, Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -28,9 +17,31 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import {
+	useDeleteEmailTemplate,
+	useEmailTemplates,
+	useUpdateEmailTemplate,
+} from "../hooks/use-whitelabel";
 import type { EmailTemplate } from "../types";
-import { useEmailTemplates, useDeleteEmailTemplate, useUpdateEmailTemplate } from "../hooks/use-whitelabel";
 
 type EmailTemplateListProps = {
 	organizationId: string;
@@ -82,7 +93,7 @@ export function EmailTemplateList({
 							</CardDescription>
 						</div>
 						<Button onClick={onCreate} size="sm">
-							<Plus className="size-4 mr-2" />
+							<Plus className="mr-2 size-4" />
 							New Template
 						</Button>
 					</div>
@@ -90,9 +101,9 @@ export function EmailTemplateList({
 				<CardContent>
 					{!templates || templates.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-12 text-center">
-							<Mail className="size-12 text-muted-foreground/50 mb-4" />
+							<Mail className="mb-4 size-12 text-muted-foreground/50" />
 							<p className="text-muted-foreground">No email templates yet</p>
-							<p className="text-sm text-muted-foreground/75">
+							<p className="text-muted-foreground/75 text-sm">
 								Create your first template to get started
 							</p>
 						</div>
@@ -110,11 +121,15 @@ export function EmailTemplateList({
 							<TableBody>
 								{templates.map((template) => (
 									<TableRow key={template.id}>
-										<TableCell className="font-medium">{template.name}</TableCell>
-										<TableCell>
-											<Badge variant="outline">{template.type.replace(/_/g, " ")}</Badge>
+										<TableCell className="font-medium">
+											{template.name}
 										</TableCell>
-										<TableCell className="text-muted-foreground truncate max-w-[200px]">
+										<TableCell>
+											<Badge variant="outline">
+												{template.type.replace(/_/g, " ")}
+											</Badge>
+										</TableCell>
+										<TableCell className="max-w-[200px] truncate text-muted-foreground">
 											{template.subject}
 										</TableCell>
 										<TableCell>
@@ -122,7 +137,7 @@ export function EmailTemplateList({
 												className={cn(
 													template.isActive
 														? "bg-emerald-500/10 text-emerald-500"
-														: "bg-muted text-muted-foreground"
+														: "bg-muted text-muted-foreground",
 												)}
 											>
 												{template.isActive ? "Active" : "Inactive"}
@@ -170,8 +185,8 @@ export function EmailTemplateList({
 					<AlertDialogHeader>
 						<AlertDialogTitle>Delete Template</AlertDialogTitle>
 						<AlertDialogDescription>
-							Are you sure you want to delete this email template? This action cannot
-							be undone.
+							Are you sure you want to delete this email template? This action
+							cannot be undone.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

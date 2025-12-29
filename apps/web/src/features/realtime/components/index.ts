@@ -3,13 +3,13 @@
 // ============================================
 
 export {
+	CursorOverlay,
+	ElementCursor,
+	FieldEditingIndicator,
+	SelectionHighlight,
+} from "./cursor-overlay";
+export {
 	PresenceAvatars,
 	PresenceIndicator,
 	PresenceList,
 } from "./presence-avatars";
-export {
-	CursorOverlay,
-	ElementCursor,
-	SelectionHighlight,
-	FieldEditingIndicator,
-} from "./cursor-overlay";

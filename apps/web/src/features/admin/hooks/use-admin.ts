@@ -2,15 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
-	PlatformUser,
+	AuditLogEntry,
+	AuditLogsFilters,
 	PlatformOrganization,
+	PlatformOrganizationsFilters,
 	PlatformPlan,
 	PlatformStats,
-	SystemHealth,
-	AuditLogEntry,
+	PlatformUser,
 	PlatformUsersFilters,
-	PlatformOrganizationsFilters,
-	AuditLogsFilters,
+	SystemHealth,
 } from "../types";
 
 // API response types
@@ -28,9 +28,7 @@ type ImpersonateResponse = {
 };
 
 // Helper to build query params
-function buildQueryParams(
-	filters: Record<string, unknown>
-): string {
+function buildQueryParams(filters: Record<string, unknown>): string {
 	const params = new URLSearchParams();
 	for (const [key, value] of Object.entries(filters)) {
 		if (value !== undefined && value !== null && value !== "") {
@@ -56,7 +54,7 @@ export function usePlatformUsers(filters: PlatformUsersFilters = {}) {
 			const query = buildQueryParams(filters);
 			return api.get<PaginatedResponse<PlatformUser>>(
 				`/api/admin/users${query}`,
-				signal
+				signal,
 			);
 		},
 	});
@@ -120,7 +118,7 @@ export function useImpersonateUser() {
 	return useMutation({
 		mutationFn: async (userId: string) => {
 			return api.post<ImpersonateResponse>(
-				`/api/admin/users/${userId}/impersonate`
+				`/api/admin/users/${userId}/impersonate`,
 			);
 		},
 	});
@@ -131,7 +129,7 @@ export function useImpersonateUser() {
 // ============================================
 
 export function usePlatformOrganizations(
-	filters: PlatformOrganizationsFilters = {}
+	filters: PlatformOrganizationsFilters = {},
 ) {
 	return useQuery({
 		queryKey: [...queryKeys.platform.organizations, filters],
@@ -139,7 +137,7 @@ export function usePlatformOrganizations(
 			const query = buildQueryParams(filters);
 			return api.get<PaginatedResponse<PlatformOrganization>>(
 				`/api/admin/organizations${query}`,
-				signal
+				signal,
 			);
 		},
 	});
@@ -151,7 +149,7 @@ export function usePlatformOrganization(id: string) {
 		queryFn: async ({ signal }) => {
 			return api.get<PlatformOrganization>(
 				`/api/admin/organizations/${id}`,
-				signal
+				signal,
 			);
 		},
 		enabled: !!id,
@@ -171,7 +169,7 @@ export function useUpdateOrgStatus() {
 		}) => {
 			return api.patch<PlatformOrganization>(
 				`/api/admin/organizations/${organizationId}/status`,
-				{ status }
+				{ status },
 			);
 		},
 		onSuccess: (data) => {
@@ -200,9 +198,7 @@ export function useCreatePlan() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (
-			input: Omit<PlatformPlan, "id" | "subscriberCount">
-		) => {
+		mutationFn: async (input: Omit<PlatformPlan, "id" | "subscriberCount">) => {
 			return api.post<PlatformPlan>("/api/admin/plans", input);
 		},
 		onSuccess: () => {
@@ -283,7 +279,7 @@ export function useAuditLogs(filters: AuditLogsFilters = {}) {
 			const query = buildQueryParams(filters);
 			return api.get<PaginatedResponse<AuditLogEntry>>(
 				`/api/admin/audit-logs${query}`,
-				signal
+				signal,
 			);
 		},
 	});

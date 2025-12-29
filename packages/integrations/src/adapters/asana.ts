@@ -109,26 +109,26 @@ interface AsanaStory {
 
 // Status mapping: Section names to internal statuses
 const ASANA_SECTION_MAP: Record<string, string> = {
-	"backlog": "backlog",
+	backlog: "backlog",
 	"to do": "todo",
-	"todo": "todo",
+	todo: "todo",
 	"in progress": "in_progress",
-	"doing": "in_progress",
+	doing: "in_progress",
 	"in review": "in_review",
-	"review": "in_review",
-	"blocked": "blocked",
-	"done": "completed",
-	"completed": "completed",
-	"complete": "completed",
+	review: "in_review",
+	blocked: "blocked",
+	done: "completed",
+	completed: "completed",
+	complete: "completed",
 };
 
 // Priority mapping (Asana uses custom fields for priority)
 const ASANA_PRIORITY_MAP: Record<string, string> = {
-	"low": "low",
-	"medium": "medium",
-	"high": "high",
-	"urgent": "urgent",
-	"critical": "urgent",
+	low: "low",
+	medium: "medium",
+	high: "high",
+	urgent: "urgent",
+	critical: "urgent",
 };
 
 export class AsanaAdapter implements IntegrationAdapter {
@@ -290,10 +290,7 @@ export class AsanaAdapter implements IntegrationAdapter {
 			.digest("hex");
 
 		try {
-			return crypto.timingSafeEqual(
-				Buffer.from(signature),
-				Buffer.from(hmac),
-			);
+			return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
 		} catch {
 			return false;
 		}
@@ -392,7 +389,8 @@ export class AsanaAdapter implements IntegrationAdapter {
 	): Promise<AsanaProject[]> {
 		const params = new URLSearchParams({
 			workspace: workspaceId,
-			opt_fields: "name,notes,color,archived,created_at,modified_at,owner,workspace",
+			opt_fields:
+				"name,notes,color,archived,created_at,modified_at,owner,workspace",
 		});
 
 		if (options?.archived !== undefined) {
@@ -747,10 +745,7 @@ export class AsanaAdapter implements IntegrationAdapter {
 	/**
 	 * Delete a webhook
 	 */
-	async deleteWebhook(
-		accessToken: string,
-		webhookId: string,
-	): Promise<void> {
+	async deleteWebhook(accessToken: string, webhookId: string): Promise<void> {
 		await this.apiRequest<Record<string, never>>(
 			accessToken,
 			`/webhooks/${webhookId}`,
@@ -764,9 +759,7 @@ export class AsanaAdapter implements IntegrationAdapter {
 	 * Handle Asana webhook handshake (required for webhook registration)
 	 * Returns the X-Hook-Secret header value if this is a handshake request
 	 */
-	handleWebhookHandshake(
-		headers: Record<string, string>,
-	): string | null {
+	handleWebhookHandshake(headers: Record<string, string>): string | null {
 		const hookSecret = headers["x-hook-secret"];
 		if (hookSecret) {
 			// This is a handshake request, return the secret
@@ -791,8 +784,7 @@ export class AsanaAdapter implements IntegrationAdapter {
 
 		// Try to find priority from custom fields
 		const priorityField = task.custom_fields?.find(
-			(f) =>
-				f.name.toLowerCase().includes("priority") && f.type === "enum",
+			(f) => f.name.toLowerCase().includes("priority") && f.type === "enum",
 		);
 		const priority = priorityField?.enum_value?.name
 			? (ASANA_PRIORITY_MAP[priorityField.enum_value.name.toLowerCase()] ??
@@ -830,7 +822,8 @@ export class AsanaAdapter implements IntegrationAdapter {
 				asanaUrl: `https://app.asana.com/0/${task.projects[0]?.gid}/${task.gid}`,
 				customFields: task.custom_fields?.reduce(
 					(acc, field) => {
-						acc[field.name] = field.enum_value?.name ?? field.text_value ?? field.number_value;
+						acc[field.name] =
+							field.enum_value?.name ?? field.text_value ?? field.number_value;
 						return acc;
 					},
 					{} as Record<string, unknown>,

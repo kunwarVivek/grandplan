@@ -12,12 +12,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -26,9 +21,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export const Route = createFileRoute(
-	"/_authenticated/projects/$projectId/"
-)({
+export const Route = createFileRoute("/_authenticated/projects/$projectId/")({
 	component: ProjectTasksPage,
 });
 
@@ -162,10 +155,13 @@ function ProjectTasksPage() {
 							</div>
 							<div className="space-y-2">
 								{columnTasks.map((task) => (
-									<Card key={task.id} className="cursor-pointer transition-colors hover:bg-muted/50">
+									<Card
+										key={task.id}
+										className="cursor-pointer transition-colors hover:bg-muted/50"
+									>
 										<CardHeader className="p-3 pb-2">
 											<div className="flex items-start justify-between gap-2">
-												<CardTitle className="text-sm font-medium leading-tight">
+												<CardTitle className="font-medium text-sm leading-tight">
 													{task.title}
 												</CardTitle>
 												<DropdownMenu>
@@ -192,7 +188,7 @@ function ProjectTasksPage() {
 											</div>
 										</CardHeader>
 										<CardContent className="p-3 pt-0">
-											<p className="line-clamp-2 text-xs text-muted-foreground">
+											<p className="line-clamp-2 text-muted-foreground text-xs">
 												{task.description}
 											</p>
 											<div className="mt-3 flex items-center justify-between">
@@ -201,10 +197,10 @@ function ProjectTasksPage() {
 												</Badge>
 												<div className="flex items-center gap-2">
 													{task.dueDate && (
-														<span className="text-xs text-muted-foreground">
+														<span className="text-muted-foreground text-xs">
 															{new Date(task.dueDate).toLocaleDateString(
 																undefined,
-																{ month: "short", day: "numeric" }
+																{ month: "short", day: "numeric" },
 															)}
 														</span>
 													)}
@@ -216,7 +212,7 @@ function ProjectTasksPage() {
 															</AvatarFallback>
 														</Avatar>
 													) : (
-														<div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30">
+														<div className="flex size-6 items-center justify-center rounded-full border-2 border-muted-foreground/30 border-dashed">
 															<Plus className="size-3 text-muted-foreground" />
 														</div>
 													)}
@@ -226,7 +222,7 @@ function ProjectTasksPage() {
 									</Card>
 								))}
 								{columnTasks.length === 0 && (
-									<div className="flex h-24 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+									<div className="flex h-24 items-center justify-center rounded-md border border-dashed text-muted-foreground text-sm">
 										No tasks
 									</div>
 								)}

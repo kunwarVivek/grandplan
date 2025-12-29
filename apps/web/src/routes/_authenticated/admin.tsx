@@ -1,4 +1,9 @@
-import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	Outlet,
+	redirect,
+} from "@tanstack/react-router";
 import {
 	BuildingIcon,
 	CreditCardIcon,
@@ -54,7 +59,7 @@ function AdminLayout() {
 		<div className="flex min-h-[calc(100svh-4rem)]">
 			<aside className="w-56 shrink-0 border-r bg-muted/30">
 				<div className="p-4">
-					<h2 className="text-sm font-semibold">Admin Panel</h2>
+					<h2 className="font-semibold text-sm">Admin Panel</h2>
 				</div>
 				<nav className="flex flex-col gap-1 px-2">
 					{adminNavItems.map((item) => (
@@ -62,8 +67,8 @@ function AdminLayout() {
 							key={item.href}
 							to={item.href}
 							className={cn(
-								"flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-								"[&.active]:bg-muted [&.active]:text-foreground"
+								"flex items-center gap-3 px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground",
+								"[&.active]:bg-muted [&.active]:text-foreground",
 							)}
 							activeOptions={{ exact: item.href === "/admin" }}
 						>

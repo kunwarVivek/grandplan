@@ -267,10 +267,7 @@ export class LinearAdapter implements IntegrationAdapter {
 			.digest("hex");
 
 		try {
-			return crypto.timingSafeEqual(
-				Buffer.from(signature),
-				Buffer.from(hmac),
-			);
+			return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
 		} catch {
 			return false;
 		}
@@ -567,10 +564,7 @@ export class LinearAdapter implements IntegrationAdapter {
 	/**
 	 * Get a single issue by ID
 	 */
-	async getIssue(
-		accessToken: string,
-		issueId: string,
-	): Promise<LinearIssue> {
+	async getIssue(accessToken: string, issueId: string): Promise<LinearIssue> {
 		const query = `
 			query($issueId: String!) {
 				issue(id: $issueId) {
@@ -903,10 +897,7 @@ export class LinearAdapter implements IntegrationAdapter {
 	/**
 	 * Search for users in the organization
 	 */
-	async searchUsers(
-		accessToken: string,
-		query: string,
-	): Promise<LinearUser[]> {
+	async searchUsers(accessToken: string, query: string): Promise<LinearUser[]> {
 		const gqlQuery = `
 			query($query: String!) {
 				users(filter: { name: { containsIgnoreCase: $query } }) {
@@ -934,10 +925,7 @@ export class LinearAdapter implements IntegrationAdapter {
 	/**
 	 * Get labels for a team
 	 */
-	async getLabels(
-		accessToken: string,
-		teamId: string,
-	): Promise<LinearLabel[]> {
+	async getLabels(accessToken: string, teamId: string): Promise<LinearLabel[]> {
 		const query = `
 			query($teamId: String!) {
 				team(id: $teamId) {
@@ -998,10 +986,7 @@ export class LinearAdapter implements IntegrationAdapter {
 	/**
 	 * Delete a webhook
 	 */
-	async deleteWebhook(
-		accessToken: string,
-		webhookId: string,
-	): Promise<void> {
+	async deleteWebhook(accessToken: string, webhookId: string): Promise<void> {
 		const mutation = `
 			mutation($webhookId: String!) {
 				webhookDelete(id: $webhookId) {
@@ -1191,9 +1176,10 @@ export class LinearAdapter implements IntegrationAdapter {
 						status: issueData.state
 							? this.mapLinearStatusToInternal(issueData.state.type)
 							: undefined,
-						priority: issueData.priority !== undefined
-							? this.mapLinearPriorityToInternal(issueData.priority)
-							: undefined,
+						priority:
+							issueData.priority !== undefined
+								? this.mapLinearPriorityToInternal(issueData.priority)
+								: undefined,
 					},
 					metadata: {
 						linearIssueId: issueData.id,

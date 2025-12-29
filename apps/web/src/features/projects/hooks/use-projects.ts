@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
+	CreateProjectInput,
 	Project,
 	ProjectMember,
 	ProjectStats,
-	CreateProjectInput,
 	UpdateProjectInput,
 } from "../types";
 
@@ -121,10 +121,7 @@ export function useProjectStats(projectId: string) {
 	return useQuery({
 		queryKey: queryKeys.projects.stats(projectId),
 		queryFn: async ({ signal }) => {
-			return api.get<StatsResponse>(
-				`/api/projects/${projectId}/stats`,
-				signal,
-			);
+			return api.get<StatsResponse>(`/api/projects/${projectId}/stats`, signal);
 		},
 		enabled: !!projectId,
 	});
@@ -183,9 +180,7 @@ export function useRemoveProjectMember() {
 			projectId: string;
 			memberId: string;
 		}) => {
-			return api.delete<void>(
-				`/api/projects/${projectId}/members/${memberId}`,
-			);
+			return api.delete<void>(`/api/projects/${projectId}/members/${memberId}`);
 		},
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
@@ -224,10 +219,9 @@ export function useDuplicateProject() {
 			projectId: string;
 			name?: string;
 		}) => {
-			return api.post<ProjectResponse>(
-				`/api/projects/${projectId}/duplicate`,
-				{ name },
-			);
+			return api.post<ProjectResponse>(`/api/projects/${projectId}/duplicate`, {
+				name,
+			});
 		},
 		onSuccess: (data) => {
 			queryClient.invalidateQueries({

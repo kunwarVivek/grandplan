@@ -53,9 +53,9 @@ function StatusIndicator({
 	return (
 		<span
 			className={cn(
-				"absolute bottom-0 right-0 z-10 block rounded-full ring-2 ring-background",
+				"absolute right-0 bottom-0 z-10 block rounded-full ring-2 ring-background",
 				"h-2.5 w-2.5",
-				statusColors[status]
+				statusColors[status],
 			)}
 			style={{ borderColor: color }}
 		/>
@@ -96,7 +96,7 @@ function PresenceAvatar({
 			<TooltipContent>
 				<div className="flex flex-col">
 					<span className="font-medium">{user.name}</span>
-					<span className="text-xs text-muted-foreground capitalize">
+					<span className="text-muted-foreground text-xs capitalize">
 						{user.status}
 						{user.currentPage && ` - ${user.currentPage}`}
 					</span>
@@ -157,7 +157,7 @@ export function PresenceAvatars({
 										style={{ backgroundColor: user.color }}
 									/>
 									<span>{user.name}</span>
-									<span className="text-xs text-muted-foreground capitalize">
+									<span className="text-muted-foreground text-xs capitalize">
 										({user.status})
 									</span>
 								</div>
@@ -184,7 +184,7 @@ export function PresenceIndicator({
 
 	return (
 		<div className={cn("flex items-center gap-1.5 text-xs", className)}>
-			<span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+			<span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
 			<span className="text-muted-foreground">
 				{onlineCount} {onlineCount === 1 ? "user" : "users"} online
 			</span>
@@ -216,7 +216,7 @@ export function PresenceList({
 					key={user.userId}
 					type="button"
 					onClick={() => onUserClick?.(user.userId)}
-					className="flex items-center gap-3 rounded-md p-2 hover:bg-muted/50 transition-colors text-left"
+					className="flex items-center gap-3 rounded-md p-2 text-left transition-colors hover:bg-muted/50"
 				>
 					<div className="relative">
 						<Avatar size="sm">
@@ -231,10 +231,10 @@ export function PresenceList({
 						</Avatar>
 						<StatusIndicator status={user.status} color={user.color} />
 					</div>
-					<div className="flex flex-col min-w-0 flex-1">
-						<span className="font-medium truncate">{user.name}</span>
+					<div className="flex min-w-0 flex-1 flex-col">
+						<span className="truncate font-medium">{user.name}</span>
 						{user.currentPage && (
-							<span className="text-xs text-muted-foreground truncate">
+							<span className="truncate text-muted-foreground text-xs">
 								{user.currentPage}
 							</span>
 						)}

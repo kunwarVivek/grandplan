@@ -1,6 +1,6 @@
 import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Popover,
 	PopoverContent,
@@ -37,18 +37,12 @@ export function NotificationBell({ className }: NotificationBellProps) {
 			>
 				<Bell className="size-4" />
 				{unreadCount > 0 && (
-					<Badge
-						className="absolute -right-1 -top-1 flex size-5 items-center justify-center bg-red-500 p-0 text-[10px] text-white"
-					>
+					<Badge className="absolute -top-1 -right-1 flex size-5 items-center justify-center bg-red-500 p-0 text-[10px] text-white">
 						{formatCount(unreadCount)}
 					</Badge>
 				)}
 			</PopoverTrigger>
-			<PopoverContent
-				align="end"
-				className="w-[380px] p-0"
-				sideOffset={8}
-			>
+			<PopoverContent align="end" className="w-[380px] p-0" sideOffset={8}>
 				<NotificationList />
 			</PopoverContent>
 		</Popover>

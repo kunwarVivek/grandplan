@@ -2,14 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
-	Subscription,
-	Plan,
-	Invoice,
-	UsageStats,
-	UpgradePlanInput,
-	CreateCheckoutInput,
-	CheckoutSession,
 	BillingPortalSession,
+	CheckoutSession,
+	CreateCheckoutInput,
+	Invoice,
+	Plan,
+	Subscription,
+	UpgradePlanInput,
+	UsageStats,
 } from "../types";
 
 // Fetch current subscription
@@ -43,7 +43,7 @@ export function useInvoices(options?: { limit?: number; offset?: number }) {
 			const query = params.toString();
 			return api.get<{ invoices: Invoice[]; total: number }>(
 				`/api/billing/invoices${query ? `?${query}` : ""}`,
-				signal
+				signal,
 			);
 		},
 	});
@@ -64,7 +64,10 @@ export function useLimits() {
 	return useQuery({
 		queryKey: queryKeys.billing.limits,
 		queryFn: async ({ signal }) => {
-			return api.get<{ limits: Record<string, number> }>("/api/billing/limits", signal);
+			return api.get<{ limits: Record<string, number> }>(
+				"/api/billing/limits",
+				signal,
+			);
 		},
 	});
 }
@@ -78,7 +81,9 @@ export function useUpgradePlan() {
 			return api.post<Subscription>("/api/billing/upgrade", input);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.billing.subscription });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.billing.subscription,
+			});
 			queryClient.invalidateQueries({ queryKey: queryKeys.billing.usage });
 			queryClient.invalidateQueries({ queryKey: queryKeys.billing.limits });
 		},
@@ -103,7 +108,9 @@ export function useCancelSubscription() {
 			return api.post<Subscription>("/api/billing/cancel", options);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.billing.subscription });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.billing.subscription,
+			});
 		},
 	});
 }
@@ -117,7 +124,9 @@ export function useResumeSubscription() {
 			return api.post<Subscription>("/api/billing/resume");
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: queryKeys.billing.subscription });
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.billing.subscription,
+			});
 		},
 	});
 }
@@ -126,7 +135,9 @@ export function useResumeSubscription() {
 export function useCreateBillingPortal() {
 	return useMutation({
 		mutationFn: async (returnUrl?: string) => {
-			return api.post<BillingPortalSession>("/api/billing/portal", { returnUrl });
+			return api.post<BillingPortalSession>("/api/billing/portal", {
+				returnUrl,
+			});
 		},
 	});
 }

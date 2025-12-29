@@ -159,14 +159,14 @@ function DashboardPage() {
 				{stats.map((stat) => (
 					<Card key={stat.title}>
 						<CardHeader className="flex flex-row items-center justify-between pb-2">
-							<CardTitle className="text-sm font-medium text-muted-foreground">
+							<CardTitle className="font-medium text-muted-foreground text-sm">
 								{stat.title}
 							</CardTitle>
 							<stat.icon className="size-4 text-muted-foreground" />
 						</CardHeader>
 						<CardContent>
-							<div className="text-2xl font-bold">{stat.value}</div>
-							<p className="mt-1 text-xs text-muted-foreground">
+							<div className="font-bold text-2xl">{stat.value}</div>
+							<p className="mt-1 text-muted-foreground text-xs">
 								{stat.change}
 							</p>
 						</CardContent>
@@ -182,32 +182,21 @@ function DashboardPage() {
 							<Activity className="size-4" />
 							Recent Activity
 						</CardTitle>
-						<CardDescription>
-							Latest updates from your team
-						</CardDescription>
+						<CardDescription>Latest updates from your team</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-4">
 							{recentActivity.map((activity) => (
-								<div
-									key={activity.id}
-									className="flex items-start gap-3"
-								>
+								<div key={activity.id} className="flex items-start gap-3">
 									<Avatar size="sm">
 										<AvatarImage src={activity.user.avatar} />
-										<AvatarFallback>
-											{activity.user.initials}
-										</AvatarFallback>
+										<AvatarFallback>{activity.user.initials}</AvatarFallback>
 									</Avatar>
 									<div className="flex-1 space-y-1">
 										<p className="text-sm">
-											<span className="font-medium">
-												{activity.user.name}
-											</span>{" "}
+											<span className="font-medium">{activity.user.name}</span>{" "}
 											{activity.action}{" "}
-											<span className="font-medium">
-												{activity.target}
-											</span>
+											<span className="font-medium">{activity.target}</span>
 											{activity.project && (
 												<span className="text-muted-foreground">
 													{" "}
@@ -215,7 +204,7 @@ function DashboardPage() {
 												</span>
 											)}
 										</p>
-										<p className="text-xs text-muted-foreground">
+										<p className="text-muted-foreground text-xs">
 											{activity.time}
 										</p>
 									</div>
@@ -229,9 +218,7 @@ function DashboardPage() {
 				<Card>
 					<CardHeader>
 						<CardTitle>Quick Actions</CardTitle>
-						<CardDescription>
-							Common tasks to get you started
-						</CardDescription>
+						<CardDescription>Common tasks to get you started</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<div className="grid gap-3">
@@ -244,7 +231,7 @@ function DashboardPage() {
 								</div>
 								<div className="flex-1 text-left">
 									<p className="font-medium">Create New Project</p>
-									<p className="text-xs text-muted-foreground">
+									<p className="text-muted-foreground text-xs">
 										Start a new project from scratch
 									</p>
 								</div>
@@ -259,7 +246,7 @@ function DashboardPage() {
 								</div>
 								<div className="flex-1 text-left">
 									<p className="font-medium">Invite Team Members</p>
-									<p className="text-xs text-muted-foreground">
+									<p className="text-muted-foreground text-xs">
 										Add collaborators to your workspace
 									</p>
 								</div>
@@ -274,7 +261,7 @@ function DashboardPage() {
 								</div>
 								<div className="flex-1 text-left">
 									<p className="font-medium">Create Task</p>
-									<p className="text-xs text-muted-foreground">
+									<p className="text-muted-foreground text-xs">
 										Add a new task to any project
 									</p>
 								</div>
@@ -291,7 +278,7 @@ function DashboardPage() {
 					{hasProSubscription ? "Pro Plan" : "Free Plan"}
 				</Badge>
 				{!hasProSubscription && (
-					<span className="text-xs text-muted-foreground">
+					<span className="text-muted-foreground text-xs">
 						Upgrade to unlock more features
 					</span>
 				)}

@@ -1,4 +1,9 @@
-export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled";
+export type ProjectStatus =
+	| "planning"
+	| "active"
+	| "on_hold"
+	| "completed"
+	| "cancelled";
 export type ProjectVisibility = "public" | "private" | "team";
 
 export type Project = {
@@ -52,7 +57,9 @@ export type CreateProjectInput = {
 	icon?: string;
 };
 
-export type UpdateProjectInput = Partial<Omit<CreateProjectInput, "workspaceId">>;
+export type UpdateProjectInput = Partial<
+	Omit<CreateProjectInput, "workspaceId">
+>;
 
 export const PROJECT_STATUS_CONFIG: Record<
 	ProjectStatus,

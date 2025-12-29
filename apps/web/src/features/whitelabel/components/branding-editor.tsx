@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
 import {
-	Palette,
-	Upload,
-	Save,
+	Code,
 	Eye,
 	Moon,
+	Palette,
+	Save,
+	Square,
 	Sun,
 	Type,
-	Square,
-	Code,
+	Upload,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -17,13 +18,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Select,
 	SelectContent,
@@ -31,13 +27,17 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { BrandingConfigInput } from "../types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
 	useBrandingConfig,
+	usePreviewBranding,
 	useUpdateBranding,
 	useUploadBrandingAsset,
-	usePreviewBranding,
 } from "../hooks/use-whitelabel";
+import type { BrandingConfigInput } from "../types";
 
 const FONT_OPTIONS = [
 	{ value: "Inter", label: "Inter" },
@@ -61,7 +61,10 @@ type BrandingEditorProps = {
 	className?: string;
 };
 
-export function BrandingEditor({ organizationId, className }: BrandingEditorProps) {
+export function BrandingEditor({
+	organizationId,
+	className,
+}: BrandingEditorProps) {
 	const { data: branding, isLoading } = useBrandingConfig(organizationId);
 	const updateMutation = useUpdateBranding(organizationId);
 	const uploadMutation = useUploadBrandingAsset(organizationId);
@@ -96,7 +99,7 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 
 	const handleFileUpload = async (
 		type: "logo" | "favicon",
-		event: React.ChangeEvent<HTMLInputElement>
+		event: React.ChangeEvent<HTMLInputElement>,
 	) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
@@ -168,7 +171,7 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 							/>
 						</div>
 
-						<div className="flex items-center justify-between p-4 border rounded-lg">
+						<div className="flex items-center justify-between rounded-lg border p-4">
 							<div className="flex items-center gap-3">
 								{formData.darkModeEnabled ? (
 									<Moon className="size-5" />
@@ -177,7 +180,7 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 								)}
 								<div>
 									<p className="font-medium">Dark Mode</p>
-									<p className="text-sm text-muted-foreground">
+									<p className="text-muted-foreground text-sm">
 										Enable dark mode for users
 									</p>
 								</div>
@@ -195,15 +198,15 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 						<div className="grid grid-cols-2 gap-6">
 							<div className="space-y-4">
 								<Label>Logo</Label>
-								<div className="border-2 border-dashed rounded-lg p-6 text-center">
+								<div className="rounded-lg border-2 border-dashed p-6 text-center">
 									{formData.logoUrl ? (
 										<img
 											src={formData.logoUrl}
 											alt="Logo"
-											className="max-h-16 mx-auto mb-4"
+											className="mx-auto mb-4 max-h-16"
 										/>
 									) : (
-										<Upload className="size-8 mx-auto mb-4 text-muted-foreground" />
+										<Upload className="mx-auto mb-4 size-8 text-muted-foreground" />
 									)}
 									<Input
 										type="file"
@@ -214,11 +217,11 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 									/>
 									<Label
 										htmlFor="logo-upload"
-										className="cursor-pointer text-sm text-primary hover:underline"
+										className="cursor-pointer text-primary text-sm hover:underline"
 									>
 										Upload Logo
 									</Label>
-									<p className="text-xs text-muted-foreground mt-2">
+									<p className="mt-2 text-muted-foreground text-xs">
 										PNG, SVG, or JPG (max 2MB)
 									</p>
 								</div>
@@ -226,15 +229,15 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 
 							<div className="space-y-4">
 								<Label>Favicon</Label>
-								<div className="border-2 border-dashed rounded-lg p-6 text-center">
+								<div className="rounded-lg border-2 border-dashed p-6 text-center">
 									{formData.faviconUrl ? (
 										<img
 											src={formData.faviconUrl}
 											alt="Favicon"
-											className="size-8 mx-auto mb-4"
+											className="mx-auto mb-4 size-8"
 										/>
 									) : (
-										<Square className="size-8 mx-auto mb-4 text-muted-foreground" />
+										<Square className="mx-auto mb-4 size-8 text-muted-foreground" />
 									)}
 									<Input
 										type="file"
@@ -245,11 +248,11 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 									/>
 									<Label
 										htmlFor="favicon-upload"
-										className="cursor-pointer text-sm text-primary hover:underline"
+										className="cursor-pointer text-primary text-sm hover:underline"
 									>
 										Upload Favicon
 									</Label>
-									<p className="text-xs text-muted-foreground mt-2">
+									<p className="mt-2 text-muted-foreground text-xs">
 										ICO, PNG (32x32 recommended)
 									</p>
 								</div>
@@ -264,12 +267,14 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 								<Select
 									value={formData.fontFamily ?? "Inter"}
 									onValueChange={(value) =>
-										value && setFormData((prev) => ({ ...prev, fontFamily: value }))
+										value &&
+										setFormData((prev) => ({ ...prev, fontFamily: value }))
 									}
 								>
 									<SelectTrigger>
 										<SelectValue>
-											{FONT_OPTIONS.find((f) => f.value === formData.fontFamily)?.label ?? "Inter"}
+											{FONT_OPTIONS.find((f) => f.value === formData.fontFamily)
+												?.label ?? "Inter"}
 										</SelectValue>
 									</SelectTrigger>
 									<SelectContent>
@@ -287,12 +292,15 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 								<Select
 									value={formData.borderRadius ?? "0.5rem"}
 									onValueChange={(value) =>
-										value && setFormData((prev) => ({ ...prev, borderRadius: value }))
+										value &&
+										setFormData((prev) => ({ ...prev, borderRadius: value }))
 									}
 								>
 									<SelectTrigger>
 										<SelectValue>
-											{BORDER_RADIUS_OPTIONS.find((r) => r.value === formData.borderRadius)?.label ?? "Medium"}
+											{BORDER_RADIUS_OPTIONS.find(
+												(r) => r.value === formData.borderRadius,
+											)?.label ?? "Medium"}
 										</SelectValue>
 									</SelectTrigger>
 									<SelectContent>
@@ -306,10 +314,10 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 							</div>
 						</div>
 
-						<div className="p-4 border rounded-lg">
-							<p className="text-sm font-medium mb-2">Preview</p>
+						<div className="rounded-lg border p-4">
+							<p className="mb-2 font-medium text-sm">Preview</p>
 							<div
-								className="p-4 bg-muted rounded"
+								className="rounded bg-muted p-4"
 								style={{
 									fontFamily: formData.fontFamily ?? "Inter",
 									borderRadius: formData.borderRadius ?? "0.5rem",
@@ -326,12 +334,15 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 							<Textarea
 								value={formData.customCss ?? ""}
 								onChange={(e) =>
-									setFormData((prev) => ({ ...prev, customCss: e.target.value }))
+									setFormData((prev) => ({
+										...prev,
+										customCss: e.target.value,
+									}))
 								}
 								placeholder=":root { --custom-color: #fff; }"
-								className="font-mono min-h-[200px]"
+								className="min-h-[200px] font-mono"
 							/>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								Add custom CSS to override default styles
 							</p>
 						</div>
@@ -344,26 +355,26 @@ export function BrandingEditor({ organizationId, className }: BrandingEditorProp
 									setFormData((prev) => ({ ...prev, customJs: e.target.value }))
 								}
 								placeholder="console.log('Custom script loaded');"
-								className="font-mono min-h-[150px]"
+								className="min-h-[150px] font-mono"
 							/>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								Add custom JavaScript (use with caution)
 							</p>
 						</div>
 					</TabsContent>
 				</Tabs>
 
-				<div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t">
+				<div className="mt-6 flex items-center justify-end gap-2 border-t pt-6">
 					<Button
 						variant="outline"
 						onClick={handlePreview}
 						disabled={previewMutation.isPending}
 					>
-						<Eye className="size-4 mr-2" />
+						<Eye className="mr-2 size-4" />
 						Preview
 					</Button>
 					<Button onClick={handleSave} disabled={updateMutation.isPending}>
-						<Save className="size-4 mr-2" />
+						<Save className="mr-2 size-4" />
 						{updateMutation.isPending ? "Saving..." : "Save Changes"}
 					</Button>
 				</div>
@@ -384,14 +395,14 @@ function ColorPicker({ label, value, onChange }: ColorPickerProps) {
 			<Label>{label}</Label>
 			<div className="flex items-center gap-2">
 				<div
-					className="size-10 rounded border cursor-pointer"
+					className="size-10 cursor-pointer rounded border"
 					style={{ backgroundColor: value }}
 				>
 					<Input
 						type="color"
 						value={value}
 						onChange={(e) => onChange(e.target.value)}
-						className="opacity-0 size-full cursor-pointer"
+						className="size-full cursor-pointer opacity-0"
 					/>
 				</div>
 				<Input
@@ -413,7 +424,7 @@ function BrandingEditorSkeleton({ className }: { className?: string }) {
 				<Skeleton className="h-4 w-60" />
 			</CardHeader>
 			<CardContent>
-				<div className="flex gap-2 mb-6">
+				<div className="mb-6 flex gap-2">
 					{Array.from({ length: 4 }).map((_, i) => (
 						<Skeleton key={i} className="h-8 w-24" />
 					))}

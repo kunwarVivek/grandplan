@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
 	Activity,
 	Building2,
@@ -10,6 +9,30 @@ import {
 	Settings,
 	User,
 } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
 	TableBody,
@@ -18,29 +41,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuditLogs } from "../hooks/use-admin";
 import type { AuditLogEntry, AuditLogsFilters } from "../types";
@@ -120,9 +120,9 @@ export function AuditLogTable({
 					<AuditLogTableSkeleton />
 				) : logs.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-12 text-center">
-						<Activity className="size-12 text-muted-foreground/50 mb-4" />
+						<Activity className="mb-4 size-12 text-muted-foreground/50" />
 						<p className="text-muted-foreground">No audit logs found</p>
-						<p className="text-sm text-muted-foreground/75">
+						<p className="text-muted-foreground/75 text-sm">
 							Try adjusting your filters
 						</p>
 					</div>
@@ -146,8 +146,8 @@ export function AuditLogTable({
 						</Table>
 
 						{/* Pagination */}
-						<div className="flex items-center justify-between mt-4 pt-4 border-t">
-							<p className="text-sm text-muted-foreground">
+						<div className="mt-4 flex items-center justify-between border-t pt-4">
+							<p className="text-muted-foreground text-sm">
 								Page {currentPage} of {totalPages}
 								{data?.total && ` (${data.total} total entries)`}
 							</p>
@@ -188,32 +188,35 @@ function FilterControls({ filters, onFilterChange }: FilterControlsProps) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const hasActiveFilters =
-		filters.action || filters.targetType || filters.startDate || filters.endDate;
+		filters.action ||
+		filters.targetType ||
+		filters.startDate ||
+		filters.endDate;
 
 	return (
 		<Popover open={isOpen} onOpenChange={setIsOpen}>
 			<PopoverTrigger
-				render={
-					<Button variant="outline" size="sm" className="gap-2" />
-				}
+				render={<Button variant="outline" size="sm" className="gap-2" />}
 			>
 				<Filter className="size-4" />
 				Filters
 				{hasActiveFilters && (
 					<Badge variant="secondary" className="ml-1 h-5 px-1.5">
-						{[
-							filters.action,
-							filters.targetType,
-							filters.startDate,
-							filters.endDate,
-						].filter(Boolean).length}
+						{
+							[
+								filters.action,
+								filters.targetType,
+								filters.startDate,
+								filters.endDate,
+							].filter(Boolean).length
+						}
 					</Badge>
 				)}
 			</PopoverTrigger>
 			<PopoverContent align="end" className="w-80">
 				<div className="space-y-4">
 					<div className="space-y-2">
-						<label className="text-sm font-medium">Action Type</label>
+						<label className="font-medium text-sm">Action Type</label>
 						<Select
 							value={filters.action ?? ""}
 							onValueChange={(value) =>
@@ -223,7 +226,8 @@ function FilterControls({ filters, onFilterChange }: FilterControlsProps) {
 							<SelectTrigger>
 								<SelectValue>
 									{filters.action
-										? ACTION_CATEGORIES.find((a) => a.value === filters.action)?.label
+										? ACTION_CATEGORIES.find((a) => a.value === filters.action)
+												?.label
 										: "All actions"}
 								</SelectValue>
 							</SelectTrigger>
@@ -239,19 +243,21 @@ function FilterControls({ filters, onFilterChange }: FilterControlsProps) {
 					</div>
 
 					<div className="space-y-2">
-						<label className="text-sm font-medium">Target Type</label>
+						<label className="font-medium text-sm">Target Type</label>
 						<Select
 							value={filters.targetType ?? ""}
 							onValueChange={(value) =>
 								onFilterChange({
-									targetType: (value as AuditLogEntry["target"]["type"]) || undefined,
+									targetType:
+										(value as AuditLogEntry["target"]["type"]) || undefined,
 								})
 							}
 						>
 							<SelectTrigger>
 								<SelectValue>
 									{filters.targetType
-										? filters.targetType.charAt(0).toUpperCase() + filters.targetType.slice(1)
+										? filters.targetType.charAt(0).toUpperCase() +
+											filters.targetType.slice(1)
 										: "All targets"}
 								</SelectValue>
 							</SelectTrigger>
@@ -266,7 +272,7 @@ function FilterControls({ filters, onFilterChange }: FilterControlsProps) {
 					</div>
 
 					<div className="space-y-2">
-						<label className="text-sm font-medium">Date Range</label>
+						<label className="font-medium text-sm">Date Range</label>
 						<div className="grid grid-cols-2 gap-2">
 							<Input
 								type="date"
@@ -390,12 +396,12 @@ function AuditLogRow({ log }: AuditLogRowProps) {
 			</TableCell>
 			<TableCell>
 				<div className="flex items-center gap-2">
-					<div className="size-6 rounded-full bg-muted flex items-center justify-center">
+					<div className="flex size-6 items-center justify-center rounded-full bg-muted">
 						<ActorIcon className="size-3" />
 					</div>
 					<div className="min-w-0">
-						<p className="text-sm font-medium truncate">{log.actor.name}</p>
-						<p className="text-xs text-muted-foreground truncate">
+						<p className="truncate font-medium text-sm">{log.actor.name}</p>
+						<p className="truncate text-muted-foreground text-xs">
 							{log.actor.email}
 						</p>
 					</div>
@@ -410,8 +416,8 @@ function AuditLogRow({ log }: AuditLogRowProps) {
 				<div className="flex items-center gap-2">
 					<TargetIcon className="size-4 text-muted-foreground" />
 					<div className="min-w-0">
-						<p className="text-sm font-medium truncate">{log.target.name}</p>
-						<p className="text-xs text-muted-foreground capitalize">
+						<p className="truncate font-medium text-sm">{log.target.name}</p>
+						<p className="text-muted-foreground text-xs capitalize">
 							{log.target.type}
 						</p>
 					</div>
@@ -419,7 +425,7 @@ function AuditLogRow({ log }: AuditLogRowProps) {
 			</TableCell>
 			<TableCell>
 				{log.ipAddress && (
-					<span className="text-xs text-muted-foreground font-mono">
+					<span className="font-mono text-muted-foreground text-xs">
 						{log.ipAddress}
 					</span>
 				)}

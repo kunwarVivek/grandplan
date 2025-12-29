@@ -261,7 +261,10 @@ export class NotionAdapter implements IntegrationAdapter {
 		options?: {
 			query?: string;
 			filter?: { property: "object"; value: "database" | "page" };
-			sort?: { direction: "ascending" | "descending"; timestamp: "last_edited_time" };
+			sort?: {
+				direction: "ascending" | "descending";
+				timestamp: "last_edited_time";
+			};
 			startCursor?: string;
 			pageSize?: number;
 		},
@@ -304,13 +307,10 @@ export class NotionAdapter implements IntegrationAdapter {
 		accessToken: string,
 		databaseId: string,
 	): Promise<NotionDatabase> {
-		const response = await fetch(
-			`${this.apiBaseUrl}/databases/${databaseId}`,
-			{
-				method: "GET",
-				headers: this.getHeaders(accessToken),
-			},
-		);
+		const response = await fetch(`${this.apiBaseUrl}/databases/${databaseId}`, {
+			method: "GET",
+			headers: this.getHeaders(accessToken),
+		});
 
 		if (!response.ok) {
 			const error = await response.json();
@@ -328,11 +328,18 @@ export class NotionAdapter implements IntegrationAdapter {
 		databaseId: string,
 		options?: {
 			filter?: Record<string, unknown>;
-			sorts?: Array<{ property: string; direction: "ascending" | "descending" }>;
+			sorts?: Array<{
+				property: string;
+				direction: "ascending" | "descending";
+			}>;
 			startCursor?: string;
 			pageSize?: number;
 		},
-	): Promise<{ results: NotionPage[]; hasMore: boolean; nextCursor: string | null }> {
+	): Promise<{
+		results: NotionPage[];
+		hasMore: boolean;
+		nextCursor: string | null;
+	}> {
 		const response = await fetch(
 			`${this.apiBaseUrl}/databases/${databaseId}/query`,
 			{
@@ -451,7 +458,11 @@ export class NotionAdapter implements IntegrationAdapter {
 		accessToken: string,
 		pageId: string,
 		startCursor?: string,
-	): Promise<{ results: NotionBlock[]; hasMore: boolean; nextCursor: string | null }> {
+	): Promise<{
+		results: NotionBlock[];
+		hasMore: boolean;
+		nextCursor: string | null;
+	}> {
 		const params = new URLSearchParams();
 		if (startCursor) {
 			params.set("start_cursor", startCursor);
@@ -468,7 +479,9 @@ export class NotionAdapter implements IntegrationAdapter {
 
 		if (!response.ok) {
 			const error = await response.json();
-			throw new Error(`Notion get page content error: ${JSON.stringify(error)}`);
+			throw new Error(
+				`Notion get page content error: ${JSON.stringify(error)}`,
+			);
 		}
 
 		const data = (await response.json()) as {
@@ -793,7 +806,9 @@ export class NotionAdapter implements IntegrationAdapter {
 			return entry ? entry[0] : value;
 		};
 
-		const status = getPropertyText(page.properties[mapping.statusProperty ?? ""]);
+		const status = getPropertyText(
+			page.properties[mapping.statusProperty ?? ""],
+		);
 		const priority = getPropertyText(
 			page.properties[mapping.priorityProperty ?? ""],
 		);
@@ -852,7 +867,9 @@ export class NotionAdapter implements IntegrationAdapter {
 
 		if (!response.ok) {
 			const error = await response.json();
-			throw new Error(`Notion get current user error: ${JSON.stringify(error)}`);
+			throw new Error(
+				`Notion get current user error: ${JSON.stringify(error)}`,
+			);
 		}
 
 		return response.json() as Promise<NotionUser>;
@@ -864,7 +881,11 @@ export class NotionAdapter implements IntegrationAdapter {
 	async listUsers(
 		accessToken: string,
 		startCursor?: string,
-	): Promise<{ results: NotionUser[]; hasMore: boolean; nextCursor: string | null }> {
+	): Promise<{
+		results: NotionUser[];
+		hasMore: boolean;
+		nextCursor: string | null;
+	}> {
 		const params = new URLSearchParams();
 		if (startCursor) {
 			params.set("start_cursor", startCursor);

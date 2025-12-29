@@ -91,7 +91,7 @@ function LineChart<T extends { date: string }>({
 }: LineChartProps<T>) {
 	if (data.length === 0) {
 		return (
-			<div className="flex items-center justify-center h-64 text-muted-foreground">
+			<div className="flex h-64 items-center justify-center text-muted-foreground">
 				No data available
 			</div>
 		);
@@ -108,7 +108,8 @@ function LineChart<T extends { date: string }>({
 
 	// Calculate points for the line
 	const points = values.map((value, index) => {
-		const x = padding + (index / (values.length - 1 || 1)) * (chartWidth - 2 * padding);
+		const x =
+			padding + (index / (values.length - 1 || 1)) * (chartWidth - 2 * padding);
 		const y =
 			chartHeight -
 			padding -
@@ -118,7 +119,9 @@ function LineChart<T extends { date: string }>({
 
 	// Create SVG path
 	const linePath = points
-		.map((point, i) => (i === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`))
+		.map((point, i) =>
+			i === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`,
+		)
 		.join(" ");
 
 	// Create area path
@@ -132,33 +135,42 @@ function LineChart<T extends { date: string }>({
 
 	const currentValue = values[values.length - 1] ?? 0;
 	const previousValue = values[values.length - 2] ?? values[0] ?? 0;
-	const change = previousValue !== 0 ? ((currentValue - previousValue) / previousValue) * 100 : 0;
+	const change =
+		previousValue !== 0
+			? ((currentValue - previousValue) / previousValue) * 100
+			: 0;
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-baseline gap-2">
-				<span className="text-3xl font-bold">{formatValue(currentValue)}</span>
+				<span className="font-bold text-3xl">{formatValue(currentValue)}</span>
 				<span
 					className={cn(
-						"text-sm font-medium",
-						change >= 0 ? "text-emerald-500" : "text-red-500"
+						"font-medium text-sm",
+						change >= 0 ? "text-emerald-500" : "text-red-500",
 					)}
 				>
 					{change >= 0 ? "+" : ""}
 					{change.toFixed(1)}%
 				</span>
-				<span className="text-sm text-muted-foreground">vs previous</span>
+				<span className="text-muted-foreground text-sm">vs previous</span>
 			</div>
 
 			<div className="relative h-64">
 				<svg
 					viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-					className="w-full h-full"
+					className="h-full w-full"
 					preserveAspectRatio="none"
 				>
 					{/* Grid lines */}
 					<defs>
-						<linearGradient id={`gradient-${label}`} x1="0" y1="0" x2="0" y2="1">
+						<linearGradient
+							id={`gradient-${label}`}
+							x1="0"
+							y1="0"
+							x2="0"
+							y2="1"
+						>
 							<stop offset="0%" stopColor={color} stopOpacity="0.2" />
 							<stop offset="100%" stopColor={color} stopOpacity="0" />
 						</linearGradient>
@@ -199,13 +211,13 @@ function LineChart<T extends { date: string }>({
 							cy={point.y}
 							r="0.8"
 							fill={color}
-							className="opacity-0 hover:opacity-100 transition-opacity"
+							className="opacity-0 transition-opacity hover:opacity-100"
 						/>
 					))}
 				</svg>
 
 				{/* Y-axis labels */}
-				<div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-muted-foreground py-2">
+				<div className="absolute top-0 bottom-0 left-0 flex flex-col justify-between py-2 text-muted-foreground text-xs">
 					<span>{formatValue(maxValue)}</span>
 					<span>{formatValue((maxValue + minValue) / 2)}</span>
 					<span>{formatValue(minValue)}</span>
@@ -213,14 +225,14 @@ function LineChart<T extends { date: string }>({
 			</div>
 
 			{/* X-axis labels */}
-			<div className="flex justify-between text-xs text-muted-foreground">
+			<div className="flex justify-between text-muted-foreground text-xs">
 				{data.length > 0 && (
 					<>
 						<span>{formatDate((data[0] as { date: string }).date)}</span>
 						{data.length > 2 && (
 							<span>
 								{formatDate(
-									(data[Math.floor(data.length / 2)] as { date: string }).date
+									(data[Math.floor(data.length / 2)] as { date: string }).date,
 								)}
 							</span>
 						)}
@@ -242,7 +254,7 @@ function AdminChartsSkeleton({ className }: { className?: string }) {
 				<Skeleton className="h-4 w-56" />
 			</CardHeader>
 			<CardContent>
-				<div className="flex gap-2 mb-4">
+				<div className="mb-4 flex gap-2">
 					<Skeleton className="h-8 w-24" />
 					<Skeleton className="h-8 w-28" />
 				</div>

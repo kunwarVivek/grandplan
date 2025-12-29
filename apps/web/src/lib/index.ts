@@ -1,13 +1,13 @@
-export { api, ApiError } from "./api-client";
-export { queryClient, queryKeys, createQueryClient } from "./query-client";
+export { ApiError, api } from "./api-client";
+export { createQueryClient, queryClient, queryKeys } from "./query-client";
 export {
-	getSocket,
 	connectSocket,
 	disconnectSocket,
-	getTasksSocket,
 	getNotificationsSocket,
 	getPresenceSocket,
-	type TaskSocketEvents,
+	getSocket,
+	getTasksSocket,
 	type NotificationSocketEvents,
 	type PresenceSocketEvents,
+	type TaskSocketEvents,
 } from "./socket";

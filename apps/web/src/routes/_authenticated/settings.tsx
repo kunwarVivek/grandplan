@@ -1,10 +1,5 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import {
-	BellIcon,
-	CreditCardIcon,
-	ShieldIcon,
-	UserIcon,
-} from "lucide-react";
+import { BellIcon, CreditCardIcon, ShieldIcon, UserIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -45,8 +40,8 @@ function SettingsLayout() {
 							key={item.href}
 							to={item.href}
 							className={cn(
-								"flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-								"[&.active]:bg-muted [&.active]:text-foreground"
+								"flex items-center gap-3 px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground",
+								"[&.active]:bg-muted [&.active]:text-foreground",
 							)}
 						>
 							<item.icon className="size-4" />

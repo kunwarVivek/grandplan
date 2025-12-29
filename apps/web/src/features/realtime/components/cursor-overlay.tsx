@@ -45,7 +45,7 @@ function Cursor({ cursor, isStale }: CursorProps) {
 		<div
 			className={cn(
 				"pointer-events-none fixed z-[9999] transition-all duration-100 ease-out",
-				isStale && "opacity-30"
+				isStale && "opacity-30",
 			)}
 			style={{
 				left: cursor.x,
@@ -56,9 +56,9 @@ function Cursor({ cursor, isStale }: CursorProps) {
 			<CursorSvg color={cursor.color} />
 			<div
 				className={cn(
-					"absolute left-5 top-4 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium text-white shadow-sm",
+					"absolute top-4 left-5 whitespace-nowrap rounded-md px-2 py-1 font-medium text-white text-xs shadow-sm",
 					"transition-opacity duration-200",
-					isStale && "opacity-0"
+					isStale && "opacity-0",
 				)}
 				style={{ backgroundColor: cursor.color }}
 			>
@@ -177,16 +177,16 @@ export function ElementCursor({
 	return (
 		<div
 			className={cn(
-				"absolute z-50 pointer-events-none",
+				"pointer-events-none absolute z-50",
 				positionClasses[position],
-				className
+				className,
 			)}
 		>
 			<div
-				className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white shadow-sm animate-in fade-in-0 zoom-in-95 duration-200"
+				className="fade-in-0 zoom-in-95 flex animate-in items-center gap-1 rounded-full px-2 py-0.5 font-medium text-white text-xs shadow-sm duration-200"
 				style={{ backgroundColor: userColor }}
 			>
-				<span className="h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />
+				<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white/80" />
 				{userName}
 			</div>
 		</div>
@@ -206,14 +206,14 @@ export function SelectionHighlight({
 	// The start/end positions would be passed via CSS transforms or positioning
 	return (
 		<div
-			className="absolute pointer-events-none"
+			className="pointer-events-none absolute"
 			style={{
 				backgroundColor: `${color}30`, // 30 = ~18% opacity
 				borderBottom: `2px solid ${color}`,
 			}}
 		>
 			<span
-				className="absolute -top-5 left-0 rounded px-1 py-0.5 text-xs text-white"
+				className="absolute -top-5 left-0 rounded px-1 py-0.5 text-white text-xs"
 				style={{ backgroundColor: color }}
 			>
 				{userName}
@@ -235,13 +235,13 @@ export function FieldEditingIndicator({
 	return (
 		<div
 			className={cn(
-				"absolute inset-0 pointer-events-none rounded-md ring-2 animate-pulse",
-				className
+				"pointer-events-none absolute inset-0 animate-pulse rounded-md ring-2",
+				className,
 			)}
 			style={{ "--tw-ring-color": editorColor } as React.CSSProperties}
 		>
 			<div
-				className="absolute -top-6 left-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white shadow-sm"
+				className="absolute -top-6 left-2 flex items-center gap-1 rounded-full px-2 py-0.5 font-medium text-white text-xs shadow-sm"
 				style={{ backgroundColor: editorColor }}
 			>
 				<span className="h-1.5 w-1.5 rounded-full bg-white/80" />

@@ -1,10 +1,9 @@
 "use client";
 
-import { ChevronRight, Home } from "lucide-react";
-import * as React from "react";
-
-import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
+import { ChevronRight, Home } from "lucide-react";
+import type * as React from "react";
+import { cn } from "@/lib/utils";
 
 export type BreadcrumbItem = {
 	/** Display label */
@@ -33,7 +32,10 @@ export function Breadcrumb({
 	className,
 }: BreadcrumbProps) {
 	const allItems: BreadcrumbItem[] = showHome
-		? [{ label: "Home", href: homeHref, icon: <Home className="size-4" /> }, ...items]
+		? [
+				{ label: "Home", href: homeHref, icon: <Home className="size-4" /> },
+				...items,
+			]
 		: items;
 
 	return (

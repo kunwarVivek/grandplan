@@ -12,7 +12,11 @@ export function createQueryClient() {
 				// Retry failed requests 1 time
 				retry: (failureCount, error) => {
 					// Don't retry on 4xx errors (client errors)
-					if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+					if (
+						error instanceof ApiError &&
+						error.status >= 400 &&
+						error.status < 500
+					) {
 						return false;
 					}
 					return failureCount < 1;

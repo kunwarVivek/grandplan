@@ -146,8 +146,8 @@ function AdminOrganizations() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-semibold">Organizations</h1>
-				<p className="text-sm text-muted-foreground">
+				<h1 className="font-semibold text-2xl">Organizations</h1>
+				<p className="text-muted-foreground text-sm">
 					Manage all organizations on the platform.
 				</p>
 			</div>
@@ -162,7 +162,7 @@ function AdminOrganizations() {
 				<CardContent>
 					<div className="mb-4 flex flex-col gap-4 sm:flex-row">
 						<div className="relative flex-1">
-							<SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+							<SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
 								placeholder="Search organizations..."
 								value={searchQuery}
@@ -170,9 +170,14 @@ function AdminOrganizations() {
 								className="pl-8"
 							/>
 						</div>
-						<Select value={statusFilter} onValueChange={(val) => setStatusFilter(val ?? "all")}>
+						<Select
+							value={statusFilter}
+							onValueChange={(val) => setStatusFilter(val ?? "all")}
+						>
 							<SelectTrigger className="w-[150px]">
-								<SelectValue>{statusFilter === "all" ? "Status" : statusFilter}</SelectValue>
+								<SelectValue>
+									{statusFilter === "all" ? "Status" : statusFilter}
+								</SelectValue>
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">All Status</SelectItem>
@@ -180,9 +185,14 @@ function AdminOrganizations() {
 								<SelectItem value="suspended">Suspended</SelectItem>
 							</SelectContent>
 						</Select>
-						<Select value={planFilter} onValueChange={(val) => setPlanFilter(val ?? "all")}>
+						<Select
+							value={planFilter}
+							onValueChange={(val) => setPlanFilter(val ?? "all")}
+						>
 							<SelectTrigger className="w-[150px]">
-								<SelectValue>{planFilter === "all" ? "Plan" : planFilter}</SelectValue>
+								<SelectValue>
+									{planFilter === "all" ? "Plan" : planFilter}
+								</SelectValue>
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">All Plans</SelectItem>
@@ -209,8 +219,8 @@ function AdminOrganizations() {
 								<TableRow key={org.id}>
 									<TableCell>
 										<div>
-											<p className="text-sm font-medium">{org.name}</p>
-											<p className="text-xs text-muted-foreground">
+											<p className="font-medium text-sm">{org.name}</p>
+											<p className="text-muted-foreground text-xs">
 												/{org.slug}
 											</p>
 										</div>
@@ -269,7 +279,7 @@ function AdminOrganizations() {
 					</Table>
 
 					<div className="mt-4 flex items-center justify-between">
-						<p className="text-sm text-muted-foreground">
+						<p className="text-muted-foreground text-sm">
 							Showing {filteredOrganizations.length} of {organizations.length}{" "}
 							organizations
 						</p>

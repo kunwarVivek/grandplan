@@ -1,18 +1,18 @@
 import { formatDistanceToNow } from "date-fns";
 import {
-	CheckSquare,
-	MessageSquare,
-	Folder,
-	Users,
-	Building2,
-	Link2,
-	CreditCard,
-	Bell,
-	Sparkles,
-	MoreHorizontal,
-	Check,
 	Archive,
+	Bell,
+	Building2,
+	Check,
+	CheckSquare,
+	CreditCard,
+	Folder,
+	Link2,
+	MessageSquare,
+	MoreHorizontal,
+	Sparkles,
 	Trash2,
+	Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,11 +22,14 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import type { Notification, NotificationType } from "@/stores/notification-store";
+import type {
+	Notification,
+	NotificationType,
+} from "@/stores/notification-store";
 import {
-	useMarkAsRead,
 	useArchiveNotification,
 	useDeleteNotification,
+	useMarkAsRead,
 } from "../hooks/use-notifications";
 
 type NotificationItemProps = {
@@ -82,7 +85,8 @@ function getNotificationColor(type: NotificationType): string {
 	if (type.startsWith("COMMENT_")) return "text-purple-500 bg-purple-500/10";
 	if (type.startsWith("PROJECT_")) return "text-emerald-500 bg-emerald-500/10";
 	if (type.startsWith("TEAM_")) return "text-amber-500 bg-amber-500/10";
-	if (type.startsWith("ORGANIZATION_")) return "text-indigo-500 bg-indigo-500/10";
+	if (type.startsWith("ORGANIZATION_"))
+		return "text-indigo-500 bg-indigo-500/10";
 	if (type.startsWith("INTEGRATION_")) return "text-cyan-500 bg-cyan-500/10";
 	if (type.startsWith("BILLING_")) return "text-pink-500 bg-pink-500/10";
 	if (type.startsWith("SYSTEM_")) return "text-muted-foreground bg-muted";
@@ -90,7 +94,10 @@ function getNotificationColor(type: NotificationType): string {
 	return "text-muted-foreground bg-muted";
 }
 
-export function NotificationItem({ notification, onClick }: NotificationItemProps) {
+export function NotificationItem({
+	notification,
+	onClick,
+}: NotificationItemProps) {
 	const markAsRead = useMarkAsRead();
 	const archiveNotification = useArchiveNotification();
 	const deleteNotification = useDeleteNotification();
@@ -128,7 +135,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
 		<div
 			className={cn(
 				"group flex cursor-pointer gap-3 px-4 py-3 transition-colors hover:bg-muted/50",
-				!notification.read && "bg-primary/5"
+				!notification.read && "bg-primary/5",
 			)}
 			onClick={handleClick}
 			role="button"
@@ -142,7 +149,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
 			<div
 				className={cn(
 					"flex size-9 shrink-0 items-center justify-center rounded-full",
-					iconColor
+					iconColor,
 				)}
 			>
 				<Icon className="size-4" />
@@ -153,7 +160,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
 					<p
 						className={cn(
 							"text-sm leading-snug",
-							!notification.read && "font-medium"
+							!notification.read && "font-medium",
 						)}
 					>
 						{notification.title}
@@ -162,10 +169,10 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
 						<span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
 					)}
 				</div>
-				<p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+				<p className="mt-0.5 line-clamp-2 text-muted-foreground text-xs">
 					{notification.body}
 				</p>
-				<p className="mt-1 text-xs text-muted-foreground/70">{timeAgo}</p>
+				<p className="mt-1 text-muted-foreground/70 text-xs">{timeAgo}</p>
 			</div>
 
 			<DropdownMenu>

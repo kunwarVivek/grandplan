@@ -2,6 +2,20 @@
 // INTEGRATIONS - External Platform Integrations
 // ============================================
 
+// Supported integration types
+enum IntegrationType {
+  SLACK
+  TEAMS
+  JIRA
+  ASANA
+  LINEAR
+  NOTION
+  GOOGLE_CALENDAR
+  OUTLOOK_CALENDAR
+  GITHUB
+  GITLAB
+}
+
 // Integration connection per user/organization
 model IntegrationConnection {
   id              String              @id @default(cuid())
@@ -11,7 +25,8 @@ model IntegrationConnection {
 
   organizationId  String?             // Optional org-level connection
 
-  integrationId   String              // "slack", "jira", "asana", "linear", etc.
+  integrationType IntegrationType     // Type-safe integration identifier
+  integrationId   String              // Legacy string identifier (to be migrated)
 
   // Encrypted credentials
   accessToken     String?             @db.Text
@@ -157,6 +172,8 @@ model IntegrationWebhookEvent {
   @@index([integrationId, eventType])
   @@index([status])
   @@index([receivedAt])
+  // Composite index for processing pending webhooks
+  @@index([status, receivedAt])
   @@map("integration_webhook_event")
 }
 

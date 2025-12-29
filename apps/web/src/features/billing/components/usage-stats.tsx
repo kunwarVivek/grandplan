@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
@@ -11,7 +12,6 @@ import {
 	ProgressLabel,
 	ProgressValue,
 } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useUsage } from "../hooks/use-billing";
@@ -50,7 +50,8 @@ export function UsageStats({ className }: UsageStatsProps) {
 			<CardHeader>
 				<CardTitle>Current Usage</CardTitle>
 				<CardDescription>
-					{formatDate(data.currentPeriodStart)} - {formatDate(data.currentPeriodEnd)}
+					{formatDate(data.currentPeriodStart)} -{" "}
+					{formatDate(data.currentPeriodEnd)}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-6">
@@ -95,7 +96,7 @@ function UsageMeter({ metric }: UsageMeterProps) {
 		<div className="space-y-2">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-medium">{metric.displayName}</span>
+					<span className="font-medium text-sm">{metric.displayName}</span>
 					{isOverLimit && (
 						<Badge variant="destructive" className="gap-1">
 							<AlertTriangle className="size-3" />
@@ -108,8 +109,9 @@ function UsageMeter({ metric }: UsageMeterProps) {
 						</Badge>
 					)}
 				</div>
-				<span className="text-sm text-muted-foreground">
-					{formatValue(metric.used, metric.unit)} / {formatValue(metric.limit, metric.unit)}
+				<span className="text-muted-foreground text-sm">
+					{formatValue(metric.used, metric.unit)} /{" "}
+					{formatValue(metric.limit, metric.unit)}
 				</span>
 			</div>
 			<Progress
@@ -117,7 +119,9 @@ function UsageMeter({ metric }: UsageMeterProps) {
 				className={cn(
 					"[&_[data-slot=progress-indicator]]:transition-all",
 					isOverLimit && "[&_[data-slot=progress-indicator]]:bg-red-500",
-					isWarning && !isOverLimit && "[&_[data-slot=progress-indicator]]:bg-amber-500"
+					isWarning &&
+						!isOverLimit &&
+						"[&_[data-slot=progress-indicator]]:bg-amber-500",
 				)}
 			>
 				<ProgressLabel className="sr-only">{metric.displayName}</ProgressLabel>

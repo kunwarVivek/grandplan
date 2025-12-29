@@ -1,32 +1,31 @@
 // Types
-export type {
-	Organization,
-	OrganizationMember,
-	OrganizationRole,
-	Invitation,
-	CreateOrganizationInput,
-	UpdateOrganizationInput,
-	InviteMemberInput,
-} from "./types";
 
-export { ORGANIZATION_ROLE_CONFIG } from "./types";
-
-// Hooks
-export {
-	useOrganizations,
-	useOrganization,
-	useCreateOrganization,
-	useUpdateOrganization,
-	useOrganizationMembers,
-	useInviteMember,
-	useRemoveMember,
-	useOrganizationInvitations,
-	useCancelInvitation,
-	useUpdateMemberRole,
-} from "./hooks/use-organizations";
+export { InviteDialog } from "./components/invite-dialog";
+export { MemberList } from "./components/member-list";
+export { OrgSettingsForm } from "./components/org-settings-form";
 
 // Components
 export { OrgSwitcher } from "./components/org-switcher";
-export { OrgSettingsForm } from "./components/org-settings-form";
-export { MemberList } from "./components/member-list";
-export { InviteDialog } from "./components/invite-dialog";
+// Hooks
+export {
+	useCancelInvitation,
+	useCreateOrganization,
+	useInviteMember,
+	useOrganization,
+	useOrganizationInvitations,
+	useOrganizationMembers,
+	useOrganizations,
+	useRemoveMember,
+	useUpdateMemberRole,
+	useUpdateOrganization,
+} from "./hooks/use-organizations";
+export type {
+	CreateOrganizationInput,
+	Invitation,
+	InviteMemberInput,
+	Organization,
+	OrganizationMember,
+	OrganizationRole,
+	UpdateOrganizationInput,
+} from "./types";
+export { ORGANIZATION_ROLE_CONFIG } from "./types";

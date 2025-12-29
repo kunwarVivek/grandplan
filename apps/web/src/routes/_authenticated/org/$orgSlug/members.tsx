@@ -99,7 +99,7 @@ function OrgMembers() {
 	const filteredMembers = members.filter(
 		(member) =>
 			member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			member.email.toLowerCase().includes(searchQuery.toLowerCase())
+			member.email.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
 	function handleInvite(e: React.FormEvent) {
@@ -151,7 +151,10 @@ function OrgMembers() {
 								Manage your organization's team members.
 							</CardDescription>
 						</div>
-						<Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+						<Dialog
+							open={isInviteDialogOpen}
+							onOpenChange={setIsInviteDialogOpen}
+						>
 							<DialogTrigger render={<Button />}>
 								<PlusIcon className="size-4" />
 								Invite Member
@@ -177,9 +180,14 @@ function OrgMembers() {
 									</div>
 									<div className="space-y-2">
 										<Label htmlFor="invite-role">Role</Label>
-										<Select value={inviteRole} onValueChange={(val) => setInviteRole(val ?? "member")}>
+										<Select
+											value={inviteRole}
+											onValueChange={(val) => setInviteRole(val ?? "member")}
+										>
 											<SelectTrigger className="w-full">
-												<SelectValue>{inviteRole || "Select a role"}</SelectValue>
+												<SelectValue>
+													{inviteRole || "Select a role"}
+												</SelectValue>
 											</SelectTrigger>
 											<SelectContent>
 												<SelectItem value="admin">Admin</SelectItem>
@@ -198,7 +206,7 @@ function OrgMembers() {
 				<CardContent>
 					<div className="mb-4">
 						<div className="relative">
-							<SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+							<SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
 								placeholder="Search members..."
 								value={searchQuery}
@@ -224,11 +232,13 @@ function OrgMembers() {
 										<div className="flex items-center gap-3">
 											<Avatar size="sm">
 												<AvatarImage src={member.avatar} alt={member.name} />
-												<AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+												<AvatarFallback>
+													{getInitials(member.name)}
+												</AvatarFallback>
 											</Avatar>
 											<div>
-												<p className="text-sm font-medium">{member.name}</p>
-												<p className="text-xs text-muted-foreground">
+												<p className="font-medium text-sm">{member.name}</p>
+												<p className="text-muted-foreground text-xs">
 													{member.email}
 												</p>
 											</div>
@@ -244,11 +254,11 @@ function OrgMembers() {
 									</TableCell>
 									<TableCell className="text-right">
 										<DropdownMenu>
-										<DropdownMenuTrigger
-											render={<Button variant="ghost" size="icon-sm" />}
-										>
-											<MoreHorizontalIcon className="size-4" />
-										</DropdownMenuTrigger>
+											<DropdownMenuTrigger
+												render={<Button variant="ghost" size="icon-sm" />}
+											>
+												<MoreHorizontalIcon className="size-4" />
+											</DropdownMenuTrigger>
 											<DropdownMenuContent align="end">
 												<DropdownMenuItem
 													onClick={() => handleChangeRole(member.id, "admin")}

@@ -40,8 +40,8 @@ function BillingSettings() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-lg font-medium">Billing</h1>
-				<p className="text-sm text-muted-foreground">
+				<h1 className="font-medium text-lg">Billing</h1>
+				<p className="text-muted-foreground text-sm">
 					Manage your subscription and billing information.
 				</p>
 			</div>
@@ -49,18 +49,16 @@ function BillingSettings() {
 			<Card>
 				<CardHeader>
 					<CardTitle>Current Plan</CardTitle>
-					<CardDescription>
-						You are currently on the Pro plan.
-					</CardDescription>
+					<CardDescription>You are currently on the Pro plan.</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="flex items-center justify-between">
 						<div>
 							<div className="flex items-center gap-2">
-								<p className="text-2xl font-semibold">Pro</p>
+								<p className="font-semibold text-2xl">Pro</p>
 								<Badge>Active</Badge>
 							</div>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								$29/month - Billed monthly
 							</p>
 						</div>
@@ -89,8 +87,8 @@ function BillingSettings() {
 								<CreditCardIcon className="size-5" />
 							</div>
 							<div>
-								<p className="text-sm font-medium">Visa ending in 4242</p>
-								<p className="text-xs text-muted-foreground">Expires 12/2025</p>
+								<p className="font-medium text-sm">Visa ending in 4242</p>
+								<p className="text-muted-foreground text-xs">Expires 12/2025</p>
 							</div>
 						</div>
 						<Button variant="outline" size="sm">

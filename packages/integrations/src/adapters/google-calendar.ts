@@ -300,7 +300,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 
 		return {
 			integrationId: "google_calendar",
-			eventType: data.resourceState as string ?? "sync",
+			eventType: (data.resourceState as string) ?? "sync",
 			timestamp: new Date(),
 			data,
 		};
@@ -332,11 +332,14 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 	 * List all calendars accessible by the user
 	 */
 	async listCalendars(accessToken: string): Promise<GoogleCalendar[]> {
-		const response = await fetch(`${this.calendarApiBaseUrl}/users/me/calendarList`, {
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
+		const response = await fetch(
+			`${this.calendarApiBaseUrl}/users/me/calendarList`,
+			{
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
 			},
-		});
+		);
 
 		if (!response.ok) {
 			const error = await response.json();
@@ -375,7 +378,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 	 */
 	async fetchEvents(
 		accessToken: string,
-		calendarId: string = "primary",
+		calendarId = "primary",
 		options?: {
 			timeMin?: Date;
 			timeMax?: Date;
@@ -460,7 +463,9 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 
 		if (!response.ok) {
 			const error = await response.json();
-			throw new Error(`Google Calendar get event error: ${JSON.stringify(error)}`);
+			throw new Error(
+				`Google Calendar get event error: ${JSON.stringify(error)}`,
+			);
 		}
 
 		return response.json() as Promise<GoogleCalendarEvent>;
@@ -471,7 +476,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 	 */
 	async createEvent(
 		accessToken: string,
-		calendarId: string = "primary",
+		calendarId = "primary",
 		event: {
 			summary: string;
 			description?: string;
@@ -627,7 +632,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 	 */
 	async createEventFromTask(
 		accessToken: string,
-		calendarId: string = "primary",
+		calendarId = "primary",
 		task: {
 			id: string;
 			title: string;
@@ -744,7 +749,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 	 */
 	async watchCalendar(
 		accessToken: string,
-		calendarId: string = "primary",
+		calendarId = "primary",
 		webhookUrl: string,
 		channelId?: string,
 		token?: string,
@@ -755,8 +760,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 
 		// Default expiration is 7 days (max allowed by Google)
 		const expirationTime =
-			expiration?.getTime() ??
-			Date.now() + 7 * 24 * 60 * 60 * 1000;
+			expiration?.getTime() ?? Date.now() + 7 * 24 * 60 * 60 * 1000;
 
 		const response = await fetch(
 			`${this.calendarApiBaseUrl}/calendars/${encodeURIComponent(calendarId)}/events/watch`,
@@ -778,9 +782,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 
 		if (!response.ok) {
 			const error = await response.json();
-			throw new Error(
-				`Google Calendar watch error: ${JSON.stringify(error)}`,
-			);
+			throw new Error(`Google Calendar watch error: ${JSON.stringify(error)}`);
 		}
 
 		const data = (await response.json()) as {
@@ -846,7 +848,11 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 		return {
 			channelId: headers["x-goog-channel-id"] ?? "",
 			resourceId: headers["x-goog-resource-id"] ?? "",
-			resourceState: (headers["x-goog-resource-state"] as "sync" | "exists" | "not_exists") ?? "sync",
+			resourceState:
+				(headers["x-goog-resource-state"] as
+					| "sync"
+					| "exists"
+					| "not_exists") ?? "sync",
 			channelToken: headers["x-goog-channel-token"],
 			messageNumber: headers["x-goog-message-number"] ?? "0",
 			resourceUri: headers["x-goog-resource-uri"],
@@ -862,12 +868,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 		timeMin: Date,
 		timeMax: Date,
 		calendarIds: string[] = ["primary"],
-	): Promise<
-		Record<
-			string,
-			Array<{ start: string; end: string }>
-		>
-	> {
+	): Promise<Record<string, Array<{ start: string; end: string }>>> {
 		const response = await fetch(`${this.calendarApiBaseUrl}/freeBusy`, {
 			method: "POST",
 			headers: {
@@ -883,7 +884,9 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 
 		if (!response.ok) {
 			const error = await response.json();
-			throw new Error(`Google Calendar freeBusy error: ${JSON.stringify(error)}`);
+			throw new Error(
+				`Google Calendar freeBusy error: ${JSON.stringify(error)}`,
+			);
 		}
 
 		const data = (await response.json()) as {

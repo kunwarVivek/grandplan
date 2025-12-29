@@ -53,12 +53,15 @@ function OrgBranding() {
 				</CardHeader>
 				<CardContent>
 					<div className="flex items-center gap-6">
-						<div className="flex size-24 items-center justify-center rounded-lg border border-dashed border-muted-foreground/25 bg-muted/50">
+						<div className="flex size-24 items-center justify-center rounded-lg border border-muted-foreground/25 border-dashed bg-muted/50">
 							<ImageIcon className="size-8 text-muted-foreground" />
 						</div>
 						<div className="space-y-2">
 							<div className="relative">
-								<Button variant="outline" render={<label className="cursor-pointer" />}>
+								<Button
+									variant="outline"
+									render={<label className="cursor-pointer" />}
+								>
 									<UploadIcon className="size-4" />
 									Upload Logo
 									<input
@@ -69,7 +72,7 @@ function OrgBranding() {
 									/>
 								</Button>
 							</div>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								PNG, JPG, or SVG. Max size 2MB.
 							</p>
 						</div>
@@ -86,12 +89,15 @@ function OrgBranding() {
 				</CardHeader>
 				<CardContent>
 					<div className="flex items-center gap-6">
-						<div className="flex size-12 items-center justify-center rounded-lg border border-dashed border-muted-foreground/25 bg-muted/50">
+						<div className="flex size-12 items-center justify-center rounded-lg border border-muted-foreground/25 border-dashed bg-muted/50">
 							<ImageIcon className="size-5 text-muted-foreground" />
 						</div>
 						<div className="space-y-2">
 							<div className="relative">
-								<Button variant="outline" render={<label className="cursor-pointer" />}>
+								<Button
+									variant="outline"
+									render={<label className="cursor-pointer" />}
+								>
 									<UploadIcon className="size-4" />
 									Upload Favicon
 									<input
@@ -102,7 +108,7 @@ function OrgBranding() {
 									/>
 								</Button>
 							</div>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								PNG or ICO. Max size 500KB.
 							</p>
 						</div>
@@ -165,9 +171,7 @@ function OrgBranding() {
 			<Card>
 				<CardHeader>
 					<CardTitle>Preview</CardTitle>
-					<CardDescription>
-						See how your branding will look.
-					</CardDescription>
+					<CardDescription>See how your branding will look.</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="rounded-lg border p-6">

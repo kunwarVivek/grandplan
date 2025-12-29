@@ -1,4 +1,12 @@
-import { MoreHorizontal, Shield, ShieldCheck, UserMinus, Users } from "lucide-react";
+import {
+	MoreHorizontal,
+	Shield,
+	ShieldCheck,
+	UserMinus,
+	Users,
+} from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -8,8 +16,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	useOrganizationMembers,
@@ -74,7 +80,8 @@ export function MemberList({
 	const updateRole = useUpdateMemberRole();
 
 	const members = data?.members ?? [];
-	const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
+	const canManageMembers =
+		currentUserRole === "owner" || currentUserRole === "admin";
 
 	if (isLoading) {
 		return <MemberListSkeleton />;
@@ -84,7 +91,7 @@ export function MemberList({
 		return (
 			<div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
 				<Users className="size-8 text-muted-foreground" />
-				<p className="text-sm text-muted-foreground">No members found</p>
+				<p className="text-muted-foreground text-sm">No members found</p>
 			</div>
 		);
 	}
@@ -133,20 +140,20 @@ export function MemberList({
 							{member.user.image ? (
 								<img src={member.user.image} alt={member.user.name} />
 							) : (
-								<div className="flex size-full items-center justify-center bg-muted text-sm font-medium uppercase">
+								<div className="flex size-full items-center justify-center bg-muted font-medium text-sm uppercase">
 									{member.user.name.charAt(0)}
 								</div>
 							)}
 						</Avatar>
 
-						<div className="flex-1 min-w-0">
-							<p className="text-sm font-medium truncate">
+						<div className="min-w-0 flex-1">
+							<p className="truncate font-medium text-sm">
 								{member.user.name}
 								{isCurrentUser && (
 									<span className="ml-1 text-muted-foreground">(you)</span>
 								)}
 							</p>
-							<p className="text-xs text-muted-foreground truncate">
+							<p className="truncate text-muted-foreground text-xs">
 								{member.user.email}
 							</p>
 						</div>
@@ -159,9 +166,7 @@ export function MemberList({
 						{canModify && (
 							<DropdownMenu>
 								<DropdownMenuTrigger
-									render={
-										<Button variant="ghost" size="icon-sm" />
-									}
+									render={<Button variant="ghost" size="icon-sm" />}
 								>
 									<MoreHorizontal className="size-4" />
 									<span className="sr-only">Actions</span>

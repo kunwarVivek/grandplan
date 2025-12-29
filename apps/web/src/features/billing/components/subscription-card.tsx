@@ -1,4 +1,11 @@
-import { CalendarDays, CreditCard, AlertTriangle, CheckCircle } from "lucide-react";
+import {
+	AlertTriangle,
+	CalendarDays,
+	CheckCircle,
+	CreditCard,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -7,11 +14,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSubscription, useCreateBillingPortal, useResumeSubscription } from "../hooks/use-billing";
-import { SUBSCRIPTION_STATUS_CONFIG, PLAN_TIER_CONFIG } from "../types";
+import {
+	useCreateBillingPortal,
+	useResumeSubscription,
+	useSubscription,
+} from "../hooks/use-billing";
+import { PLAN_TIER_CONFIG, SUBSCRIPTION_STATUS_CONFIG } from "../types";
 
 type SubscriptionCardProps = {
 	onManagePlan?: () => void;
@@ -40,11 +49,14 @@ export function SubscriptionCard({ onManagePlan }: SubscriptionCardProps) {
 			<Card>
 				<CardHeader>
 					<CardTitle>Subscription</CardTitle>
-					<CardDescription>Unable to load subscription information</CardDescription>
+					<CardDescription>
+						Unable to load subscription information
+					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<p className="text-muted-foreground text-sm">
-						There was an error loading your subscription. Please try again later.
+						There was an error loading your subscription. Please try again
+						later.
 					</p>
 				</CardContent>
 			</Card>
@@ -54,7 +66,8 @@ export function SubscriptionCard({ onManagePlan }: SubscriptionCardProps) {
 	const statusConfig = SUBSCRIPTION_STATUS_CONFIG[subscription.status];
 	const tierConfig = PLAN_TIER_CONFIG[subscription.plan.tier];
 	const isTrialing = subscription.status === "trialing";
-	const isCanceled = subscription.cancelAtPeriodEnd || subscription.status === "canceled";
+	const isCanceled =
+		subscription.cancelAtPeriodEnd || subscription.status === "canceled";
 	const isPastDue = subscription.status === "past_due";
 
 	const formatDate = (date: Date) => {
@@ -93,7 +106,7 @@ export function SubscriptionCard({ onManagePlan }: SubscriptionCardProps) {
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="flex items-baseline gap-1">
-					<span className="text-3xl font-bold">{formatPrice(price)}</span>
+					<span className="font-bold text-3xl">{formatPrice(price)}</span>
 					<span className="text-muted-foreground text-sm">
 						/{subscription.interval === "yearly" ? "year" : "month"}
 					</span>
@@ -107,7 +120,7 @@ export function SubscriptionCard({ onManagePlan }: SubscriptionCardProps) {
 							{formatDate(
 								isTrialing && subscription.trialEnd
 									? subscription.trialEnd
-									: subscription.currentPeriodEnd
+									: subscription.currentPeriodEnd,
 							)}
 						</span>
 					</div>
@@ -116,7 +129,8 @@ export function SubscriptionCard({ onManagePlan }: SubscriptionCardProps) {
 						<div className="flex items-center gap-2 text-amber-500">
 							<AlertTriangle className="size-4" />
 							<span>
-								Subscription will end on {formatDate(subscription.currentPeriodEnd)}
+								Subscription will end on{" "}
+								{formatDate(subscription.currentPeriodEnd)}
 							</span>
 						</div>
 					)}
@@ -124,7 +138,9 @@ export function SubscriptionCard({ onManagePlan }: SubscriptionCardProps) {
 					{isPastDue && (
 						<div className="flex items-center gap-2 text-red-500">
 							<AlertTriangle className="size-4" />
-							<span>Payment is past due. Please update your payment method.</span>
+							<span>
+								Payment is past due. Please update your payment method.
+							</span>
 						</div>
 					)}
 
@@ -142,7 +158,9 @@ export function SubscriptionCard({ onManagePlan }: SubscriptionCardProps) {
 						onClick={handleResume}
 						disabled={resumeSubscription.isPending}
 					>
-						{resumeSubscription.isPending ? "Resuming..." : "Resume Subscription"}
+						{resumeSubscription.isPending
+							? "Resuming..."
+							: "Resume Subscription"}
 					</Button>
 				) : (
 					<Button variant="outline" onClick={onManagePlan}>

@@ -1,18 +1,3 @@
-import { useState, useMemo } from "react";
-import { cn } from "@/lib/utils";
-import { useUIStore, useTaskViewMode } from "@/stores";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	CalendarIcon,
 	FilterIcon,
@@ -24,6 +9,21 @@ import {
 	UserIcon,
 	XIcon,
 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { useTaskViewMode, useUIStore } from "@/stores";
 import type { TaskFilters, TaskPriority, TaskStatus } from "../types";
 import { TASK_PRIORITY_CONFIG, TASK_STATUS_CONFIG } from "../types";
 
@@ -36,11 +36,19 @@ type TaskFiltersProps = {
 
 type ViewMode = "kanban" | "tree" | "list" | "timeline";
 
-const VIEW_MODES: Array<{ id: ViewMode; label: string; icon: React.ReactNode }> = [
+const VIEW_MODES: Array<{
+	id: ViewMode;
+	label: string;
+	icon: React.ReactNode;
+}> = [
 	{ id: "kanban", label: "Kanban", icon: <KanbanIcon className="size-4" /> },
 	{ id: "tree", label: "Tree", icon: <ListTreeIcon className="size-4" /> },
 	{ id: "list", label: "List", icon: <LayoutListIcon className="size-4" /> },
-	{ id: "timeline", label: "Timeline", icon: <GanttChartIcon className="size-4" /> },
+	{
+		id: "timeline",
+		label: "Timeline",
+		icon: <GanttChartIcon className="size-4" />,
+	},
 ];
 
 export function TaskFilters({
@@ -81,7 +89,10 @@ export function TaskFilters({
 		const updated = current.includes(status)
 			? current.filter((s) => s !== status)
 			: [...current, status];
-		onFiltersChange({ ...filters, status: updated.length ? updated : undefined });
+		onFiltersChange({
+			...filters,
+			status: updated.length ? updated : undefined,
+		});
 	};
 
 	const handlePriorityToggle = (priority: TaskPriority) => {
@@ -89,7 +100,10 @@ export function TaskFilters({
 		const updated = current.includes(priority)
 			? current.filter((p) => p !== priority)
 			: [...current, priority];
-		onFiltersChange({ ...filters, priority: updated.length ? updated : undefined });
+		onFiltersChange({
+			...filters,
+			priority: updated.length ? updated : undefined,
+		});
 	};
 
 	const handleAssigneeToggle = (assigneeId: string) => {
@@ -97,10 +111,16 @@ export function TaskFilters({
 		const updated = current.includes(assigneeId)
 			? current.filter((a) => a !== assigneeId)
 			: [...current, assigneeId];
-		onFiltersChange({ ...filters, assigneeId: updated.length ? updated : undefined });
+		onFiltersChange({
+			...filters,
+			assigneeId: updated.length ? updated : undefined,
+		});
 	};
 
-	const handleDateChange = (field: "dueDateFrom" | "dueDateTo", value: string) => {
+	const handleDateChange = (
+		field: "dueDateFrom" | "dueDateTo",
+		value: string,
+	) => {
 		onFiltersChange({
 			...filters,
 			[field]: value ? new Date(value) : undefined,
@@ -114,17 +134,17 @@ export function TaskFilters({
 
 	return (
 		<div className={cn("flex flex-col gap-3", className)}>
-			<div className="flex items-center gap-2 flex-wrap">
+			<div className="flex flex-wrap items-center gap-2">
 				{/* Search */}
-				<div className="relative flex-1 min-w-48 max-w-xs">
-					<SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+				<div className="relative min-w-48 max-w-xs flex-1">
+					<SearchIcon className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						value={searchValue}
 						onChange={(e) => handleSearchChange(e.target.value)}
 						onKeyDown={handleSearchKeyDown}
 						onBlur={handleSearchSubmit}
 						placeholder="Search tasks..."
-						className="pl-8 h-8"
+						className="h-8 pl-8"
 					/>
 				</div>
 
@@ -136,11 +156,16 @@ export function TaskFilters({
 						<Button
 							variant="outline"
 							size="sm"
-							className={cn(filters.status?.length && "border-primary text-primary")}
+							className={cn(
+								filters.status?.length && "border-primary text-primary",
+							)}
 						>
 							Status
 							{filters.status?.length ? (
-								<Badge variant="secondary" className="ml-1.5 h-4 px-1.5 text-[10px]">
+								<Badge
+									variant="secondary"
+									className="ml-1.5 h-4 px-1.5 text-[10px]"
+								>
 									{filters.status.length}
 								</Badge>
 							) : null}
@@ -152,11 +177,15 @@ export function TaskFilters({
 								{Object.entries(TASK_STATUS_CONFIG).map(([value, config]) => (
 									<label
 										key={value}
-										className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-none cursor-pointer"
+										className="flex cursor-pointer items-center gap-2 rounded-none px-2 py-1.5 hover:bg-muted"
 									>
 										<Checkbox
-											checked={filters.status?.includes(value as TaskStatus) ?? false}
-											onCheckedChange={() => handleStatusToggle(value as TaskStatus)}
+											checked={
+												filters.status?.includes(value as TaskStatus) ?? false
+											}
+											onCheckedChange={() =>
+												handleStatusToggle(value as TaskStatus)
+											}
 										/>
 										<span className="text-xs">{config.label}</span>
 									</label>
@@ -172,11 +201,16 @@ export function TaskFilters({
 						<Button
 							variant="outline"
 							size="sm"
-							className={cn(filters.priority?.length && "border-primary text-primary")}
+							className={cn(
+								filters.priority?.length && "border-primary text-primary",
+							)}
 						>
 							Priority
 							{filters.priority?.length ? (
-								<Badge variant="secondary" className="ml-1.5 h-4 px-1.5 text-[10px]">
+								<Badge
+									variant="secondary"
+									className="ml-1.5 h-4 px-1.5 text-[10px]"
+								>
 									{filters.priority.length}
 								</Badge>
 							) : null}
@@ -188,11 +222,16 @@ export function TaskFilters({
 								{Object.entries(TASK_PRIORITY_CONFIG).map(([value, config]) => (
 									<label
 										key={value}
-										className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-none cursor-pointer"
+										className="flex cursor-pointer items-center gap-2 rounded-none px-2 py-1.5 hover:bg-muted"
 									>
 										<Checkbox
-											checked={filters.priority?.includes(value as TaskPriority) ?? false}
-											onCheckedChange={() => handlePriorityToggle(value as TaskPriority)}
+											checked={
+												filters.priority?.includes(value as TaskPriority) ??
+												false
+											}
+											onCheckedChange={() =>
+												handlePriorityToggle(value as TaskPriority)
+											}
 										/>
 										<span className="text-xs">{config.label}</span>
 									</label>
@@ -208,12 +247,17 @@ export function TaskFilters({
 						<Button
 							variant="outline"
 							size="sm"
-							className={cn(filters.assigneeId?.length && "border-primary text-primary")}
+							className={cn(
+								filters.assigneeId?.length && "border-primary text-primary",
+							)}
 						>
 							<UserIcon className="size-3.5" />
 							Assignee
 							{filters.assigneeId?.length ? (
-								<Badge variant="secondary" className="ml-1.5 h-4 px-1.5 text-[10px]">
+								<Badge
+									variant="secondary"
+									className="ml-1.5 h-4 px-1.5 text-[10px]"
+								>
 									{filters.assigneeId.length}
 								</Badge>
 							) : null}
@@ -226,19 +270,23 @@ export function TaskFilters({
 									{assignees.map((assignee) => (
 										<label
 											key={assignee.id}
-											className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-none cursor-pointer"
+											className="flex cursor-pointer items-center gap-2 rounded-none px-2 py-1.5 hover:bg-muted"
 										>
 											<Checkbox
-												checked={filters.assigneeId?.includes(assignee.id) ?? false}
-												onCheckedChange={() => handleAssigneeToggle(assignee.id)}
+												checked={
+													filters.assigneeId?.includes(assignee.id) ?? false
+												}
+												onCheckedChange={() =>
+													handleAssigneeToggle(assignee.id)
+												}
 											/>
-											<span className="text-xs truncate">{assignee.name}</span>
+											<span className="truncate text-xs">{assignee.name}</span>
 										</label>
 									))}
 								</div>
 							</ScrollArea>
 						) : (
-							<p className="text-xs text-muted-foreground text-center py-4">
+							<p className="py-4 text-center text-muted-foreground text-xs">
 								No team members found
 							</p>
 						)}
@@ -252,7 +300,8 @@ export function TaskFilters({
 							variant="outline"
 							size="sm"
 							className={cn(
-								(filters.dueDateFrom || filters.dueDateTo) && "border-primary text-primary",
+								(filters.dueDateFrom || filters.dueDateTo) &&
+									"border-primary text-primary",
 							)}
 						>
 							<CalendarIcon className="size-3.5" />
@@ -262,20 +311,24 @@ export function TaskFilters({
 					<PopoverContent align="start" className="w-64 p-3">
 						<div className="space-y-3">
 							<div className="space-y-1.5">
-								<Label className="text-xs text-muted-foreground">From</Label>
+								<Label className="text-muted-foreground text-xs">From</Label>
 								<Input
 									type="date"
 									value={filters.dueDateFrom?.toISOString().split("T")[0] ?? ""}
-									onChange={(e) => handleDateChange("dueDateFrom", e.target.value)}
+									onChange={(e) =>
+										handleDateChange("dueDateFrom", e.target.value)
+									}
 									className="h-8"
 								/>
 							</div>
 							<div className="space-y-1.5">
-								<Label className="text-xs text-muted-foreground">To</Label>
+								<Label className="text-muted-foreground text-xs">To</Label>
 								<Input
 									type="date"
 									value={filters.dueDateTo?.toISOString().split("T")[0] ?? ""}
-									onChange={(e) => handleDateChange("dueDateTo", e.target.value)}
+									onChange={(e) =>
+										handleDateChange("dueDateTo", e.target.value)
+									}
 									className="h-8"
 								/>
 							</div>
@@ -290,14 +343,17 @@ export function TaskFilters({
 							<FilterIcon className="size-3.5" />
 							More
 							{activeFilterCount > 0 ? (
-								<Badge variant="secondary" className="ml-1.5 h-4 px-1.5 text-[10px]">
+								<Badge
+									variant="secondary"
+									className="ml-1.5 h-4 px-1.5 text-[10px]"
+								>
 									{activeFilterCount}
 								</Badge>
 							) : null}
 						</Button>
 					</PopoverTrigger>
 					<PopoverContent align="start" className="w-64 p-3">
-						<p className="text-xs text-muted-foreground text-center py-4">
+						<p className="py-4 text-center text-muted-foreground text-xs">
 							More filter options coming soon...
 						</p>
 					</PopoverContent>
@@ -315,7 +371,7 @@ export function TaskFilters({
 				<div className="flex-1" />
 
 				{/* View mode selector */}
-				<div className="flex items-center border border-border rounded-none">
+				<div className="flex items-center rounded-none border border-border">
 					{VIEW_MODES.map((mode) => (
 						<Button
 							key={mode.id}
@@ -336,20 +392,16 @@ export function TaskFilters({
 
 			{/* Active filters display */}
 			{activeFilterCount > 0 && (
-				<div className="flex items-center gap-2 flex-wrap">
-					<span className="text-xs text-muted-foreground">Active filters:</span>
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="text-muted-foreground text-xs">Active filters:</span>
 
 					{filters.status?.map((status) => (
-						<Badge
-							key={status}
-							variant="secondary"
-							className="gap-1 pr-1"
-						>
+						<Badge key={status} variant="secondary" className="gap-1 pr-1">
 							{TASK_STATUS_CONFIG[status].label}
 							<button
 								type="button"
 								onClick={() => handleStatusToggle(status)}
-								className="hover:bg-muted-foreground/20 rounded-none p-0.5"
+								className="rounded-none p-0.5 hover:bg-muted-foreground/20"
 							>
 								<XIcon className="size-3" />
 							</button>
@@ -357,16 +409,12 @@ export function TaskFilters({
 					))}
 
 					{filters.priority?.map((priority) => (
-						<Badge
-							key={priority}
-							variant="secondary"
-							className="gap-1 pr-1"
-						>
+						<Badge key={priority} variant="secondary" className="gap-1 pr-1">
 							{TASK_PRIORITY_CONFIG[priority].label}
 							<button
 								type="button"
 								onClick={() => handlePriorityToggle(priority)}
-								className="hover:bg-muted-foreground/20 rounded-none p-0.5"
+								className="rounded-none p-0.5 hover:bg-muted-foreground/20"
 							>
 								<XIcon className="size-3" />
 							</button>
@@ -385,7 +433,7 @@ export function TaskFilters({
 								<button
 									type="button"
 									onClick={() => handleAssigneeToggle(assigneeId)}
-									className="hover:bg-muted-foreground/20 rounded-none p-0.5"
+									className="rounded-none p-0.5 hover:bg-muted-foreground/20"
 								>
 									<XIcon className="size-3" />
 								</button>
@@ -409,7 +457,7 @@ export function TaskFilters({
 										dueDateTo: undefined,
 									})
 								}
-								className="hover:bg-muted-foreground/20 rounded-none p-0.5"
+								className="rounded-none p-0.5 hover:bg-muted-foreground/20"
 							>
 								<XIcon className="size-3" />
 							</button>

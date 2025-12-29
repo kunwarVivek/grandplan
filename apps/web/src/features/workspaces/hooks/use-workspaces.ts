@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
-	Workspace,
-	WorkspaceMember,
 	CreateWorkspaceInput,
 	UpdateWorkspaceInput,
+	Workspace,
+	WorkspaceMember,
 } from "../types";
 
 // Types for API responses
@@ -24,9 +24,7 @@ export function useWorkspaces(organizationId?: string) {
 	return useQuery({
 		queryKey: queryKeys.workspaces.all,
 		queryFn: async ({ signal }) => {
-			const params = organizationId
-				? `?organizationId=${organizationId}`
-				: "";
+			const params = organizationId ? `?organizationId=${organizationId}` : "";
 			return api.get<WorkspacesResponse>(`/api/workspaces${params}`, signal);
 		},
 	});

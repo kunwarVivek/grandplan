@@ -1,4 +1,9 @@
-import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	Outlet,
+	redirect,
+} from "@tanstack/react-router";
 import {
 	BuildingIcon,
 	CreditCardIcon,
@@ -30,8 +35,8 @@ function OrgSettingsLayout() {
 	return (
 		<div className="container mx-auto py-8">
 			<div className="mb-6">
-				<h1 className="text-lg font-medium">Organization Settings</h1>
-				<p className="text-sm text-muted-foreground">
+				<h1 className="font-medium text-lg">Organization Settings</h1>
+				<p className="text-muted-foreground text-sm">
 					Manage settings for your organization.
 				</p>
 			</div>
@@ -43,8 +48,8 @@ function OrgSettingsLayout() {
 							to="/org/$orgSlug"
 							params={{ orgSlug }}
 							className={cn(
-								"flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-								"[&.active]:bg-muted [&.active]:text-foreground"
+								"flex items-center gap-3 px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground",
+								"[&.active]:bg-muted [&.active]:text-foreground",
 							)}
 							activeOptions={{ exact: true }}
 						>
@@ -55,8 +60,8 @@ function OrgSettingsLayout() {
 							to="/org/$orgSlug/members"
 							params={{ orgSlug }}
 							className={cn(
-								"flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-								"[&.active]:bg-muted [&.active]:text-foreground"
+								"flex items-center gap-3 px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground",
+								"[&.active]:bg-muted [&.active]:text-foreground",
 							)}
 						>
 							<UsersIcon className="size-4" />
@@ -66,8 +71,8 @@ function OrgSettingsLayout() {
 							to="/org/$orgSlug/billing"
 							params={{ orgSlug }}
 							className={cn(
-								"flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-								"[&.active]:bg-muted [&.active]:text-foreground"
+								"flex items-center gap-3 px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground",
+								"[&.active]:bg-muted [&.active]:text-foreground",
 							)}
 						>
 							<CreditCardIcon className="size-4" />
@@ -77,8 +82,8 @@ function OrgSettingsLayout() {
 							to="/org/$orgSlug/branding"
 							params={{ orgSlug }}
 							className={cn(
-								"flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-								"[&.active]:bg-muted [&.active]:text-foreground"
+								"flex items-center gap-3 px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground",
+								"[&.active]:bg-muted [&.active]:text-foreground",
 							)}
 						>
 							<PaletteIcon className="size-4" />

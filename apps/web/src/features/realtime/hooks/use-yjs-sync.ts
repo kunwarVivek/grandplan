@@ -2,16 +2,20 @@
 // YJS SYNCHRONIZATION HOOK
 // ============================================
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
-import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
+import {
+	Awareness,
+	applyAwarenessUpdate,
+	encodeAwarenessUpdate,
+} from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
 
 import { useTasksSocket } from "@/providers";
-import type { SyncState, AwarenessUser } from "../types";
+import type { AwarenessUser, SyncState } from "../types";
 import { getColorForUser } from "../types";
 
 type UseYjsDocumentOptions = {
@@ -30,7 +34,7 @@ type UseYjsDocumentReturn = {
 
 export function useYjsDocument(
 	projectId: string | null,
-	options: UseYjsDocumentOptions
+	options: UseYjsDocumentOptions,
 ): UseYjsDocumentReturn {
 	const socket = useTasksSocket();
 	const [syncState, setSyncState] = useState<SyncState>("disconnected");
@@ -63,7 +67,7 @@ export function useYjsDocument(
 			};
 			awareness.setLocalStateField("user", awarenessUser);
 		},
-		[options.userId, options.userName, options.userAvatar]
+		[options.userId, options.userName, options.userAvatar],
 	);
 
 	// Handle sync messages from server
@@ -101,7 +105,7 @@ export function useYjsDocument(
 				}
 			}
 		},
-		[socket]
+		[socket],
 	);
 
 	// Handle awareness updates from server
@@ -126,7 +130,7 @@ export function useYjsDocument(
 			encoding.writeVarUint8Array(encoder, update);
 			socket.emit("sync:update", encoding.toUint8Array(encoder));
 		},
-		[socket]
+		[socket],
 	);
 
 	// Send local awareness updates to server
@@ -143,11 +147,11 @@ export function useYjsDocument(
 			const encoder = encoding.createEncoder();
 			encoding.writeVarUint8Array(
 				encoder,
-				encodeAwarenessUpdate(awareness, changedClients)
+				encodeAwarenessUpdate(awareness, changedClients),
 			);
 			socket.emit("sync:awareness", encoding.toUint8Array(encoder));
 		},
-		[socket]
+		[socket],
 	);
 
 	// Connect to a project room
@@ -169,7 +173,12 @@ export function useYjsDocument(
 			currentProjectRef.current = projectId;
 			setSyncState("connecting");
 		},
-		[initDocument, setupAwareness, handleDocumentUpdate, handleLocalAwarenessUpdate]
+		[
+			initDocument,
+			setupAwareness,
+			handleDocumentUpdate,
+			handleLocalAwarenessUpdate,
+		],
 	);
 
 	// Disconnect from current project
@@ -297,7 +306,10 @@ export function useYjsDocument(
 }
 
 // Hook to access specific Yjs shared types
-export function useYjsMap<T>(doc: Y.Doc | null, mapName: string): Y.Map<T> | null {
+export function useYjsMap<T>(
+	doc: Y.Doc | null,
+	mapName: string,
+): Y.Map<T> | null {
 	const [map, setMap] = useState<Y.Map<T> | null>(null);
 
 	useEffect(() => {
@@ -311,7 +323,10 @@ export function useYjsMap<T>(doc: Y.Doc | null, mapName: string): Y.Map<T> | nul
 	return map;
 }
 
-export function useYjsArray<T>(doc: Y.Doc | null, arrayName: string): Y.Array<T> | null {
+export function useYjsArray<T>(
+	doc: Y.Doc | null,
+	arrayName: string,
+): Y.Array<T> | null {
 	const [array, setArray] = useState<Y.Array<T> | null>(null);
 
 	useEffect(() => {

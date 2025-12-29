@@ -16,15 +16,19 @@ import type {
 
 export class PaymentService {
 	private providers: Map<PaymentProvider, PaymentProviderInterface> = new Map();
-	private defaultProvider: PaymentProvider = "stripe";
+	private defaultProvider: PaymentProvider = "polar";
+	private initialized = false;
 
 	initialize(config: {
-		polar?: { accessToken: string };
+		polar?: { accessToken: string; webhookSecret?: string };
 		stripe?: { secretKey: string; webhookSecret: string };
 		defaultProvider?: PaymentProvider;
 	}): void {
 		if (config.polar) {
-			this.providers.set("polar", new PolarProvider(config.polar.accessToken));
+			this.providers.set(
+				"polar",
+				new PolarProvider(config.polar.accessToken, config.polar.webhookSecret),
+			);
 		}
 
 		if (config.stripe) {
@@ -40,6 +44,15 @@ export class PaymentService {
 		if (config.defaultProvider) {
 			this.defaultProvider = config.defaultProvider;
 		}
+
+		this.initialized = true;
+	}
+
+	/**
+	 * Check if the payment service has been initialized
+	 */
+	isInitialized(): boolean {
+		return this.initialized;
 	}
 
 	private getProvider(provider?: PaymentProvider): PaymentProviderInterface {

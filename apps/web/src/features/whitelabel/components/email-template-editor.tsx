@@ -1,5 +1,7 @@
+import { Code, Eye, FileText, Mail, Save, Send } from "lucide-react";
 import { useState } from "react";
-import { Mail, Eye, Send, Save, Code, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -7,19 +9,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {
 	Dialog,
 	DialogContent,
@@ -29,13 +18,28 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import type { EmailTemplate, EmailTemplateType, EmailTemplateInput } from "../types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
 	useCreateEmailTemplate,
-	useUpdateEmailTemplate,
 	usePreviewEmailTemplate,
 	useSendTestEmail,
+	useUpdateEmailTemplate,
 } from "../hooks/use-whitelabel";
+import type {
+	EmailTemplate,
+	EmailTemplateInput,
+	EmailTemplateType,
+} from "../types";
 
 const TEMPLATE_TYPES: { value: EmailTemplateType; label: string }[] = [
 	{ value: "WELCOME", label: "Welcome Email" },
@@ -118,7 +122,10 @@ export function EmailTemplateEditor({
 
 	const handleSendTest = async () => {
 		if (!template || !testEmail) return;
-		await sendTestMutation.mutateAsync({ templateId: template.id, email: testEmail });
+		await sendTestMutation.mutateAsync({
+			templateId: template.id,
+			email: testEmail,
+		});
 	};
 
 	const insertVariable = (variable: string) => {
@@ -146,12 +153,17 @@ export function EmailTemplateEditor({
 						<Select
 							value={formData.type}
 							onValueChange={(value) =>
-								value && setFormData((prev) => ({ ...prev, type: value as EmailTemplateType }))
+								value &&
+								setFormData((prev) => ({
+									...prev,
+									type: value as EmailTemplateType,
+								}))
 							}
 						>
 							<SelectTrigger>
 								<SelectValue>
-									{TEMPLATE_TYPES.find((t) => t.value === formData.type)?.label ?? "Select type"}
+									{TEMPLATE_TYPES.find((t) => t.value === formData.type)
+										?.label ?? "Select type"}
 								</SelectValue>
 							</SelectTrigger>
 							<SelectContent>
@@ -217,17 +229,23 @@ export function EmailTemplateEditor({
 						<Textarea
 							value={formData.htmlContent}
 							onChange={(e) =>
-								setFormData((prev) => ({ ...prev, htmlContent: e.target.value }))
+								setFormData((prev) => ({
+									...prev,
+									htmlContent: e.target.value,
+								}))
 							}
 							placeholder="<html>...</html>"
-							className="font-mono min-h-[300px]"
+							className="min-h-[300px] font-mono"
 						/>
 					</TabsContent>
 					<TabsContent value="text" className="mt-4">
 						<Textarea
 							value={formData.textContent ?? ""}
 							onChange={(e) =>
-								setFormData((prev) => ({ ...prev, textContent: e.target.value }))
+								setFormData((prev) => ({
+									...prev,
+									textContent: e.target.value,
+								}))
 							}
 							placeholder="Plain text version of the email..."
 							className="min-h-[300px]"
@@ -235,7 +253,7 @@ export function EmailTemplateEditor({
 					</TabsContent>
 				</Tabs>
 
-				<div className="flex items-center justify-between pt-4 border-t">
+				<div className="flex items-center justify-between border-t pt-4">
 					<div className="flex items-center gap-2">
 						{isEditing && (
 							<>
@@ -245,12 +263,14 @@ export function EmailTemplateEditor({
 									onClick={handlePreview}
 									disabled={previewMutation.isPending}
 								>
-									<Eye className="size-4 mr-2" />
+									<Eye className="mr-2 size-4" />
 									Preview
 								</Button>
 								<Dialog>
-									<DialogTrigger render={<Button variant="outline" size="sm" />}>
-										<Send className="size-4 mr-2" />
+									<DialogTrigger
+										render={<Button variant="outline" size="sm" />}
+									>
+										<Send className="mr-2 size-4" />
 										Send Test
 									</DialogTrigger>
 									<DialogContent>
@@ -276,7 +296,9 @@ export function EmailTemplateEditor({
 												onClick={handleSendTest}
 												disabled={!testEmail || sendTestMutation.isPending}
 											>
-												{sendTestMutation.isPending ? "Sending..." : "Send Test"}
+												{sendTestMutation.isPending
+													? "Sending..."
+													: "Send Test"}
 											</Button>
 										</DialogFooter>
 									</DialogContent>
@@ -285,19 +307,19 @@ export function EmailTemplateEditor({
 						)}
 					</div>
 					<Button onClick={handleSave} disabled={isSaving}>
-						<Save className="size-4 mr-2" />
+						<Save className="mr-2 size-4" />
 						{isSaving ? "Saving..." : "Save Template"}
 					</Button>
 				</div>
 
 				{/* Preview Dialog */}
 				<Dialog open={showPreview} onOpenChange={setShowPreview}>
-					<DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+					<DialogContent className="max-h-[80vh] max-w-3xl overflow-auto">
 						<DialogHeader>
 							<DialogTitle>Email Preview</DialogTitle>
 						</DialogHeader>
 						<div
-							className="border rounded-lg p-4 bg-white"
+							className="rounded-lg border bg-white p-4"
 							dangerouslySetInnerHTML={{ __html: previewHtml }}
 						/>
 					</DialogContent>

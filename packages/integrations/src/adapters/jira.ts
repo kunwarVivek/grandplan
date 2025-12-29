@@ -94,27 +94,27 @@ interface JiraCloudResource {
 
 // Status mapping: Jira status categories to internal statuses
 const JIRA_STATUS_CATEGORY_MAP: Record<string, string> = {
-	"new": "backlog",
-	"undefined": "backlog",
-	"indeterminate": "in_progress",
-	"done": "completed",
+	new: "backlog",
+	undefined: "backlog",
+	indeterminate: "in_progress",
+	done: "completed",
 };
 
 // Priority mapping: Jira priorities to internal priorities
 const JIRA_PRIORITY_MAP: Record<string, string> = {
-	"highest": "urgent",
-	"high": "high",
-	"medium": "medium",
-	"low": "low",
-	"lowest": "low",
+	highest: "urgent",
+	high: "high",
+	medium: "medium",
+	low: "low",
+	lowest: "low",
 };
 
 // Reverse priority mapping: internal to Jira
 const INTERNAL_TO_JIRA_PRIORITY: Record<string, string> = {
-	"urgent": "Highest",
-	"high": "High",
-	"medium": "Medium",
-	"low": "Low",
+	urgent: "Highest",
+	high: "High",
+	medium: "Medium",
+	low: "Low",
 };
 
 export class JiraAdapter implements IntegrationAdapter {
@@ -290,10 +290,7 @@ export class JiraAdapter implements IntegrationAdapter {
 			.digest("hex");
 
 		try {
-			return crypto.timingSafeEqual(
-				Buffer.from(signature),
-				Buffer.from(hmac),
-			);
+			return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
 		} catch {
 			return false;
 		}
@@ -553,10 +550,16 @@ export class JiraAdapter implements IntegrationAdapter {
 
 		if (!response.ok) {
 			const errorBody = await response.text();
-			throw new Error(`Failed to create issue: ${response.statusText} - ${errorBody}`);
+			throw new Error(
+				`Failed to create issue: ${response.statusText} - ${errorBody}`,
+			);
 		}
 
-		const result = (await response.json()) as { id: string; key: string; self: string };
+		const result = (await response.json()) as {
+			id: string;
+			key: string;
+			self: string;
+		};
 
 		// Fetch the full issue to return
 		return this.getIssue(accessToken, cloudId, result.key);
@@ -632,7 +635,9 @@ export class JiraAdapter implements IntegrationAdapter {
 
 		if (!response.ok) {
 			const errorBody = await response.text();
-			throw new Error(`Failed to update issue: ${response.statusText} - ${errorBody}`);
+			throw new Error(
+				`Failed to update issue: ${response.statusText} - ${errorBody}`,
+			);
 		}
 	}
 
@@ -762,7 +767,11 @@ export class JiraAdapter implements IntegrationAdapter {
 		accessToken: string,
 		cloudId: string,
 		webhookUrl: string,
-		events: string[] = ["jira:issue_created", "jira:issue_updated", "jira:issue_deleted"],
+		events: string[] = [
+			"jira:issue_created",
+			"jira:issue_updated",
+			"jira:issue_deleted",
+		],
 		jqlFilter?: string,
 	): Promise<{ id: string }> {
 		const response = await fetch(
@@ -788,10 +797,14 @@ export class JiraAdapter implements IntegrationAdapter {
 
 		if (!response.ok) {
 			const errorBody = await response.text();
-			throw new Error(`Failed to register webhook: ${response.statusText} - ${errorBody}`);
+			throw new Error(
+				`Failed to register webhook: ${response.statusText} - ${errorBody}`,
+			);
 		}
 
-		const data = (await response.json()) as { webhookRegistrationResult: Array<{ createdWebhookId: number }> };
+		const data = (await response.json()) as {
+			webhookRegistrationResult: Array<{ createdWebhookId: number }>;
+		};
 		return { id: String(data.webhookRegistrationResult[0]?.createdWebhookId) };
 	}
 
@@ -894,9 +907,7 @@ export class JiraAdapter implements IntegrationAdapter {
 	 * Map Jira status category to internal status
 	 */
 	mapJiraStatusToInternal(status: JiraStatus): string {
-		return (
-			JIRA_STATUS_CATEGORY_MAP[status.statusCategory.key] ?? "in_progress"
-		);
+		return JIRA_STATUS_CATEGORY_MAP[status.statusCategory.key] ?? "in_progress";
 	}
 
 	/**
@@ -920,15 +931,15 @@ export class JiraAdapter implements IntegrationAdapter {
 	private extractTextFromADF(adf: unknown): string {
 		if (!adf || typeof adf !== "object") return "";
 
-		const doc = adf as { content?: Array<{ content?: Array<{ text?: string }> }> };
+		const doc = adf as {
+			content?: Array<{ content?: Array<{ text?: string }> }>;
+		};
 		if (!doc.content) return "";
 
 		return doc.content
 			.map((block) => {
 				if (!block.content) return "";
-				return block.content
-					.map((item) => item.text ?? "")
-					.join("");
+				return block.content.map((item) => item.text ?? "").join("");
 			})
 			.join("\n");
 	}
