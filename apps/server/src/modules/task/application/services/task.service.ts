@@ -36,7 +36,7 @@ import {
 	isTaskCompleted,
 } from "../../domain/entities/task-node.entity.js";
 import { TASK_EVENTS } from "../../domain/events/task.events.js";
-import { materializedPathUtils } from "../../domain/value-objects/materialized-path.vo.js";
+// materializedPathUtils is now handled in the repository layer for transaction support
 import {
 	type TaskQueryOptions,
 	taskRepository,
@@ -70,9 +70,9 @@ export class TaskService {
 	async create(dto: CreateTaskDto) {
 		const { project, tenant } = await this.verifyProjectAccess(dto.projectId);
 
-		// Calculate path and depth
+		// Calculate depth and get parent info
 		let depth = 0;
-		let path: string;
+		let parentPath: string | null = null;
 		let position = dto.position;
 
 		if (dto.parentId) {
@@ -87,6 +87,7 @@ export class TaskService {
 				);
 			}
 			depth = parent.depth + 1;
+			parentPath = parent.path;
 		}
 
 		// Get next position if not specified
@@ -100,12 +101,13 @@ export class TaskService {
 		// Determine node type based on depth if not specified
 		const nodeType = dto.nodeType ?? getDefaultNodeTypeForDepth(depth);
 
-		// Create task first to get ID, then build path
-		const task = await taskRepository.create({
+		// Create task with path and history in a single transaction
+		const task = await taskRepository.createWithPath({
 			title: dto.title,
 			description: dto.description,
 			projectId: dto.projectId,
 			parentId: dto.parentId,
+			parentPath,
 			nodeType: nodeType as TaskNodeType,
 			status: (dto.status ?? "DRAFT") as TaskStatus,
 			priority: (dto.priority ?? "MEDIUM") as TaskPriority,
@@ -115,29 +117,9 @@ export class TaskService {
 			dueDate: dto.dueDate,
 			position,
 			depth,
-			path: "", // Temporary, will update
 		});
 
-		// Now update with correct path
-		if (dto.parentId) {
-			const parent = await taskRepository.findById(dto.parentId);
-			path = materializedPathUtils.buildPath(parent!.path, task.id);
-		} else {
-			path = task.id;
-		}
-
-		const updatedTask = await taskRepository.update(task.id, { path } as never);
-		// @ts-expect-error - workaround for type issue
-		updatedTask.path = path;
-
-		// Record history
-		await taskRepository.addHistory({
-			taskId: task.id,
-			action: "CREATED",
-			actorId: tenant.userId,
-		});
-
-		// Emit events
+		// Emit events (after transaction commits successfully)
 		await eventBus.emit(TASK_EVENTS.CREATED, {
 			taskId: task.id,
 			title: task.title,
@@ -157,7 +139,7 @@ export class TaskService {
 			metadata: { title: task.title, projectId: dto.projectId },
 		});
 
-		return updatedTask;
+		return task;
 	}
 
 	async findById(id: string) {

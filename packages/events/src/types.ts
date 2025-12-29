@@ -2,7 +2,7 @@
 // EVENT TYPE DEFINITIONS
 // ============================================
 
-import type { TaskPriorityType, TaskStatusType } from "@grandplan/core/types";
+import type { TaskStatusType } from "@grandplan/core/types";
 
 export interface DomainEvent<T = unknown> {
 	id: string;
@@ -36,22 +36,26 @@ export interface TaskCreatedPayload {
 }
 
 export interface TaskUpdatedPayload {
-	id: string;
+	taskId: string;
 	changes: Record<string, unknown>;
 	previousValues: Record<string, unknown>;
+	updatedById?: string;
 }
 
 export interface TaskStatusChangedPayload {
-	id: string;
+	taskId: string;
 	previousStatus: TaskStatusType;
 	newStatus: TaskStatusType;
 	reason?: string;
+	changedById?: string;
+	aiTriggered?: boolean;
 }
 
 export interface TaskAssignedPayload {
-	id: string;
+	taskId: string;
 	assigneeId: string;
-	previousAssigneeId?: string;
+	previousAssigneeId?: string | null;
+	assignedById: string;
 }
 
 export interface TaskDecomposedPayload {
@@ -99,16 +103,128 @@ export interface NotificationCreatedPayload {
 	title: string;
 }
 
+// Task move/dependency events
+export interface TaskMovedPayload {
+	taskId: string;
+	previousParentId: string | null;
+	newParentId: string | null;
+	previousPath: string;
+	newPath: string;
+	movedById: string;
+}
+
+export interface DependencyAddedPayload {
+	dependencyId: string;
+	fromTaskId: string;
+	toTaskId: string;
+	type: string;
+	createdById: string;
+}
+
+export interface DependencyRemovedPayload {
+	dependencyId: string;
+	fromTaskId: string;
+	toTaskId: string;
+	type: string;
+	removedById: string;
+}
+
+export interface TaskCommentAddedPayload {
+	commentId: string;
+	taskId: string;
+	authorId: string | null;
+	content: string;
+}
+
+export interface TaskCommentUpdatedPayload {
+	commentId: string;
+	taskId: string;
+	content: string;
+	updatedById: string;
+}
+
+export interface TaskCommentDeletedPayload {
+	commentId: string;
+	taskId: string;
+	deletedById: string;
+}
+
+export interface ChildrenCompletedPayload {
+	parentTaskId: string;
+	completedChildIds: string[];
+	triggeredById: string;
+}
+
+export interface DependencyBlockedPayload {
+	blockedTaskId: string;
+	blockingTaskId: string;
+	dependencyType: string;
+}
+
+// Project Events
+export interface ProjectCreatedPayload {
+	projectId: string;
+	name: string;
+	workspaceId: string;
+	createdById: string;
+	createdAt: Date;
+}
+
+export interface ProjectUpdatedPayload {
+	projectId: string;
+	changes: Record<string, unknown>;
+	previousValues: Record<string, unknown>;
+	updatedById: string;
+}
+
+export interface ProjectStatusChangedPayload {
+	projectId: string;
+	previousStatus: string;
+	newStatus: string;
+	changedById: string;
+}
+
+export interface ProjectDeletedPayload {
+	projectId: string;
+	name: string;
+	workspaceId: string;
+	deletedById: string;
+}
+
+export interface ProjectArchivedPayload {
+	projectId: string;
+	name: string;
+	workspaceId: string;
+	archivedById: string;
+}
+
 // Event type map for type safety
 export interface EventTypeMap {
 	"task.created": DomainEvent<TaskCreatedPayload>;
 	"task.updated": DomainEvent<TaskUpdatedPayload>;
 	"task.statusChanged": DomainEvent<TaskStatusChangedPayload>;
 	"task.assigned": DomainEvent<TaskAssignedPayload>;
-	"task.unassigned": DomainEvent<{ id: string; previousAssigneeId: string }>;
+	"task.unassigned": DomainEvent<{
+		taskId: string;
+		previousAssigneeId: string;
+		unassignedById: string;
+	}>;
 	"task.decomposed": DomainEvent<TaskDecomposedPayload>;
 	"task.completed": DomainEvent<TaskCompletedPayload>;
-	"task.deleted": DomainEvent<{ id: string; projectId: string }>;
+	"task.deleted": DomainEvent<{
+		taskId: string;
+		title: string;
+		projectId: string;
+		deletedById: string;
+	}>;
+	"task.moved": DomainEvent<TaskMovedPayload>;
+	"task.dependencyAdded": DomainEvent<DependencyAddedPayload>;
+	"task.dependencyRemoved": DomainEvent<DependencyRemovedPayload>;
+	"task.commentAdded": DomainEvent<TaskCommentAddedPayload>;
+	"task.commentUpdated": DomainEvent<TaskCommentUpdatedPayload>;
+	"task.commentDeleted": DomainEvent<TaskCommentDeletedPayload>;
+	"task.childrenCompleted": DomainEvent<ChildrenCompletedPayload>;
+	"task.dependencyBlocked": DomainEvent<DependencyBlockedPayload>;
 	"comment.created": DomainEvent<CommentCreatedPayload>;
 	"comment.updated": DomainEvent<{
 		id: string;
@@ -132,6 +248,11 @@ export interface EventTypeMap {
 	}>;
 	"notification.created": DomainEvent<NotificationCreatedPayload>;
 	"notification.read": DomainEvent<{ id: string; userId: string }>;
+	"project.created": DomainEvent<ProjectCreatedPayload>;
+	"project.updated": DomainEvent<ProjectUpdatedPayload>;
+	"project.statusChanged": DomainEvent<ProjectStatusChangedPayload>;
+	"project.deleted": DomainEvent<ProjectDeletedPayload>;
+	"project.archived": DomainEvent<ProjectArchivedPayload>;
 }
 
 export type EventType = keyof EventTypeMap;

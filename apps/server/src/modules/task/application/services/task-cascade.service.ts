@@ -6,7 +6,6 @@ import db from "@grandplan/db";
 import { eventBus } from "@grandplan/events";
 import type { TaskStatus } from "@prisma/client";
 import {
-	COMPLETED_STATUSES,
 	isTaskBlocking,
 	isTaskCompleted,
 } from "../../domain/entities/task-node.entity.js";
@@ -97,23 +96,16 @@ export class TaskCascadeService {
 			childrenCounts.COMPLETED + childrenCounts.CANCELLED;
 
 		if (completedChildren === totalChildren) {
-			// All children are completed, complete the parent
+			// All children are completed, complete the parent (atomic status + history)
 			const previousStatus = parent.status;
-			await taskRepository.updateStatus(parentId, "COMPLETED");
-
-			// Record history
-			await taskRepository.addHistory({
-				taskId: parentId,
-				action: "STATUS_CHANGED",
-				field: "status",
-				oldValue: previousStatus,
-				newValue: "COMPLETED",
+			await taskRepository.updateStatusWithHistory(parentId, "COMPLETED", {
+				previousStatus,
 				reason: "All child tasks completed",
 				actorId: userId,
 				aiTriggered: false,
 			});
 
-			// Emit event
+			// Emit event (after transaction commits)
 			await eventBus.emit(TASK_EVENTS.STATUS_CHANGED, {
 				taskId: parentId,
 				previousStatus,
@@ -186,17 +178,10 @@ export class TaskCascadeService {
 			);
 
 			if (!stillBlocked) {
-				// Unblock the task - move it to PENDING
+				// Unblock the task - move it to PENDING (atomic status + history)
 				const previousStatus = blockedTask.status;
-				await taskRepository.updateStatus(blockedTask.id, "PENDING");
-
-				// Record history
-				await taskRepository.addHistory({
-					taskId: blockedTask.id,
-					action: "STATUS_CHANGED",
-					field: "status",
-					oldValue: previousStatus,
-					newValue: "PENDING",
+				await taskRepository.updateStatusWithHistory(blockedTask.id, "PENDING", {
+					previousStatus,
 					reason: `Unblocked: ${completedTaskId} completed`,
 					actorId: userId,
 					aiTriggered: false,
@@ -248,15 +233,9 @@ export class TaskCascadeService {
 			toTask.status !== "BLOCKED"
 		) {
 			const previousStatus = toTask.status;
-			await taskRepository.updateStatus(toTaskId, "BLOCKED");
-
-			// Record history
-			await taskRepository.addHistory({
-				taskId: toTaskId,
-				action: "STATUS_CHANGED",
-				field: "status",
-				oldValue: previousStatus,
-				newValue: "BLOCKED",
+			// Block the task (atomic status + history)
+			await taskRepository.updateStatusWithHistory(toTaskId, "BLOCKED", {
+				previousStatus,
 				reason: `Blocked by task: ${fromTaskId}`,
 				actorId: userId,
 				aiTriggered: false,
@@ -306,17 +285,10 @@ export class TaskCascadeService {
 			return;
 		}
 
-		// Reopen the parent
+		// Reopen the parent (atomic status + history)
 		const previousStatus = parent.status;
-		await taskRepository.updateStatus(parentId, "IN_PROGRESS");
-
-		// Record history
-		await taskRepository.addHistory({
-			taskId: parentId,
-			action: "STATUS_CHANGED",
-			field: "status",
-			oldValue: previousStatus,
-			newValue: "IN_PROGRESS",
+		await taskRepository.updateStatusWithHistory(parentId, "IN_PROGRESS", {
+			previousStatus,
 			reason: `Child task ${childId} was reopened`,
 			actorId: userId,
 			aiTriggered: false,
@@ -389,14 +361,9 @@ export class TaskCascadeService {
 				(child) => !isTaskCompleted(child.status),
 			);
 			if (hasIncompleteChildren) {
-				// Reopen the task
-				await taskRepository.updateStatus(taskId, "IN_PROGRESS");
-				await taskRepository.addHistory({
-					taskId,
-					action: "STATUS_CHANGED",
-					field: "status",
-					oldValue: task.status,
-					newValue: "IN_PROGRESS",
+				// Reopen the task (atomic status + history)
+				await taskRepository.updateStatusWithHistory(taskId, "IN_PROGRESS", {
+					previousStatus: task.status,
 					reason: "Reopened due to incomplete child tasks after move",
 					actorId: null,
 					aiTriggered: true,

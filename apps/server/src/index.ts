@@ -26,6 +26,7 @@ import {
 	organizationRoutes,
 	platformRoutes,
 	projectRoutes,
+	registerProjectEventHandlers,
 	registerTaskEventHandlers,
 	taskRoutes,
 	teamRoutes,
@@ -146,6 +147,7 @@ app.use(errorHandler);
 
 // Register event handlers for cross-module communication
 registerTaskEventHandlers();
+registerProjectEventHandlers();
 
 // Create HTTP server for both Express and Socket.io
 const httpServer = createServer(app);

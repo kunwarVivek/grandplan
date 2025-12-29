@@ -10,7 +10,11 @@ export {
 	organizationService,
 } from "./organization/index.js";
 export { platformRoutes } from "./platform/index.js";
-export { projectRoutes, projectService } from "./project/index.js";
+export {
+	projectRoutes,
+	projectService,
+	registerProjectEventHandlers,
+} from "./project/index.js";
 export {
 	registerTaskEventHandlers,
 	taskCascadeService,

@@ -2,7 +2,7 @@
 // TASK REPOSITORY
 // ============================================
 
-import db from "@grandplan/db";
+import db, { withTransaction } from "@grandplan/db";
 import type {
 	DependencyType,
 	Prisma,
@@ -89,6 +89,71 @@ export class TaskRepository {
 		});
 
 		return task;
+	}
+
+	/**
+	 * Create a task with path calculation and history in a single transaction.
+	 * This ensures atomicity: if any step fails, the entire operation is rolled back.
+	 */
+	async createWithPath(data: {
+		title: string;
+		description?: string | null;
+		projectId: string;
+		parentId?: string | null;
+		parentPath?: string | null;
+		nodeType: TaskNodeType;
+		status?: TaskStatus;
+		priority?: TaskPriority;
+		createdById: string;
+		assigneeId?: string | null;
+		estimatedHours?: number | null;
+		dueDate?: Date | null;
+		position: number;
+		depth: number;
+	}): Promise<TaskNodeEntity> {
+		return withTransaction(async (tx) => {
+			// Create task with temporary path
+			const task = await tx.taskNode.create({
+				data: {
+					title: data.title,
+					description: data.description,
+					projectId: data.projectId,
+					parentId: data.parentId,
+					nodeType: data.nodeType,
+					status: data.status ?? "DRAFT",
+					priority: data.priority ?? "MEDIUM",
+					createdById: data.createdById,
+					assigneeId: data.assigneeId,
+					estimatedHours: data.estimatedHours,
+					dueDate: data.dueDate,
+					position: data.position,
+					depth: data.depth,
+					path: "", // Temporary, will update
+				},
+			});
+
+			// Calculate and update path
+			const path = data.parentPath
+				? materializedPathUtils.buildPath(data.parentPath, task.id)
+				: task.id;
+
+			const updatedTask = await tx.taskNode.update({
+				where: { id: task.id },
+				data: { path },
+			});
+
+			// Record creation history
+			await tx.taskHistory.create({
+				data: {
+					taskId: task.id,
+					action: "CREATED",
+					actorId: data.createdById,
+					aiTriggered: false,
+				},
+			});
+
+			return updatedTask;
+		});
 	}
 
 	async findById(id: string): Promise<TaskNodeEntity | null> {
@@ -258,61 +323,114 @@ export class TaskRepository {
 		});
 	}
 
+	/**
+	 * Update task status with history recording in a single transaction.
+	 * This ensures atomicity for cascade operations.
+	 */
+	async updateStatusWithHistory(
+		id: string,
+		status: TaskStatus,
+		history: {
+			previousStatus: TaskStatus;
+			reason?: string;
+			actorId: string | null;
+			aiTriggered?: boolean;
+		},
+	): Promise<TaskNodeEntity> {
+		return withTransaction(async (tx) => {
+			const now = new Date();
+			const updateData: Prisma.TaskNodeUpdateInput = { status };
+
+			if (status === "IN_PROGRESS") {
+				updateData.startedAt = now;
+			} else if (status === "COMPLETED") {
+				updateData.completedAt = now;
+			}
+
+			const updatedTask = await tx.taskNode.update({
+				where: { id },
+				data: updateData,
+			});
+
+			await tx.taskHistory.create({
+				data: {
+					taskId: id,
+					action: "STATUS_CHANGED",
+					field: "status",
+					oldValue: history.previousStatus as unknown as Prisma.InputJsonValue,
+					newValue: status as unknown as Prisma.InputJsonValue,
+					reason: history.reason,
+					actorId: history.actorId,
+					aiTriggered: history.aiTriggered ?? false,
+				},
+			});
+
+			return updatedTask;
+		});
+	}
+
 	async move(
 		id: string,
 		newParentId: string | null,
 		newPosition: number,
 	): Promise<{ task: TaskNodeEntity; descendants: TaskNodeEntity[] }> {
-		const task = await db.taskNode.findUnique({ where: { id } });
-		if (!task) throw new Error("Task not found");
+		return withTransaction(async (tx) => {
+			const task = await tx.taskNode.findUnique({ where: { id } });
+			if (!task) throw new Error("Task not found");
 
-		// Calculate new path and depth
-		let newPath: string;
-		let newDepth: number;
+			// Calculate new path and depth
+			let newPath: string;
+			let newDepth: number;
 
-		if (newParentId) {
-			const parent = await db.taskNode.findUnique({
-				where: { id: newParentId },
-			});
-			if (!parent) throw new Error("Parent task not found");
-			newPath = materializedPathUtils.buildPath(parent.path, id);
-			newDepth = parent.depth + 1;
-		} else {
-			newPath = id;
-			newDepth = 0;
-		}
+			if (newParentId) {
+				const parent = await tx.taskNode.findUnique({
+					where: { id: newParentId },
+				});
+				if (!parent) throw new Error("Parent task not found");
+				newPath = materializedPathUtils.buildPath(parent.path, id);
+				newDepth = parent.depth + 1;
+			} else {
+				newPath = id;
+				newDepth = 0;
+			}
 
-		// Update the task
-		const updatedTask = await db.taskNode.update({
-			where: { id },
-			data: {
-				parentId: newParentId,
-				position: newPosition,
-				path: newPath,
-				depth: newDepth,
-			},
-		});
-
-		// Update all descendants' paths
-		const descendants = await this.findDescendants(task.path);
-		const updatedDescendants: TaskNodeEntity[] = [];
-
-		for (const descendant of descendants) {
-			const newDescendantPath = descendant.path.replace(task.path, newPath);
-			const newDescendantDepth =
-				materializedPathUtils.getDepth(newDescendantPath);
-
-			const updated = await db.taskNode.update({
-				where: { id: descendant.id },
+			// Update the task
+			const updatedTask = await tx.taskNode.update({
+				where: { id },
 				data: {
-					path: newDescendantPath,
-					depth: newDescendantDepth,
+					parentId: newParentId,
+					position: newPosition,
+					path: newPath,
+					depth: newDepth,
 				},
 			});
-			updatedDescendants.push(updated);
-		}
 
-		return { task: updatedTask, descendants: updatedDescendants };
+			// Update all descendants' paths within the transaction
+			const descendants = await tx.taskNode.findMany({
+				where: {
+					path: { startsWith: `${task.path}.` },
+				},
+				orderBy: [{ depth: "asc" }, { position: "asc" }],
+			});
+			const updatedDescendants: TaskNodeEntity[] = [];
+
+			for (const descendant of descendants) {
+				const newDescendantPath = descendant.path.replace(task.path, newPath);
+				const newDescendantDepth =
+					materializedPathUtils.getDepth(newDescendantPath);
+
+				const updated = await tx.taskNode.update({
+					where: { id: descendant.id },
+					data: {
+						path: newDescendantPath,
+						depth: newDescendantDepth,
+					},
+				});
+				updatedDescendants.push(updated);
+			}
+
+			return { task: updatedTask, descendants: updatedDescendants };
+		});
 	}
 
 	async delete(id: string): Promise<void> {

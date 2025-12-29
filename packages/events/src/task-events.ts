@@ -45,11 +45,12 @@ export const taskEvents = {
 	async unassigned(
 		taskId: string,
 		previousAssigneeId: string,
+		unassignedById: string,
 		metadata?: Partial<EventMetadata>,
 	): Promise<void> {
 		await eventBus.emit(
 			"task.unassigned",
-			{ id: taskId, previousAssigneeId },
+			{ taskId, previousAssigneeId, unassignedById },
 			metadata,
 		);
 	},
@@ -74,10 +75,16 @@ export const taskEvents = {
 
 	async deleted(
 		taskId: string,
+		title: string,
 		projectId: string,
+		deletedById: string,
 		metadata?: Partial<EventMetadata>,
 	): Promise<void> {
-		await eventBus.emit("task.deleted", { id: taskId, projectId }, metadata);
+		await eventBus.emit(
+			"task.deleted",
+			{ taskId, title, projectId, deletedById },
+			metadata,
+		);
 	},
 };
 
