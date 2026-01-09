@@ -114,7 +114,9 @@ export class ProjectDeletedHandler
 	async handle(event: DomainEvent<ProjectDeletedEvent>): Promise<void> {
 		const { projectId, name, workspaceId, deletedById } = event.payload;
 
-		console.log(`[ProjectEventHandler] Project deleted: ${projectId} - ${name}`);
+		console.log(
+			`[ProjectEventHandler] Project deleted: ${projectId} - ${name}`,
+		);
 
 		// Emit realtime event to workspace
 		try {
@@ -139,7 +141,9 @@ export class ProjectArchivedHandler
 	async handle(event: DomainEvent<ProjectArchivedEvent>): Promise<void> {
 		const { projectId, name, workspaceId, archivedById } = event.payload;
 
-		console.log(`[ProjectEventHandler] Project archived: ${projectId} - ${name}`);
+		console.log(
+			`[ProjectEventHandler] Project archived: ${projectId} - ${name}`,
+		);
 
 		// Emit realtime event to workspace
 		try {

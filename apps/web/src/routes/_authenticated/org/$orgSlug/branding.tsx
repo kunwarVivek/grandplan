@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ImageIcon, UploadIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,29 +18,93 @@ export const Route = createFileRoute("/_authenticated/org/$orgSlug/branding")({
 	component: OrgBranding,
 });
 
+async function uploadFile(
+	file: File,
+	type: "avatar" | "logo" | "favicon",
+): Promise<string | null> {
+	const formData = new FormData();
+	formData.append("file", file);
+	formData.append("type", type);
+
+	try {
+		const response = await fetch(
+			`${import.meta.env.VITE_API_URL || ""}/api/uploads`,
+			{
+				method: "POST",
+				credentials: "include",
+				body: formData,
+			},
+		);
+
+		if (!response.ok) throw new Error("Upload failed");
+
+		const data = await response.json();
+		return data.url;
+	} catch (error) {
+		toast.error("Failed to upload file");
+		return null;
+	}
+}
+
 function OrgBranding() {
+	const { orgSlug } = Route.useParams();
 	const [primaryColor, setPrimaryColor] = useState("#3b82f6");
 	const [secondaryColor, setSecondaryColor] = useState("#64748b");
+	const [fontFamily, setFontFamily] = useState("Inter");
+	const [logoUrl, setLogoUrl] = useState<string | null>(null);
+	const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+	async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
 		const file = e.target.files?.[0];
 		if (file) {
-			// TODO: Implement logo upload
-			console.log("Upload logo:", file);
+			const url = await uploadFile(file, "logo");
+			if (url) {
+				setLogoUrl(url);
+				toast.success("Logo uploaded successfully");
+			}
 		}
 	}
 
-	function handleFaviconUpload(e: React.ChangeEvent<HTMLInputElement>) {
+	async function handleFaviconUpload(e: React.ChangeEvent<HTMLInputElement>) {
 		const file = e.target.files?.[0];
 		if (file) {
-			// TODO: Implement favicon upload
-			console.log("Upload favicon:", file);
+			const url = await uploadFile(file, "favicon");
+			if (url) {
+				setFaviconUrl(url);
+				toast.success("Favicon uploaded successfully");
+			}
 		}
 	}
 
-	function handleSave() {
-		// TODO: Implement branding save
-		console.log("Save branding:", { primaryColor, secondaryColor });
+	async function handleSave() {
+		setIsSubmitting(true);
+
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/organizations/${orgSlug}/branding`,
+				{
+					method: "PATCH",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						brandingConfig: {
+							primaryColor,
+							secondaryColor,
+							fontFamily,
+						},
+					}),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to save branding");
+
+			toast.success("Branding settings saved");
+		} catch (error) {
+			toast.error("Failed to save branding settings");
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
 	return (
@@ -163,7 +228,9 @@ function OrgBranding() {
 						</div>
 					</div>
 					<div className="flex justify-end">
-						<Button onClick={handleSave}>Save Changes</Button>
+						<Button onClick={handleSave} disabled={isSubmitting}>
+							{isSubmitting ? "Saving..." : "Save Changes"}
+						</Button>
 					</div>
 				</CardContent>
 			</Card>

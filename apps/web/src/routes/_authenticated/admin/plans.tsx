@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -124,27 +125,91 @@ function AdminPlans() {
 		},
 	];
 
-	function handleCreatePlan(e: React.FormEvent) {
+	async function handleCreatePlan(e: React.FormEvent) {
 		e.preventDefault();
-		// TODO: Implement plan creation
-		console.log("Create plan:", newPlan);
-		setNewPlan({ name: "", slug: "", price: "", features: "" });
-		setIsCreateDialogOpen(false);
+		try {
+			const planData = {
+				name: newPlan.name,
+				slug: newPlan.slug,
+				price: Number(newPlan.price),
+				features: newPlan.features.split("\n").filter((f) => f.trim()),
+			};
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/platform/plans`,
+				{
+					method: "POST",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(planData),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to create plan");
+
+			toast.success("Plan created");
+			setNewPlan({ name: "", slug: "", price: "", features: "" });
+			setIsCreateDialogOpen(false);
+		} catch (error) {
+			toast.error("Failed to create plan");
+		}
 	}
 
-	function handleEditPlan(planId: string) {
-		// TODO: Implement plan editing
-		console.log("Edit plan:", planId);
+	async function handleEditPlan(planId: string) {
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/platform/plans/${planId}`,
+				{
+					method: "PATCH",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({}),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to update plan");
+
+			toast.success("Plan updated");
+		} catch (error) {
+			toast.error("Failed to update plan");
+		}
 	}
 
-	function handleTogglePlan(planId: string, isActive: boolean) {
-		// TODO: Implement plan toggle
-		console.log("Toggle plan:", planId, isActive);
+	async function handleTogglePlan(planId: string, isActive: boolean) {
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/platform/plans/${planId}`,
+				{
+					method: "PATCH",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ isActive }),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to toggle plan");
+
+			toast.success(isActive ? "Plan activated" : "Plan deactivated");
+		} catch (error) {
+			toast.error("Failed to toggle plan");
+		}
 	}
 
-	function handleDeletePlan(planId: string) {
-		// TODO: Implement plan deletion
-		console.log("Delete plan:", planId);
+	async function handleDeletePlan(planId: string) {
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/platform/plans/${planId}`,
+				{
+					method: "DELETE",
+					credentials: "include",
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to delete plan");
+
+			toast.success("Plan deleted");
+		} catch (error) {
+			toast.error("Failed to delete plan");
+		}
 	}
 
 	return (

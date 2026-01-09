@@ -278,9 +278,8 @@ export function TaskForm({
 												<span className="flex items-center gap-2">
 													<User className="size-4 text-muted-foreground" />
 													{field.state.value
-														? (assignees.find(
-																(a) => a.id === field.state.value,
-															)?.name ?? "Unknown")
+														? (assignees.find((a) => a.id === field.state.value)
+																?.name ?? "Unknown")
 														: "Unassigned"}
 												</span>
 											</SelectValue>

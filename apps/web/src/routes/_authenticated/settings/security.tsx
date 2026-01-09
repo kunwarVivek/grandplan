@@ -6,6 +6,7 @@ import {
 	SmartphoneIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ function SecuritySettings() {
 	const [currentPassword, setCurrentPassword] = useState("");
 	const [newPassword, setNewPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
+	const [isChangingPassword, setIsChangingPassword] = useState(false);
 	const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
 	const [sessions] = useState<Session[]>([
@@ -66,23 +68,54 @@ function SecuritySettings() {
 		},
 	]);
 
-	function handlePasswordChange(e: React.FormEvent) {
+	async function handlePasswordChange(e: React.FormEvent) {
 		e.preventDefault();
 		if (newPassword !== confirmPassword) {
-			// TODO: Show error toast
-			console.error("Passwords do not match");
+			toast.error("Passwords do not match");
 			return;
 		}
-		// TODO: Implement password change
-		console.log("Change password");
-		setCurrentPassword("");
-		setNewPassword("");
-		setConfirmPassword("");
+
+		setIsChangingPassword(true);
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/auth/change-password`,
+				{
+					method: "POST",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ currentPassword, newPassword }),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to change password");
+
+			toast.success("Password changed successfully");
+			setCurrentPassword("");
+			setNewPassword("");
+			setConfirmPassword("");
+		} catch (error) {
+			toast.error("Failed to change password");
+		} finally {
+			setIsChangingPassword(false);
+		}
 	}
 
-	function handleRevokeSession(sessionId: string) {
-		// TODO: Implement session revocation
-		console.log("Revoke session:", sessionId);
+	async function handleRevokeSession(sessionId: string) {
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/auth/sessions/${sessionId}`,
+				{
+					method: "DELETE",
+					credentials: "include",
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to revoke session");
+
+			toast.success("Session revoked");
+		} catch (error) {
+			toast.error("Failed to revoke session");
+		}
 	}
 
 	return (
@@ -137,7 +170,9 @@ function SecuritySettings() {
 							/>
 						</div>
 						<div className="flex justify-end">
-							<Button type="submit">Update Password</Button>
+							<Button type="submit" disabled={isChangingPassword}>
+								{isChangingPassword ? "Updating..." : "Update Password"}
+							</Button>
 						</div>
 					</form>
 				</CardContent>

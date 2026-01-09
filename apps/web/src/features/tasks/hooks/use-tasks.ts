@@ -118,7 +118,10 @@ export function useInfiniteTasksQuery(
 				return {
 					...response,
 					hasMore: currentCount >= pageSize,
-					nextCursor: currentCount >= pageSize ? response.tasks[currentCount - 1]?.id : null,
+					nextCursor:
+						currentCount >= pageSize
+							? response.tasks[currentCount - 1]?.id
+							: null,
 				};
 			}
 

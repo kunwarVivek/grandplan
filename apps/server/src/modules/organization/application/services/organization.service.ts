@@ -110,7 +110,10 @@ export class OrganizationService {
 		organizationId: string,
 		options: InvitationQueryOptions = {},
 	) {
-		return organizationInvitationService.listInvitations(organizationId, options);
+		return organizationInvitationService.listInvitations(
+			organizationId,
+			options,
+		);
 	}
 
 	async revokeInvitation(organizationId: string, invitationId: string) {

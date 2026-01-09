@@ -22,8 +22,8 @@ import { ORGANIZATION_EVENTS } from "../../domain/events/organization.events.js"
 import type {
 	IInvitationRepository,
 	IMemberRepository,
-	IOrganizationRepository,
 	InvitationQueryOptions,
+	IOrganizationRepository,
 } from "../../infrastructure/repositories/interfaces/index.js";
 import { organizationRepository as orgRepo } from "../../infrastructure/repositories/organization.repository.js";
 
@@ -253,4 +253,5 @@ export class OrganizationInvitationService {
 	}
 }
 
-export const organizationInvitationService = new OrganizationInvitationService();
+export const organizationInvitationService =
+	new OrganizationInvitationService();

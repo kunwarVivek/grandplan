@@ -187,7 +187,9 @@ if (typeof window === "undefined") {
 			config.anthropic = { apiKey: process.env.ANTHROPIC_API_KEY };
 		}
 		if (process.env.AI_PROVIDER) {
-			config.defaultProvider = process.env.AI_PROVIDER as "openai" | "anthropic";
+			config.defaultProvider = process.env.AI_PROVIDER as
+				| "openai"
+				| "anthropic";
 		}
 
 		// Only initialize if we have at least one provider

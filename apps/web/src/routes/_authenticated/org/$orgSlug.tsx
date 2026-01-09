@@ -14,16 +14,67 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/org/$orgSlug")({
-	beforeLoad: async () => {
-		// Session is available from parent _authenticated layout via context.session
-		// TODO: Fetch organization and check if user is admin
-		// In a real app, you would fetch the org and verify the user is an admin
-		const isOrgAdmin = true; // Placeholder - implement actual check
+	beforeLoad: async ({ params, context }) => {
+		const { session } = context;
+		const { orgSlug } = params;
 
-		if (!isOrgAdmin) {
-			throw redirect({
-				to: "/dashboard",
-			});
+		if (!session) {
+			throw redirect({ to: "/login" });
+		}
+
+		// Fetch organization and check if user is admin
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/organizations/slug/${orgSlug}`,
+				{
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				},
+			);
+
+			if (!response.ok) {
+				throw redirect({ to: "/dashboard" });
+			}
+
+			const org = await response.json();
+
+			// Check if user is a member with admin role
+			const membersResponse = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/organizations/${org.id}/members`,
+				{
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				},
+			);
+
+			if (!membersResponse.ok) {
+				throw redirect({ to: "/dashboard" });
+			}
+
+			const members = await membersResponse.json();
+			const currentMember = members.find(
+				(m: { userId: string }) => m.userId === session.user.id,
+			);
+
+			const isOrgAdmin =
+				currentMember?.role?.name === "Owner" ||
+				currentMember?.role?.name === "Admin";
+
+			if (!isOrgAdmin) {
+				throw redirect({ to: "/dashboard" });
+			}
+
+			return { organization: org, isOrgAdmin: true };
+		} catch (error) {
+			// If check fails, redirect to dashboard
+			if (error instanceof Response || (error as { to?: string })?.to) {
+				throw error;
+			}
+			throw redirect({ to: "/dashboard" });
 		}
 	},
 	component: OrgSettingsLayout,

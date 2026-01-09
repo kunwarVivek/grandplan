@@ -14,25 +14,23 @@ export { organizationService } from "./application/services/organization.service
 
 // Services - Focused (SRP compliant)
 export { organizationCoreService } from "./application/services/organization-core.service.js";
-export { organizationMemberService } from "./application/services/organization-member.service.js";
 export { organizationInvitationService } from "./application/services/organization-invitation.service.js";
+export { organizationMemberService } from "./application/services/organization-member.service.js";
 
 // Domain
 export * from "./domain/entities/organization.entity.js";
 export * from "./domain/events/organization.events.js";
-
-// Repository - Concrete implementation
-export { organizationRepository } from "./infrastructure/repositories/organization.repository.js";
-
 // Repository - Interfaces (DIP compliant)
 export type {
 	IInvitationRepository,
 	IMemberRepository,
-	IOrganizationRepository,
 	InvitationQueryOptions,
 	InvitationQueryResult,
+	IOrganizationRepository,
 	MemberQueryOptions,
 	MemberQueryResult,
 	OrganizationQueryOptions,
 	OrganizationQueryResult,
 } from "./infrastructure/repositories/interfaces/index.js";
+// Repository - Concrete implementation
+export { organizationRepository } from "./infrastructure/repositories/organization.repository.js";

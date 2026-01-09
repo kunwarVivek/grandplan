@@ -180,12 +180,16 @@ export class TaskCascadeService {
 			if (!stillBlocked) {
 				// Unblock the task - move it to PENDING (atomic status + history)
 				const previousStatus = blockedTask.status;
-				await taskRepository.updateStatusWithHistory(blockedTask.id, "PENDING", {
-					previousStatus,
-					reason: `Unblocked: ${completedTaskId} completed`,
-					actorId: userId,
-					aiTriggered: false,
-				});
+				await taskRepository.updateStatusWithHistory(
+					blockedTask.id,
+					"PENDING",
+					{
+						previousStatus,
+						reason: `Unblocked: ${completedTaskId} completed`,
+						actorId: userId,
+						aiTriggered: false,
+					},
+				);
 
 				// Emit event
 				await eventBus.emit(TASK_EVENTS.STATUS_CHANGED, {

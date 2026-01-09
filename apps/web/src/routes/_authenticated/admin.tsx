@@ -17,16 +17,40 @@ export const Route = createFileRoute("/_authenticated/admin")({
 	beforeLoad: async ({ context }) => {
 		const { session } = context;
 
-		// TODO: Implement actual platform admin check
-		// For now, just check if user is authenticated
-		// In production, this should verify against a platform admin role/list
 		if (!session) {
-			throw redirect({
-				to: "/dashboard",
-			});
+			throw redirect({ to: "/login" });
 		}
 
-		return { isPlatformAdmin: true };
+		// Check if user is a platform admin
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/platform/admin/check`,
+				{
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				},
+			);
+
+			if (!response.ok) {
+				throw redirect({ to: "/dashboard" });
+			}
+
+			const data = await response.json();
+
+			if (!data.isPlatformAdmin) {
+				throw redirect({ to: "/dashboard" });
+			}
+
+			return { isPlatformAdmin: true, platformRole: data.role };
+		} catch (error) {
+			// If check fails, redirect to dashboard
+			if (error instanceof Response || (error as { to?: string })?.to) {
+				throw error;
+			}
+			throw redirect({ to: "/dashboard" });
+		}
 	},
 	component: AdminLayout,
 });

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CameraIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,17 +19,70 @@ export const Route = createFileRoute("/_authenticated/settings/profile")({
 	component: ProfileSettings,
 });
 
+async function uploadFile(
+	file: File,
+	type: "avatar" | "logo" | "favicon",
+): Promise<string | null> {
+	const formData = new FormData();
+	formData.append("file", file);
+	formData.append("type", type);
+
+	try {
+		const response = await fetch(
+			`${import.meta.env.VITE_API_URL || ""}/api/uploads`,
+			{
+				method: "POST",
+				credentials: "include",
+				body: formData,
+			},
+		);
+
+		if (!response.ok) throw new Error("Upload failed");
+
+		const data = await response.json();
+		return data.url;
+	} catch (error) {
+		toast.error("Failed to upload file");
+		return null;
+	}
+}
+
 function ProfileSettings() {
 	const { session } = Route.useRouteContext();
 	const user = session?.user;
 
 	const [name, setName] = useState(user?.name ?? "");
 	const [email, setEmail] = useState(user?.email ?? "");
+	const [avatarUrl, setAvatarUrl] = useState<string | null>(
+		user?.image ?? null,
+	);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	function handleSubmit(e: React.FormEvent) {
+	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		// TODO: Implement profile update
-		console.log("Update profile:", { name, email });
+		setIsSubmitting(true);
+
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/auth/update-user`,
+				{
+					method: "PATCH",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ name, email }),
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error("Failed to update profile");
+			}
+
+			toast.success("Profile updated successfully");
+		} catch (error) {
+			toast.error("Failed to update profile");
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
 	const initials =
@@ -59,7 +113,7 @@ function ProfileSettings() {
 						<div className="group relative cursor-pointer">
 							<Avatar size="lg">
 								<AvatarImage
-									src={user?.image ?? undefined}
+									src={avatarUrl ?? undefined}
 									alt={user?.name ?? "User"}
 								/>
 								<AvatarFallback>{initials}</AvatarFallback>
@@ -71,11 +125,14 @@ function ProfileSettings() {
 								type="file"
 								accept="image/*"
 								className="absolute inset-0 cursor-pointer opacity-0"
-								onChange={(e) => {
+								onChange={async (e) => {
 									const file = e.target.files?.[0];
 									if (file) {
-										// TODO: Implement avatar upload
-										console.log("Upload avatar:", file);
+										const url = await uploadFile(file, "avatar");
+										if (url) {
+											setAvatarUrl(url);
+											toast.success("Avatar uploaded successfully");
+										}
 									}
 								}}
 							/>
@@ -117,7 +174,9 @@ function ProfileSettings() {
 							/>
 						</div>
 						<div className="flex justify-end">
-							<Button type="submit">Save Changes</Button>
+							<Button type="submit" disabled={isSubmitting}>
+								Save Changes
+							</Button>
 						</div>
 					</form>
 				</CardContent>

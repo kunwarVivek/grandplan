@@ -22,6 +22,7 @@ import {
 import {
 	aiRoutes,
 	billingRoutes,
+	integrationRoutes,
 	notificationRoutes,
 	organizationRoutes,
 	platformRoutes,
@@ -137,6 +138,7 @@ app.use("/api/teams", teamRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/integrations", integrationRoutes);
 app.use("/api/platform", platformRoutes);
 
 // 404 handler for API routes

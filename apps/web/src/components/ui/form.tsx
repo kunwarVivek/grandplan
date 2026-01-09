@@ -2,6 +2,7 @@
 
 import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
+
 // biome-ignore lint/suspicious/noExplicitAny: TanStack Form FieldApi has 23+ type parameters
 type AnyFieldApi = {
 	state: {
@@ -15,6 +16,7 @@ type AnyFieldApi = {
 	// biome-ignore lint/suspicious/noExplicitAny: Updater can be value or function
 	handleChange: (updater: any) => void;
 };
+
 import * as React from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";

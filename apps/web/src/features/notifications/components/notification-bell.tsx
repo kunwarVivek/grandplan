@@ -6,8 +6,8 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { useRealtimeNotifications } from "@/features/realtime";
+import { cn } from "@/lib/utils";
 import { useUnreadCount } from "../hooks/use-notifications";
 import { NotificationList } from "./notification-list";
 

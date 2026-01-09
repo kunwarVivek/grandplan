@@ -54,7 +54,35 @@ import {
 
 const router = Router();
 
-// All platform routes require platform admin authentication
+// ============================================
+// PUBLIC PLATFORM ROUTES (before auth middleware)
+// ============================================
+
+// Check if current user is a platform admin (for frontend routing)
+router.get("/admin/check", async (req, res, next) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) {
+			res.json({ isPlatformAdmin: false });
+			return;
+		}
+
+		const { db } = await import("@grandplan/db");
+		const platformAdmin = await db.platformAdmin.findUnique({
+			where: { userId },
+			select: { id: true, role: true },
+		});
+
+		res.json({
+			isPlatformAdmin: !!platformAdmin,
+			role: platformAdmin?.role ?? null,
+		});
+	} catch (error) {
+		next(error);
+	}
+});
+
+// All subsequent platform routes require platform admin authentication
 router.use(requirePlatformAuth);
 
 // ============================================

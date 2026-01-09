@@ -1,6 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -18,20 +30,55 @@ export const Route = createFileRoute("/_authenticated/org/$orgSlug/")({
 
 function OrgGeneralSettings() {
 	const { orgSlug } = Route.useParams();
+	const navigate = useNavigate();
 
 	const [orgName, setOrgName] = useState("My Organization");
 	const [slug, setSlug] = useState(orgSlug);
 	const [website, setWebsite] = useState("");
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	function handleSubmit(e: React.FormEvent) {
+	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		// TODO: Implement org update
-		console.log("Update org:", { orgName, slug, website });
+		setIsSubmitting(true);
+
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/organizations/${orgSlug}`,
+				{
+					method: "PATCH",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ name: orgName, slug, website }),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to update organization");
+
+			toast.success("Organization updated successfully");
+		} catch (error) {
+			toast.error("Failed to update organization");
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
-	function handleDeleteOrg() {
-		// TODO: Implement org deletion with confirmation
-		console.log("Delete org:", orgSlug);
+	async function handleDelete() {
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/organizations/${orgSlug}`,
+				{
+					method: "DELETE",
+					credentials: "include",
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to delete organization");
+
+			toast.success("Organization deleted");
+			navigate({ to: "/dashboard" });
+		} catch (error) {
+			toast.error("Failed to delete organization");
+		}
 	}
 
 	return (
@@ -77,7 +124,9 @@ function OrgGeneralSettings() {
 							/>
 						</div>
 						<div className="flex justify-end">
-							<Button type="submit">Save Changes</Button>
+							<Button type="submit" disabled={isSubmitting}>
+								{isSubmitting ? "Saving..." : "Save Changes"}
+							</Button>
 						</div>
 					</form>
 				</CardContent>
@@ -98,9 +147,32 @@ function OrgGeneralSettings() {
 								Permanently delete this organization and all its data.
 							</p>
 						</div>
-						<Button variant="destructive" onClick={handleDeleteOrg}>
-							Delete Organization
-						</Button>
+						<AlertDialog>
+							<AlertDialogTrigger
+								render={
+									<Button variant="destructive">Delete Organization</Button>
+								}
+							/>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>Delete Organization</AlertDialogTitle>
+									<AlertDialogDescription>
+										Are you sure you want to delete this organization? This
+										action cannot be undone and all data will be permanently
+										lost.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>Cancel</AlertDialogCancel>
+									<AlertDialogAction
+										variant="destructive"
+										onClick={handleDelete}
+									>
+										Delete
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
 					</div>
 				</CardContent>
 			</Card>

@@ -30,6 +30,19 @@ export {
 	useOrganizationStore,
 	useOrganizations,
 } from "./organization-store";
+export type { TaskViewMode } from "./task-store";
+// Task
+export {
+	filterTasks,
+	sortTasks,
+	useIsDetailPanelOpen,
+	useIsTaskExpanded,
+	useSelectedTask,
+	useSelectedTasks,
+	useTaskFilters,
+	useTaskStore,
+	useTaskViewMode as useTaskStoreViewMode,
+} from "./task-store";
 export type { ModalData, ModalType, Theme } from "./ui-store";
 // UI
 export {
@@ -54,16 +67,3 @@ export {
 	useWorkspaceStore,
 	useWorkspaces,
 } from "./workspace-store";
-export type { TaskViewMode } from "./task-store";
-// Task
-export {
-	filterTasks,
-	sortTasks,
-	useIsDetailPanelOpen,
-	useIsTaskExpanded,
-	useSelectedTask,
-	useSelectedTasks,
-	useTaskFilters,
-	useTaskStore,
-	useTaskViewMode as useTaskStoreViewMode,
-} from "./task-store";

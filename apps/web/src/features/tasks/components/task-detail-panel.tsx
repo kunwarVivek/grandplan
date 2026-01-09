@@ -186,14 +186,22 @@ export function TaskDetailPanel() {
 	const handleStatusChange = (newStatus: TaskStatus) => {
 		setStatus(newStatus);
 		if (taskId && task) {
-			updateTask.mutate({ taskId, projectId: task.projectId, status: newStatus });
+			updateTask.mutate({
+				taskId,
+				projectId: task.projectId,
+				status: newStatus,
+			});
 		}
 	};
 
 	const handlePriorityChange = (newPriority: TaskPriority) => {
 		setPriority(newPriority);
 		if (taskId && task) {
-			updateTask.mutate({ taskId, projectId: task.projectId, priority: newPriority });
+			updateTask.mutate({
+				taskId,
+				projectId: task.projectId,
+				priority: newPriority,
+			});
 		}
 	};
 

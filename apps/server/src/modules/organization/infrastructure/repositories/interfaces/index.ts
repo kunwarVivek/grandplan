@@ -5,9 +5,9 @@
 export type {
 	IInvitationRepository,
 	IMemberRepository,
-	IOrganizationRepository,
 	InvitationQueryOptions,
 	InvitationQueryResult,
+	IOrganizationRepository,
 	MemberQueryOptions,
 	MemberQueryResult,
 	OrganizationQueryOptions,

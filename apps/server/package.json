@@ -24,7 +24,8 @@
 		"@grandplan/rbac": "workspace:*",
 		"@grandplan/events": "workspace:*",
 		"@grandplan/audit": "workspace:*",
-		"@grandplan/realtime": "workspace:*"
+		"@grandplan/realtime": "workspace:*",
+		"@grandplan/integrations": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.1",

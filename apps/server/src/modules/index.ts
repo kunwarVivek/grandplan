@@ -4,6 +4,10 @@
 
 export { aiRoutes } from "./ai/index.js";
 export { billingRoutes, webhookRoutes } from "./billing/index.js";
+export {
+	integrationRoutes,
+	integrationService,
+} from "./integration/index.js";
 export { notificationRoutes } from "./notification/index.js";
 export {
 	organizationRoutes,

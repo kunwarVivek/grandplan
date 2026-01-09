@@ -73,44 +73,46 @@ export function AppLayout({
 				{/* Sidebar */}
 				<Sidebar />
 
-			{/* Main Content Area */}
-			<div className="flex flex-1 flex-col overflow-hidden">
-				{/* Top Header Bar (for mobile nav trigger and other controls) */}
-				{showHeader && (
-					<header className="flex h-14 shrink-0 items-center gap-4 border-border border-b bg-card px-4 lg:px-6">
-						<MobileSidebarTrigger />
-						{headerLeft && (
-							<div className="flex flex-1 items-center gap-4">{headerLeft}</div>
-						)}
-						{headerRight && (
-							<div className="ml-auto flex items-center gap-2">
-								{headerRight}
-							</div>
-						)}
-					</header>
-				)}
-
-				{/* Content + Task Detail Grid */}
-				<div className="flex flex-1 overflow-hidden">
-					{/* Main Content */}
-					<main
-						className={cn(
-							"flex-1 overflow-y-auto",
-							showTaskDetail && "hidden lg:block",
-							className,
-						)}
-					>
-						{children}
-					</main>
-
-					{/* Task Detail Panel */}
-					{showTaskDetail && (
-						<TaskDetailPanel onClose={closeTaskDetail}>
-							{taskDetailPanel}
-						</TaskDetailPanel>
+				{/* Main Content Area */}
+				<div className="flex flex-1 flex-col overflow-hidden">
+					{/* Top Header Bar (for mobile nav trigger and other controls) */}
+					{showHeader && (
+						<header className="flex h-14 shrink-0 items-center gap-4 border-border border-b bg-card px-4 lg:px-6">
+							<MobileSidebarTrigger />
+							{headerLeft && (
+								<div className="flex flex-1 items-center gap-4">
+									{headerLeft}
+								</div>
+							)}
+							{headerRight && (
+								<div className="ml-auto flex items-center gap-2">
+									{headerRight}
+								</div>
+							)}
+						</header>
 					)}
+
+					{/* Content + Task Detail Grid */}
+					<div className="flex flex-1 overflow-hidden">
+						{/* Main Content */}
+						<main
+							className={cn(
+								"flex-1 overflow-y-auto",
+								showTaskDetail && "hidden lg:block",
+								className,
+							)}
+						>
+							{children}
+						</main>
+
+						{/* Task Detail Panel */}
+						{showTaskDetail && (
+							<TaskDetailPanel onClose={closeTaskDetail}>
+								{taskDetailPanel}
+							</TaskDetailPanel>
+						)}
+					</div>
 				</div>
-			</div>
 			</div>
 		</>
 	);

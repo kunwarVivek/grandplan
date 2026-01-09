@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,14 +86,39 @@ function OrgBilling() {
 		{ name: "API Calls", current: 45000, limit: 100000, unit: "calls/month" },
 	];
 
+	async function handlePlanChange(
+		planId: string,
+		type: "upgrade" | "downgrade",
+	) {
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/billing/checkout`,
+				{
+					method: "POST",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ planId }),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to initiate checkout");
+
+			const data = await response.json();
+
+			if (data.url) {
+				window.location.href = data.url;
+			}
+		} catch {
+			toast.error(`Failed to ${type} plan`);
+		}
+	}
+
 	function handleUpgrade(planId: string) {
-		// TODO: Implement plan upgrade
-		console.log("Upgrade to plan:", planId);
+		handlePlanChange(planId, "upgrade");
 	}
 
 	function handleDowngrade(planId: string) {
-		// TODO: Implement plan downgrade
-		console.log("Downgrade to plan:", planId);
+		handlePlanChange(planId, "downgrade");
 	}
 
 	function getUsagePercentage(current: number, limit: number): number {

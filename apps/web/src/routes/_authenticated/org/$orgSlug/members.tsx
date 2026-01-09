@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MoreHorizontalIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/org/$orgSlug/members")({
 	component: OrgMembers,
+	loader: ({ params }) => ({ orgSlug: params.orgSlug }),
 });
 
 interface Member {
@@ -60,10 +62,12 @@ interface Member {
 }
 
 function OrgMembers() {
+	const { orgSlug } = Route.useLoaderData();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [inviteEmail, setInviteEmail] = useState("");
 	const [inviteRole, setInviteRole] = useState<string>("member");
 	const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+	const [_refreshKey, setRefreshKey] = useState(0);
 
 	const members: Member[] = [
 		{
@@ -102,23 +106,69 @@ function OrgMembers() {
 			member.email.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
-	function handleInvite(e: React.FormEvent) {
+	async function handleInvite(e: React.FormEvent) {
 		e.preventDefault();
-		// TODO: Implement member invitation
-		console.log("Invite member:", { email: inviteEmail, role: inviteRole });
-		setInviteEmail("");
-		setInviteRole("member");
-		setIsInviteDialogOpen(false);
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/organizations/${orgSlug}/members/invite`,
+				{
+					method: "POST",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ email: inviteEmail, roleId: inviteRole }),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to send invitation");
+
+			toast.success("Invitation sent successfully");
+			setInviteEmail("");
+			setInviteRole("member");
+			setIsInviteDialogOpen(false);
+			setRefreshKey((k) => k + 1);
+		} catch {
+			toast.error("Failed to send invitation");
+		}
 	}
 
-	function handleChangeRole(memberId: string, newRole: string) {
-		// TODO: Implement role change
-		console.log("Change role:", { memberId, newRole });
+	async function handleChangeRole(memberId: string, newRole: string) {
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/organizations/${orgSlug}/members/${memberId}`,
+				{
+					method: "PATCH",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ roleId: newRole }),
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to update role");
+
+			toast.success("Role updated");
+			setRefreshKey((k) => k + 1);
+		} catch {
+			toast.error("Failed to update role");
+		}
 	}
 
-	function handleRemoveMember(memberId: string) {
-		// TODO: Implement member removal
-		console.log("Remove member:", memberId);
+	async function handleRemoveMember(memberId: string) {
+		try {
+			const response = await fetch(
+				`${import.meta.env.VITE_API_URL || ""}/api/organizations/${orgSlug}/members/${memberId}`,
+				{
+					method: "DELETE",
+					credentials: "include",
+				},
+			);
+
+			if (!response.ok) throw new Error("Failed to remove member");
+
+			toast.success("Member removed");
+			setRefreshKey((k) => k + 1);
+		} catch {
+			toast.error("Failed to remove member");
+		}
 	}
 
 	function getInitials(name: string) {

@@ -27,7 +27,9 @@ import type {
 import { organizationRepository } from "../../infrastructure/repositories/organization.repository.js";
 
 export class OrganizationCoreService {
-	constructor(private readonly repository: IOrganizationRepository = organizationRepository) {}
+	constructor(
+		private readonly repository: IOrganizationRepository = organizationRepository,
+	) {}
 
 	async create(dto: CreateOrganizationDto, userId: string) {
 		const slug = dto.slug || slugify(dto.name);

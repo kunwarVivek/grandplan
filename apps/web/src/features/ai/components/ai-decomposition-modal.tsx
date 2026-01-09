@@ -142,8 +142,7 @@ export function AIDecompositionModal() {
 		jobStatus.data?.status === "pending" ||
 		jobStatus.data?.status === "processing";
 	const isCompleted = jobStatus.data?.status === "completed";
-	const isFailed =
-		decomposeTask.isError || jobStatus.data?.status === "failed";
+	const isFailed = decomposeTask.isError || jobStatus.data?.status === "failed";
 	const isLoading = isPending || isProcessing;
 
 	const selectedCount = subtasks.filter((s) => s.selected).length;
@@ -237,9 +236,7 @@ export function AIDecompositionModal() {
 										key={`subtask-${index}`}
 										className={cn(
 											"group flex items-start gap-3 rounded border border-border p-3 transition-colors",
-											subtask.selected
-												? "bg-card"
-												: "bg-muted/30 opacity-60",
+											subtask.selected ? "bg-card" : "bg-muted/30 opacity-60",
 										)}
 									>
 										<Checkbox
@@ -303,14 +300,16 @@ export function AIDecompositionModal() {
 					)}
 
 					{/* No subtasks generated */}
-					{isCompleted && subtasks.length === 0 && !jobStatus.data?.result?.subtasks?.length && (
-						<div className="flex flex-col items-center justify-center gap-4 py-8">
-							<p className="text-center text-muted-foreground text-sm">
-								The AI could not generate subtasks for this task. The task may
-								already be small enough or too vague.
-							</p>
-						</div>
-					)}
+					{isCompleted &&
+						subtasks.length === 0 &&
+						!jobStatus.data?.result?.subtasks?.length && (
+							<div className="flex flex-col items-center justify-center gap-4 py-8">
+								<p className="text-center text-muted-foreground text-sm">
+									The AI could not generate subtasks for this task. The task may
+									already be small enough or too vague.
+								</p>
+							</div>
+						)}
 				</div>
 
 				<DialogFooter>
