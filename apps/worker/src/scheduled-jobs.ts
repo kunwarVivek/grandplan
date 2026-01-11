@@ -53,11 +53,10 @@ export async function setupScheduledJobs(): Promise<void> {
 }
 
 async function scheduleIntegrationSyncJobs(): Promise<void> {
-	// Get all sync configurations with schedules
+	// Get all sync configurations with auto-sync enabled
 	const syncConfigs = await db.integrationSyncConfig.findMany({
 		where: {
-			enabled: true,
-			schedule: { not: null },
+			autoSync: true,
 		},
 		include: {
 			connection: true,
@@ -65,22 +64,30 @@ async function scheduleIntegrationSyncJobs(): Promise<void> {
 	});
 
 	for (const config of syncConfigs) {
-		if (config.schedule) {
-			await queueManager.scheduleRecurringJob(
-				"integration:sync",
-				`sync-${config.id}`,
-				{
-					integrationId: config.connection.integrationId,
-					connectionId: config.connectionId,
-					direction: config.direction as
-						| "toExternal"
-						| "fromExternal"
-						| "bidirectional",
-					entityType: config.entityType as "task" | "project" | "comment",
-				},
-				config.schedule,
-			);
-		}
+		// Convert syncIntervalMinutes to cron expression
+		const cronSchedule = `*/${config.syncIntervalMinutes} * * * *`;
+
+		// Determine entity type based on config
+		const entityType = config.syncTasks ? "task" : config.syncComments ? "comment" : "task";
+
+		// Map syncDirection enum to expected string values
+		const directionMap: Record<string, "toExternal" | "fromExternal" | "bidirectional"> = {
+			TO_EXTERNAL: "toExternal",
+			FROM_EXTERNAL: "fromExternal",
+			BIDIRECTIONAL: "bidirectional",
+		};
+
+		await queueManager.scheduleRecurringJob(
+			"integration:sync",
+			`sync-${config.id}`,
+			{
+				integrationId: config.connection.integrationId,
+				connectionId: config.connectionId,
+				direction: directionMap[config.syncDirection] ?? "bidirectional",
+				entityType,
+			},
+			cronSchedule,
+		);
 	}
 }
 
@@ -89,14 +96,14 @@ async function scheduleIntegrationSyncJobs(): Promise<void> {
  */
 export async function processDailyDigests(): Promise<void> {
 	const users = await db.notificationPreference.findMany({
-		where: { digestFrequency: "daily" },
+		where: { digestFrequency: "DAILY" },
 		select: { userId: true },
 	});
 
 	for (const { userId } of users) {
 		await queueManager.addJob("digest", {
 			userId,
-			frequency: "daily",
+			frequency: "DAILY",
 		});
 	}
 
@@ -108,14 +115,14 @@ export async function processDailyDigests(): Promise<void> {
  */
 export async function processWeeklyDigests(): Promise<void> {
 	const users = await db.notificationPreference.findMany({
-		where: { digestFrequency: "weekly" },
+		where: { digestFrequency: "WEEKLY" },
 		select: { userId: true },
 	});
 
 	for (const { userId } of users) {
 		await queueManager.addJob("digest", {
 			userId,
-			frequency: "weekly",
+			frequency: "WEEKLY",
 		});
 	}
 

@@ -10,6 +10,9 @@
 		"check": "biome check --write .",
 		"dev": "turbo dev",
 		"build": "turbo build",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
 		"check-types": "turbo check-types",
 		"dev:native": "turbo -F native dev",
 		"dev:web": "turbo -F web dev",
@@ -33,7 +36,9 @@
 		"@biomejs/biome": "^2.2.0",
 		"typescript": "catalog:",
 		"@types/node": "catalog:",
-		"@grandplan/config": "workspace:*"
+		"@grandplan/config": "workspace:*",
+		"vitest": "^3.1.0",
+		"@vitest/coverage-v8": "^3.1.0"
 	},
 	"packageManager": "pnpm@10.20.0"
 }

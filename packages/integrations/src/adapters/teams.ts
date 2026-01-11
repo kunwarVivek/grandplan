@@ -2,7 +2,7 @@
 // TEAMS ADAPTER - Microsoft Teams integration
 // ============================================
 
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type {
 	ExternalItem,
 	IntegrationAdapter,
@@ -224,13 +224,12 @@ export class TeamsAdapter implements IntegrationAdapter {
 		// The signature is in the Authorization header as "HMAC <signature>"
 		const expectedSig = signature.replace("HMAC ", "");
 
-		const hmac = crypto
-			.createHmac("sha256", this.clientSecret)
+		const hmac = createHmac("sha256", this.clientSecret)
 			.update(payload)
 			.digest("base64");
 
 		try {
-			return crypto.timingSafeEqual(
+			return timingSafeEqual(
 				Buffer.from(expectedSig),
 				Buffer.from(hmac),
 			);

@@ -69,11 +69,12 @@ export class EventBus {
 		payload: EventTypeMap[K]["payload"],
 		metadata: Partial<EventTypeMap[K]["metadata"]> = {},
 	): Promise<void> {
+		const payloadId = (payload as { id?: string }).id;
 		const event: DomainEvent = {
 			id: generateId(),
 			type,
-			aggregateId: (payload as { id?: string }).id ?? generateId(),
-			aggregateType: type.split(".")[0],
+			aggregateId: payloadId !== undefined ? payloadId : generateId(),
+			aggregateType: type.split(".")[0] ?? "unknown",
 			payload,
 			metadata: {
 				timestamp: new Date(),

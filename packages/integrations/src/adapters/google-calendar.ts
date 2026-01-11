@@ -2,7 +2,7 @@
 // GOOGLE CALENDAR ADAPTER - Google Calendar integration
 // ============================================
 
-import { createHmac } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import type {
 	ExternalItem,
 	IntegrationAdapter,
@@ -259,8 +259,8 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 	}
 
 	async fetchExternalItems(
-		connectionId: string,
-		options?: { since?: Date },
+		_connectionId: string,
+		_options?: { since?: Date },
 	): Promise<ExternalItem[]> {
 		// This would need access to the connection's credentials
 		throw new Error(
@@ -269,8 +269,8 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 	}
 
 	async pushToExternal(
-		connectionId: string,
-		items: InternalItem[],
+		_connectionId: string,
+		_items: InternalItem[],
 	): Promise<SyncResult> {
 		// This would need access to the connection's credentials
 		throw new Error(
@@ -278,7 +278,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 		);
 	}
 
-	verifyWebhook(payload: string, signature: string): boolean {
+	verifyWebhook(_payload: string, signature: string): boolean {
 		// Google Calendar push notifications use channel tokens for verification
 		// The token is set when creating the watch and included in the X-Goog-Channel-Token header
 		// Here we just verify that the token matches what we expect
@@ -756,7 +756,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 		expiration?: Date,
 	): Promise<GooglePushChannel> {
 		const id = channelId ?? crypto.randomUUID();
-		const channelToken = token ?? crypto.randomBytes(32).toString("hex");
+		const channelToken = token ?? randomBytes(32).toString("hex");
 
 		// Default expiration is 7 days (max allowed by Google)
 		const expirationTime =
@@ -941,17 +941,12 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
 		// Merge overlapping busy times
 		const mergedBusy: Array<{ start: Date; end: Date }> = [];
 		for (const slot of allBusy) {
-			if (
-				mergedBusy.length === 0 ||
-				slot.start > mergedBusy[mergedBusy.length - 1].end
-			) {
+			const lastBusy = mergedBusy[mergedBusy.length - 1];
+			if (mergedBusy.length === 0 || !lastBusy || slot.start > lastBusy.end) {
 				mergedBusy.push(slot);
 			} else {
-				mergedBusy[mergedBusy.length - 1].end = new Date(
-					Math.max(
-						mergedBusy[mergedBusy.length - 1].end.getTime(),
-						slot.end.getTime(),
-					),
+				lastBusy.end = new Date(
+					Math.max(lastBusy.end.getTime(), slot.end.getTime()),
 				);
 			}
 		}

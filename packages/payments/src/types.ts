@@ -2,7 +2,8 @@
 // PAYMENT TYPE DEFINITIONS
 // ============================================
 
-export type PaymentProvider = "polar" | "stripe";
+// Must match Prisma enum PaymentProvider
+export type PaymentProvider = "POLAR" | "STRIPE";
 
 export interface CreateCustomerParams {
 	organizationId: string;

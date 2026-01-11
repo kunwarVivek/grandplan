@@ -18,7 +18,7 @@
 	},
 	"dependencies": {
 		"@grandplan/core": "workspace:*",
-		"@prisma/client": "^6.2.1"
+		"@grandplan/db": "workspace:*"
 	},
 	"devDependencies": {
 		"@grandplan/config": "workspace:*",

@@ -15,7 +15,7 @@ import type {
 } from "../types.js";
 
 export class StripeProvider implements PaymentProviderInterface {
-	name = "stripe" as const;
+	name = "STRIPE" as const;
 	private client: Stripe;
 	private webhookSecret: string;
 
@@ -129,7 +129,7 @@ export class StripeProvider implements PaymentProviderInterface {
 
 		return {
 			type: event.type,
-			data: event.data.object as Record<string, unknown>,
+			data: event.data.object as unknown as Record<string, unknown>,
 		};
 	}
 }

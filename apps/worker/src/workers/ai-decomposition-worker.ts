@@ -24,7 +24,7 @@ export function registerAIDecompositionWorker(): void {
 	queueManager.registerWorker<AIDecompositionJobData, JobResult>(
 		"ai:decomposition",
 		async (job: Job<AIDecompositionJobData>): Promise<JobResult> => {
-			const { taskId, workspaceId, depth = 1, maxSubtasks = 5 } = job.data;
+			const { taskId, workspaceId, depth: _depth = 1, maxSubtasks = 5 } = job.data;
 
 			console.log(`Processing AI decomposition for task ${taskId}`);
 
@@ -38,8 +38,8 @@ export function registerAIDecompositionWorker(): void {
 							children: true,
 						},
 					}),
-					db.workspaceAIConfig.findUnique({
-						where: { workspaceId },
+					db.workspaceAIConfig.findFirst({
+						where: { workspaceId, isDefault: true },
 					}),
 				]);
 
@@ -61,13 +61,15 @@ export function registerAIDecompositionWorker(): void {
 				const decision = await db.taskAIDecision.create({
 					data: {
 						taskId,
-						decisionType: "decomposition",
+						decisionType: "DECOMPOSITION",
 						provider: aiConfig.provider,
-						model: aiConfig.defaultModel,
+						model: aiConfig.defaultModel ?? "unknown",
 						prompt: `Decompose task: ${task.title}`,
-						response: subtasks as unknown as Record<string, unknown>,
+						response: JSON.parse(JSON.stringify(subtasks)),
 						confidence: 0.85, // Could be calculated from AI response
 						applied: false,
+						tokensUsed: 0,
+						latencyMs: 0,
 					},
 				});
 
@@ -104,7 +106,7 @@ export function registerAIDecompositionWorker(): void {
 
 async function generateSubtasks(
 	task: { id: string; title: string; description: string | null },
-	aiConfig: { provider: string; defaultModel: string; apiKeyEncrypted: string },
+	aiConfig: { provider: string; defaultModel: string | null; apiKeyEncrypted: string | null },
 	maxSubtasks: number,
 ): Promise<AISubtask[]> {
 	const prompt = `You are a project management AI assistant. Decompose the following task into ${maxSubtasks} or fewer subtasks.
@@ -129,7 +131,7 @@ Rules:
 - Return ONLY valid JSON, no other text`;
 
 	// Decrypt API key (simplified - in production use proper encryption)
-	const apiKey = aiConfig.apiKeyEncrypted; // Would be decrypted
+	const apiKey = aiConfig.apiKeyEncrypted ?? ""; // Would be decrypted
 
 	if (aiConfig.provider === "openai") {
 		const openai = new OpenAI({ apiKey });
@@ -159,7 +161,7 @@ Rules:
 		});
 
 		const content = response.content[0];
-		if (content.type !== "text") {
+		if (!content || content.type !== "text") {
 			throw new Error("Unexpected response type from Anthropic");
 		}
 

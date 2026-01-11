@@ -4,7 +4,7 @@
 
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
-import type { Namespace, Socket } from "socket.io";
+import type { Namespace } from "socket.io";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";

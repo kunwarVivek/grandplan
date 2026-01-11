@@ -3,7 +3,7 @@
 // ============================================
 
 import { AsyncLocalStorage } from "node:async_hooks";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@grandplan/db";
 import { tryGetCurrentTenant } from "./context.js";
 
 // Models that should be automatically filtered by organizationId
@@ -103,6 +103,9 @@ export function createTenantExtension() {
 
 					const organizationId = tenant.organizationId;
 
+					// Cast args to allow dynamic property access
+					const mutableArgs = args as Record<string, unknown>;
+
 					// For read operations, add organizationId to where clause
 					if (
 						[
@@ -114,8 +117,8 @@ export function createTenantExtension() {
 							"groupBy",
 						].includes(operation)
 					) {
-						args.where = {
-							...args.where,
+						mutableArgs.where = {
+							...(mutableArgs.where as Record<string, unknown>),
 							organizationId,
 						};
 					}
@@ -126,24 +129,25 @@ export function createTenantExtension() {
 							operation,
 						)
 					) {
-						args.where = {
-							...args.where,
+						mutableArgs.where = {
+							...(mutableArgs.where as Record<string, unknown>),
 							organizationId,
 						};
 					}
 
 					// For create operations, auto-set organizationId
 					if (operation === "create") {
-						args.data = {
-							...args.data,
+						mutableArgs.data = {
+							...(mutableArgs.data as Record<string, unknown>),
 							organizationId,
 						};
 					}
 
 					// For createMany operations, auto-set organizationId on all records
 					if (operation === "createMany") {
-						if (Array.isArray(args.data)) {
-							args.data = args.data.map((item: Record<string, unknown>) => ({
+						const data = mutableArgs.data;
+						if (Array.isArray(data)) {
+							mutableArgs.data = data.map((item: Record<string, unknown>) => ({
 								...item,
 								organizationId,
 							}));

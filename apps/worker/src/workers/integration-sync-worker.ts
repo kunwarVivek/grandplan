@@ -4,7 +4,7 @@
 
 import { db } from "@grandplan/db";
 import { eventBus } from "@grandplan/events";
-import { integrationHub } from "@grandplan/integrations";
+import { integrationHub, type IntegrationProvider } from "@grandplan/integrations";
 import {
 	type IntegrationSyncJobData,
 	type JobResult,
@@ -33,14 +33,14 @@ export function registerIntegrationSyncWorker(): void {
 					return { success: false, error: "Connection not found" };
 				}
 
-				if (connection.status !== "active") {
+				if (connection.status !== "ACTIVE") {
 					return {
 						success: false,
 						error: `Connection is ${connection.status}`,
 					};
 				}
 
-				const adapter = integrationHub.getAdapter(integrationId);
+				const adapter = integrationHub.getAdapter(integrationId as IntegrationProvider);
 				let syncedCount = 0;
 				let failedCount = 0;
 				const errors: Array<{ itemId: string; error: string }> = [];
@@ -77,7 +77,7 @@ export function registerIntegrationSyncWorker(): void {
 
 					const result = await adapter.pushToExternal(
 						connectionId,
-						internalItems,
+						internalItems as Array<{ id: string; type: "task" | "project" | "comment"; data: Record<string, unknown> }>,
 					);
 					syncedCount += result.syncedCount;
 					failedCount += result.failedCount;
@@ -86,11 +86,12 @@ export function registerIntegrationSyncWorker(): void {
 					}
 				}
 
-				// Emit sync completed event
+				// Emit sync completed event - direction must be "toExternal" or "fromExternal" for event payload
+				const eventDirection = direction === "bidirectional" ? "toExternal" : direction;
 				await eventBus.emit("integration.syncCompleted", {
 					integrationId: connectionId,
 					userId: connection.userId,
-					direction,
+					direction: eventDirection,
 					itemsSynced: syncedCount,
 					errors: errors.length > 0 ? errors.map((e) => e.error) : undefined,
 				});
@@ -123,7 +124,7 @@ export function registerIntegrationSyncWorker(): void {
 }
 
 async function processExternalItem(
-	userId: string,
+	_userId: string,
 	integrationId: string,
 	item: { externalId: string; type: string; data: Record<string, unknown> },
 ): Promise<void> {
@@ -146,7 +147,7 @@ async function processExternalItem(
 			where: { id: existingLink.id },
 			data: {
 				lastSyncedAt: new Date(),
-				syncStatus: "synced",
+				syncStatus: "SYNCED",
 			},
 		});
 	} else {

@@ -15,6 +15,7 @@
 		"ioredis": "^5.6.1",
 		"eventemitter3": "^5.0.1",
 		"zod": "catalog:",
-		"@grandplan/core": "workspace:*"
+		"@grandplan/core": "workspace:*",
+		"@grandplan/queue": "workspace:*"
 	}
 }

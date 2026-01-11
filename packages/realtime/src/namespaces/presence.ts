@@ -115,7 +115,7 @@ export function setupPresenceNamespace(
 		const now = Date.now();
 
 		for (const [orgId, orgPresence] of presenceStore) {
-			for (const [odId, presence] of orgPresence) {
+			for (const [_userId, presence] of orgPresence) {
 				if (now - presence.lastActiveAt.getTime() > inactiveThreshold) {
 					orgPresence.delete(presence.userId);
 					namespace

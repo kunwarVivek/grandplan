@@ -108,7 +108,7 @@ export class DecompositionService {
 				provider: aiProvider.name,
 				model: provider === "anthropic" ? "claude-sonnet-4-20250514" : "gpt-4o",
 				prompt: JSON.stringify({ taskContext, options }),
-				response: result as unknown as Record<string, unknown>,
+				response: JSON.parse(JSON.stringify(result)),
 				reasoning: result.reasoning,
 				confidence: result.confidence,
 				tokensUsed: 0, // Would need to track from response
@@ -261,7 +261,7 @@ export class DecompositionService {
 	async redecomposeWithFeedback(
 		taskId: string,
 		decisionId: string,
-		feedback: string,
+		_feedback: string,
 		requestedById?: string,
 	): Promise<DecomposeTaskOutput> {
 		// Get the original decision

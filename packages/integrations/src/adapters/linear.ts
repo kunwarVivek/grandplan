@@ -2,7 +2,7 @@
 // LINEAR ADAPTER - Linear integration
 // ============================================
 
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type {
 	ExternalItem,
 	IntegrationAdapter,
@@ -236,8 +236,8 @@ export class LinearAdapter implements IntegrationAdapter {
 	}
 
 	async fetchExternalItems(
-		connectionId: string,
-		options?: { since?: Date },
+		_connectionId: string,
+		_options?: { since?: Date },
 	): Promise<ExternalItem[]> {
 		throw new Error(
 			"Use fetchIssues directly with access token and team ID for Linear integration",
@@ -245,8 +245,8 @@ export class LinearAdapter implements IntegrationAdapter {
 	}
 
 	async pushToExternal(
-		connectionId: string,
-		items: InternalItem[],
+		_connectionId: string,
+		_items: InternalItem[],
 	): Promise<SyncResult> {
 		throw new Error(
 			"Use createIssue/updateIssue directly with access token for Linear integration",
@@ -261,13 +261,12 @@ export class LinearAdapter implements IntegrationAdapter {
 
 		// Linear uses HMAC-SHA256 for webhook signatures
 		// The signature is in the Linear-Signature header
-		const hmac = crypto
-			.createHmac("sha256", this.webhookSecret)
+		const hmac = createHmac("sha256", this.webhookSecret)
 			.update(payload)
 			.digest("hex");
 
 		try {
-			return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
+			return timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
 		} catch {
 			return false;
 		}
@@ -317,7 +316,7 @@ export class LinearAdapter implements IntegrationAdapter {
 		};
 
 		if (result.errors && result.errors.length > 0) {
-			throw new Error(`Linear GraphQL error: ${result.errors[0].message}`);
+			throw new Error(`Linear GraphQL error: ${result.errors[0]?.message ?? "Unknown error"}`);
 		}
 
 		return result.data!;

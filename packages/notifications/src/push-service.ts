@@ -31,10 +31,7 @@ export class PushService {
 	): Promise<void> {
 		await db.pushSubscription.upsert({
 			where: {
-				userId_endpoint: {
-					userId,
-					endpoint: subscription.endpoint,
-				},
+				endpoint: subscription.endpoint,
 			},
 			create: {
 				userId,
@@ -43,6 +40,7 @@ export class PushService {
 				auth: subscription.keys.auth,
 			},
 			update: {
+				userId,
 				p256dh: subscription.keys.p256dh,
 				auth: subscription.keys.auth,
 			},
@@ -107,6 +105,16 @@ export class PushService {
 		});
 
 		await Promise.allSettled(sendPromises);
+	}
+
+	/**
+	 * Send push notification to a specific user
+	 */
+	async sendToUser(
+		userId: string,
+		notification: Omit<PushPayload, "userId">,
+	): Promise<void> {
+		await this.send({ ...notification, userId });
 	}
 
 	/**

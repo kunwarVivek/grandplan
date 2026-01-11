@@ -37,7 +37,7 @@ export function registerDigestWorker(): void {
 				const digestItems = await db.digestQueue.findMany({
 					where: {
 						userId,
-						processed: false,
+						processedAt: null,
 					},
 					orderBy: { createdAt: "desc" },
 				});
@@ -46,12 +46,15 @@ export function registerDigestWorker(): void {
 					return { success: true, message: "No items to digest" };
 				}
 
-				// Group notifications by type
+				// Get notifications from digest items
 				const grouped = digestItems.reduce(
 					(acc, item) => {
-						const type = item.notificationType;
-						if (!acc[type]) acc[type] = [];
-						acc[type].push(item.data as Record<string, unknown>);
+						const notifications = item.notifications as Array<Record<string, unknown>>;
+						for (const notification of notifications) {
+							const type = (notification.type as string) ?? "other";
+							if (!acc[type]) acc[type] = [];
+							acc[type].push(notification);
+						}
 						return acc;
 					},
 					{} as Record<string, Array<Record<string, unknown>>>,
@@ -79,7 +82,7 @@ export function registerDigestWorker(): void {
 					where: {
 						id: { in: digestItems.map((i) => i.id) },
 					},
-					data: { processed: true },
+					data: { processedAt: new Date() },
 				});
 
 				return {

@@ -2,8 +2,9 @@
 // SLACK ADAPTER - Slack integration
 // ============================================
 
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { InstallProvider } from "@slack/oauth";
+import type { Block, KnownBlock } from "@slack/web-api";
 import { WebClient } from "@slack/web-api";
 import type {
 	ExternalItem,
@@ -21,7 +22,8 @@ export class SlackAdapter implements IntegrationAdapter {
 	private clientSecret: string;
 	private signingSecret: string;
 	private redirectUri: string;
-	private installProvider: InstallProvider | null = null;
+	// @ts-expect-error Reserved for OAuth flow implementation
+	private _installProvider: InstallProvider | null = null;
 
 	constructor(config: {
 		clientId: string;
@@ -34,10 +36,10 @@ export class SlackAdapter implements IntegrationAdapter {
 		this.signingSecret = config.signingSecret;
 		this.redirectUri = config.redirectUri;
 
-		this.installProvider = new InstallProvider({
+		this._installProvider = new InstallProvider({
 			clientId: this.clientId,
 			clientSecret: this.clientSecret,
-			stateSecret: crypto.randomBytes(32).toString("hex"),
+			stateSecret: randomBytes(32).toString("hex"),
 		});
 	}
 
@@ -170,12 +172,11 @@ export class SlackAdapter implements IntegrationAdapter {
 		}
 
 		const baseString = `v0:${timestamp}:${payload}`;
-		const hmac = crypto
-			.createHmac("sha256", this.signingSecret)
+		const hmac = createHmac("sha256", this.signingSecret)
 			.update(baseString)
 			.digest("hex");
 
-		return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(hmac));
+		return timingSafeEqual(Buffer.from(sig), Buffer.from(hmac));
 	}
 
 	parseWebhookEvent(payload: string): WebhookPayload {
@@ -204,7 +205,7 @@ export class SlackAdapter implements IntegrationAdapter {
 		await client.chat.postMessage({
 			channel,
 			text,
-			blocks,
+			blocks: (blocks ?? []) as (Block | KnownBlock)[],
 		});
 	}
 
@@ -270,8 +271,8 @@ export class SlackAdapter implements IntegrationAdapter {
 	async handleSlashCommand(
 		command: string,
 		text: string,
-		userId: string,
-		channelId: string,
+		_userId: string,
+		_channelId: string,
 	): Promise<{ response_type: "in_channel" | "ephemeral"; text: string }> {
 		switch (command) {
 			case "/grandplan": {

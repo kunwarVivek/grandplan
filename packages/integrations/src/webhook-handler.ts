@@ -15,7 +15,7 @@ export class WebhookHandler {
 		provider: IntegrationProvider,
 		payload: string,
 		signature: string,
-		headers: Record<string, string>,
+		_headers: Record<string, string>,
 	): Promise<{ success: boolean; message?: string }> {
 		try {
 			const adapter = integrationHub.getAdapter(provider);
@@ -55,9 +55,7 @@ export class WebhookHandler {
 			data: {
 				integrationId: provider,
 				eventType: event.eventType,
-				payload: event.data,
-				receivedAt: new Date(),
-				processed: false,
+				payload: JSON.parse(JSON.stringify(event.data)),
 			},
 		});
 	}
@@ -106,7 +104,7 @@ export class WebhookHandler {
 
 	private async processSlackEvent(
 		eventType: string,
-		data: Record<string, unknown>,
+		_data: Record<string, unknown>,
 	): Promise<void> {
 		switch (eventType) {
 			case "app_mention":

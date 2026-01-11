@@ -5,7 +5,7 @@
 import { ForbiddenError } from "@grandplan/core/errors";
 import { getCurrentTenant } from "@grandplan/tenant";
 import { PERMISSION_MAP } from "./permissions.js";
-import type { AccessDecision, PermissionCheck } from "./types.js";
+import type { AccessDecision } from "./types.js";
 
 export class PermissionService {
 	/**

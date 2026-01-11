@@ -54,7 +54,7 @@ export class AIProviderFactory {
 		// Ensure default provider is available
 		if (!this.providers.has(this.defaultProvider)) {
 			const availableProviders = Array.from(this.providers.keys());
-			if (availableProviders.length > 0) {
+			if (availableProviders.length > 0 && availableProviders[0]) {
 				this.defaultProvider = availableProviders[0];
 			} else {
 				throw new Error("No AI providers configured");
@@ -132,7 +132,9 @@ export class AIProviderFactory {
 			const remaining = Array.from(this.providers.keys()).filter(
 				(n) => n !== name,
 			);
-			this.defaultProvider = remaining[0];
+			if (remaining[0]) {
+				this.defaultProvider = remaining[0];
+			}
 		}
 		return this.providers.delete(name);
 	}
@@ -173,7 +175,7 @@ export function createProvider(
 }
 
 // Auto-initialize from environment if running on server
-if (typeof window === "undefined") {
+if (typeof globalThis !== "undefined" && typeof (globalThis as Record<string, unknown>).window === "undefined") {
 	const factory = getAIFactory();
 
 	// Check if not already initialized

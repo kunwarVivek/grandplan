@@ -37,10 +37,10 @@ export function registerIntegrationWebhookWorker(): void {
 					where: {
 						integrationId,
 						eventType,
-						processed: false,
+						status: "PENDING",
 					},
 					data: {
-						processed: true,
+						status: "COMPLETED",
 						processedAt: new Date(),
 					},
 				});

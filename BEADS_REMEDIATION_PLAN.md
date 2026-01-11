@@ -1,64 +1,67 @@
 # GrandPlan - BEADS Remediation Plan
 
-> **Generated:** 2026-01-09 (Updated)
+> **Generated:** 2026-01-10 (Fresh Analysis)
 > **Analyst:** Claude Opus - Principal Full-Stack Architect
-> **Analysis Scope:** Full codebase audit against PRD/FRD specifications
-> **Methodology:** Root Cause Analysis (RCA) with bottom-up remediation order
+> **Scope:** Full codebase audit against PRD/FRD specifications
+> **Methodology:** Root Cause Analysis (RCA) with bottom-up remediation
 
 ---
 
 ## Executive Summary
 
-**Revised Implementation Status: ~88% Complete**
+**Current Implementation Status: ~90% Complete**
 
-The existing BEADS_REMEDIATION_PLAN.md is mostly accurate. This updated analysis confirms and refines the gap assessment.
+| Layer | Status | Completion | Blocking Issues |
+|-------|--------|------------|-----------------|
+| **Schema** | ✅ Complete | 100% | 0 |
+| **Packages** | ❌ BROKEN | 70% | 2 P0 (Build fails) |
+| **Backend** | ✅ Near Complete | 95% | 0 |
+| **Worker** | ⚠️ Partial | 90% | 1 P2 |
+| **Frontend** | ⚠️ Partial | 85% | 5 P1, 3 P2 |
+| **Deployment** | ✅ Complete | 100% | 0 |
 
-| Layer | Status | Completion |
-|-------|--------|------------|
-| **Schema** | ✅ Complete | 100% |
-| **Packages** | ✅ Complete | 100% |
-| **Backend** | Near Complete | 95% |
-| **Worker** | ✅ Complete | 100% |
-| **Frontend** | Significant Progress | 82% |
-| **Deployment** | Near Complete | 90% |
+**⚠️ CRITICAL: Build is completely broken due to Package layer issues**
+
+**Total Issues: 13**
+- P0 (Blocking): 2
+- P1 (High): 5
+- P2 (Medium): 6
 
 ---
 
-## PRD Requirements Mapping
+## PRD Requirements Verification
 
-Based on [specifications.md](file:///Users/vivek/jet/grandplan/grandplan/specifications.md):
-
-| Requirement | Status | Coverage |
+| Requirement | Status | Evidence |
 |------------|--------|----------|
-| AI-Native Task Management | ✅ Implemented | AI services, workers, prompts complete |
-| Node Decomposition | ✅ Implemented | DecompositionService + Worker |
-| Lifecycle Management | ✅ Implemented | TaskCascadeService + EventHandlers |
-| Change Response/Recalibration | ✅ Implemented | Event-driven architecture |
-| Temporal Status Tracking | ✅ Implemented | TaskHistory schema + service |
-| Communication Integrations | ⚠️ Partial | Hub exists, adapters need completion |
-| Platform Admin | ⚠️ Partial | Backend complete, frontend TODO |
-| Enterprise Management | ✅ Implemented | Full CRUD for Org/Team/Workspace |
-| White-labeling | ⚠️ Partial | Schema/backend done, UI TODO |
-| Notifications | ✅ Implemented | Full stack complete |
-| DDD/SOLID/KISS/YAGNI | ✅ Compliant | Clean module architecture |
-| Atomic/Gestalt/ShadCN | ✅ Compliant | UI components follow patterns |
-| Docker/Railway | ✅ Implemented | Full docker-compose exists |
+| AI-Native Task Management | ✅ | packages/ai, DecompositionService |
+| Node Decomposition | ✅ | TaskNode schema, hierarchy, cascade |
+| Lifecycle Management | ✅ | TaskCascadeService, EventHandlers |
+| Change Response/Recalibration | ✅ | Event-driven architecture |
+| Temporal Status Tracking | ✅ | TaskHistory schema + service |
+| Communication Integrations | ✅ | Integration module exists |
+| Platform Admin | ⚠️ | Backend done, UI actions placeholder |
+| Enterprise Management | ✅ | Full CRUD Org/Team/Workspace |
+| White-labeling | ✅ | Schema/backend/UI complete |
+| Notifications | ✅ | Full stack implemented |
+| DDD/SOLID/KISS/YAGNI | ✅ | Clean module architecture |
+| Atomic/Gestalt/ShadCN | ✅ | 28 UI components |
+| Docker/Railway | ✅ | docker-compose.yml exists |
+| **Tests** | ❌ | Zero test files found |
 
 ---
 
-## Root Cause Analysis Summary
+## Root Cause Analysis
 
 ### Origin Layer Distribution
 
-| Root Cause Layer | Issue Count | Priority Breakdown |
-|-----------------|-------------|-------------------|
-| Schema | 0 | No gaps |
-| Packages | 0 | No gaps |
-| Backend | 1 | 1 P0 (Integration module) |
-| Frontend | 17 | 2 P0, 9 P1, 6 P2 |
-| Deployment | 0 | Complete |
-
-**Total Issues Identified: 18**
+| Layer | Issues | Priority |
+|-------|--------|----------|
+| Schema | 0 | - |
+| Packages | 2 | P0, P0 |
+| Backend | 0 | - |
+| Worker | 1 | P2 |
+| Frontend | 8 | 3 P1, 5 P2 |
+| Tests | 2 | P1 |
 
 ---
 
@@ -66,329 +69,306 @@ Based on [specifications.md](file:///Users/vivek/jet/grandplan/grandplan/specifi
 
 ### B - Business Impact
 
-| Issue ID | Description | Business Impact | Priority |
-|----------|-------------|-----------------|----------|
-| GAP-BE-001 | Missing Integration Server Module | Cannot connect external tools (Jira, Slack, etc.) | P0 |
-| GAP-FE-006 | Plan upgrade/downgrade not implemented | Revenue flow blocked | P1 |
-| GAP-FE-007 | Member invitation not implemented | Team growth blocked | P1 |
+| ID | Description | Impact | Priority | Origin |
+|----|-------------|--------|----------|--------|
+| GAP-001 | Config package missing exports | **Build fails, cannot deploy** | P0 | Packages |
+| GAP-002 | Prisma types not resolving | **Build fails, cannot deploy** | P0 | Packages |
+| GAP-003 | Admin user CRUD placeholder | Platform admin cannot manage users | P1 | Frontend |
+| GAP-004 | Admin org CRUD placeholder | Platform admin cannot manage orgs | P1 | Frontend |
 
 ### E - Experience Impact
 
-| Issue ID | Description | UX Impact | Priority |
-|----------|-------------|-----------|----------|
-| GAP-FE-001 | Platform admin check TODO | Security friction | P0 |
-| GAP-FE-002 | Org admin check TODO | Access control gaps | P0 |
-| GAP-FE-003 | Profile update TODO | User self-service blocked | P1 |
-| GAP-FE-004 | Password change TODO | Security self-service blocked | P1 |
-| GAP-FE-012 | Branding save TODO | White-label customization blocked | P1 |
+| ID | Description | Impact | Priority | Origin |
+|----|-------------|--------|----------|--------|
+| GAP-005 | Bulk task operations placeholder | Users cannot bulk delete/archive | P2 | Frontend |
+| GAP-006 | Task dependencies placeholder | Cannot visualize dependencies | P2 | Frontend |
+| GAP-007 | Task activity placeholder | No activity feed in task detail | P2 | Frontend |
+| GAP-008 | Timeline dependency arrows | Gantt missing connections | P2 | Frontend |
 
 ### A - Architecture Impact
 
-| Issue ID | Description | Architecture Impact | Priority |
-|----------|-------------|---------------------|----------|
-| GAP-BE-001 | Integration module missing | Package exists but no server routes | P0 |
+| ID | Description | Impact | Priority | Origin |
+|----|-------------|--------|----------|--------|
+| GAP-009 | Zero test coverage | No quality assurance | P1 | Tests |
 
 ### D - Data Impact
 
-| Issue ID | Description | Data Impact | Priority |
-|----------|-------------|-------------|----------|
-| None | Schema is complete | N/A | - |
+None - Schema is complete.
 
 ### S - Systems Impact
 
-| Issue ID | Description | Systems Impact | Priority |
-|----------|-------------|----------------|----------|
-| None | Infrastructure complete | Docker-compose complete | - |
+| ID | Description | Impact | Priority | Origin |
+|----|-------------|--------|----------|--------|
+| GAP-010 | Orphaned files cleanup stub | Storage bloat over time | P2 | Worker |
+| GAP-011 | No worker health endpoint | Kubernetes probes fail | P1 | Worker |
 
 ---
 
 ## Detailed Gap Analysis
 
-### Backend Gaps (Root Cause Layer: Backend)
+### GAP-001: Config Package Missing Exports [P0] ❌ BLOCKING
 
-#### GAP-BE-001: Missing Integration Server Module [P0]
-**RCA:** Integration adapters exist in `packages/integrations/` (hub.ts, adapters/, oauth-manager.ts) but no server module exposes routes.
+**RCA:** `@grandplan/config` package.json has no `exports` field, so `@grandplan/config/base.json` cannot be resolved.
 
-**Files Affected:**
-- `apps/server/src/modules/integration/` (MISSING ENTIRELY)
+**File:** [packages/config/package.json](file:///Users/vivek/jet/grandplan/grandplan/packages/config/package.json)
 
-**Required Implementation:**
-```
-apps/server/src/modules/integration/
-├── api/
-│   ├── routes.ts              # OAuth callback, connection endpoints
-│   └── controllers/
-│       ├── connection.controller.ts
-│       ├── oauth.controller.ts
-│       └── webhook.controller.ts
-├── application/
-│   └── services/
-│       ├── integration.service.ts
-│       └── sync.service.ts
-├── domain/
-│   └── events/
-│       └── integration.events.ts
-└── index.ts
-```
-
-**Endpoints Required:**
-- `GET /api/integrations` - List available integrations
-- `GET /api/integrations/connections` - User's connected integrations
-- `POST /api/integrations/:provider/connect` - Initiate OAuth flow
-- `GET /api/integrations/:provider/callback` - OAuth callback
-- `DELETE /api/integrations/connections/:id` - Disconnect
-- `POST /api/integrations/connections/:id/sync` - Trigger sync
-
----
-
-### Frontend Gaps (Root Cause Layer: Frontend)
-
-#### GAP-FE-001: Platform Admin Check Not Implemented [P0]
-**Location:** [admin.tsx:20](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/admin.tsx#L20)
-**TODO:** `// TODO: Implement actual platform admin check`
-
-**Required Changes:**
-- Call platform admin API endpoint
-- Verify user is in PlatformAdmin table
-- Redirect non-admins to dashboard
-
-**Fix:**
-```typescript
-beforeLoad: async ({ context }) => {
-  const { session } = context;
-  if (!session) throw redirect({ to: "/login" });
-  
-  const response = await fetch("/api/platform/admin/check", {
-    headers: { Authorization: `Bearer ${session.token}` }
-  });
-  
-  if (!response.ok) {
-    throw redirect({ to: "/dashboard" });
-  }
-  
-  return { isPlatformAdmin: true };
+**Current:**
+```json
+{
+  "name": "@grandplan/config",
+  "version": "0.0.0",
+  "private": true
 }
 ```
 
-#### GAP-FE-002: Org Admin Check Not Implemented [P0]
-**Location:** [org/$orgSlug.tsx:19](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug.tsx#L19)
-**TODO:** `// TODO: Fetch organization and check if user is admin`
+**Required Fix:**
+```json
+{
+  "name": "@grandplan/config",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./base.json": "./tsconfig.base.json"
+  }
+}
+```
 
-**Required Changes:**
-- Fetch organization by slug
-- Verify user membership and role
-- Set org context
+**Affected Packages (6):**
+- packages/tenant
+- packages/queue
+- packages/ai
+- packages/realtime
+- packages/payments
+- packages/integrations
 
-#### GAP-FE-003: Profile Update Not Implemented [P1]
-**Location:** [profile.tsx:30](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/settings/profile.tsx#L30)
-**TODO:** `// TODO: Implement profile update`
+---
 
-**Required Changes:**
-- Wire mutation hook to profile update API
-- Handle form submission
-- Show success/error feedback
+### GAP-002: Prisma Client Types Not Resolving [P0] ❌ BLOCKING
 
-#### GAP-FE-004: Password Change Not Implemented [P1]
-**Location:** [security.tsx:76](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/settings/security.tsx#L76)
+**RCA:** Prisma client not generated or exports misconfigured.
 
-#### GAP-FE-005: Session Revocation Not Implemented [P1]
-**Location:** [security.tsx:84](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/settings/security.tsx#L84)
+**Error:**
+```
+Cannot find module '.prisma/client/default'
+Module '"@prisma/client"' has no exported member 'Prisma'
+```
 
-#### GAP-FE-006: Plan Upgrade/Downgrade Not Implemented [P1]
-**Location:** [billing.tsx:89-94](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/billing.tsx#L89-L94)
+**File:** [packages/tenant/src/prisma-extension.ts:6](file:///Users/vivek/jet/grandplan/grandplan/packages/tenant/src/prisma-extension.ts#L6)
 
-#### GAP-FE-007: Member Invitation Not Implemented [P1]
-**Location:** [members.tsx:107](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/members.tsx#L107)
+**Fix:** Run `pnpm --filter @grandplan/db db:generate` before build.
 
-#### GAP-FE-008: Role Change Not Implemented [P1]
-**Location:** [members.tsx:115](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/members.tsx#L115)
+---
 
-#### GAP-FE-009: Member Removal Not Implemented [P1]
-**Location:** [members.tsx:120](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/members.tsx#L120)
+### GAP-003: Admin User CRUD Placeholder [P1]
 
-#### GAP-FE-010: Org Update Not Implemented [P1]
-**Location:** [org/$orgSlug/index.tsx:28](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/index.tsx#L28)
+**File:** [admin/users.tsx:143-156](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/admin/users.tsx#L143-L156)
 
-#### GAP-FE-011: Org Deletion Not Implemented [P1]
-**Location:** [org/$orgSlug/index.tsx:33](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/index.tsx#L33)
+**Current Code:**
+```typescript
+function handleViewUser(userId: string) {
+  console.log("View user:", userId);  // ← Placeholder
+}
+function handleEditUser(userId: string) {
+  console.log("Edit user:", userId);  // ← Placeholder
+}
+function handleSuspendUser(userId: string) {
+  console.log("Suspend user:", userId);  // ← Placeholder
+}
+function handleDeleteUser(userId: string) {
+  console.log("Delete user:", userId);  // ← Placeholder
+}
+```
 
-#### GAP-FE-012: Branding Save Not Implemented [P1]
-**Location:** [branding.tsx:41](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/branding.tsx#L41)
+**Fix:** Wire to platform admin API endpoints.
 
-#### GAP-FE-013: Logo Upload Not Implemented [P2]
-**Location:** [branding.tsx:27](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/branding.tsx#L27)
+---
 
-#### GAP-FE-014: Favicon Upload Not Implemented [P2]
-**Location:** [branding.tsx:35](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/org/$orgSlug/branding.tsx#L35)
+### GAP-004: Admin Org CRUD Placeholder [P1]
 
-#### GAP-FE-015: Avatar Upload Not Implemented [P2]
-**Location:** [profile.tsx:77](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/settings/profile.tsx#L77)
+**File:** [admin/organizations.tsx:131-143](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/admin/organizations.tsx#L131-L143)
 
-#### GAP-FE-016: Admin Plan CRUD Not Implemented [P2]
-**Location:** [plans.tsx:129-146](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/admin/plans.tsx#L129-L146)
+**Current Code:**
+```typescript
+function handleViewOrganization(orgId: string) {
+  console.log("View organization:", orgId);  // ← Placeholder
+}
+// ... 3 more placeholders
+```
 
-#### GAP-FE-017: Error Toast in Security Not Implemented [P2]
-**Location:** [security.tsx:72](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/routes/_authenticated/settings/security.tsx#L72)
+**Fix:** Wire to platform admin API endpoints.
+
+---
+
+### GAP-005: Bulk Task Operations Placeholder [P2]
+
+**File:** [list-view.tsx:495-511](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/features/tasks/views/list-view.tsx#L495-L511)
+
+**Current Code:**
+```typescript
+const handleBulkDelete = useCallback(() => {
+  // Placeholder for bulk delete - would call API
+  console.log("Delete tasks:", selectedRowIds);
+  setRowSelection({});
+}, [selectedRowIds]);
+```
+
+---
+
+### GAP-006: Task Dependencies Placeholder [P2]
+
+**File:** [task-detail-panel.tsx:505](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/features/tasks/components/task-detail-panel.tsx#L505)
+
+**Current:** `{/* Dependencies placeholder */}`
+
+---
+
+### GAP-007: Task Activity Placeholder [P2]
+
+**File:** [task-detail-panel.tsx:518](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/features/tasks/components/task-detail-panel.tsx#L518)
+
+**Current:** `{/* Activity/Comments placeholder */}`
+
+---
+
+### GAP-008: Timeline Dependency Arrows [P2]
+
+**File:** [timeline-view.tsx:386](file:///Users/vivek/jet/grandplan/grandplan/apps/web/src/features/tasks/views/timeline-view.tsx#L386)
+
+**Current:** `{/* Dependency Arrow Placeholder */}`
+
+---
+
+### GAP-009: Zero Test Coverage [P1]
+
+**RCA:** No test files exist in apps/ or packages/ (verified via find command).
+
+**Impact:** No automated quality assurance for:
+- API endpoints
+- Service logic
+- Domain events
+- UI components
+
+---
+
+### GAP-010: Orphaned Files Cleanup Stub [P2]
+
+**File:** [maintenance-worker.ts:53](file:///Users/vivek/jet/grandplan/grandplan/apps/worker/src/workers/maintenance-worker.ts#L53)
+
+**Current:** `console.log("Orphaned files cleanup not yet implemented");`
+
+---
+
+### GAP-011: Worker Health Endpoint Missing [P1]
+
+**RCA:** Worker has no HTTP endpoint for health checks.
+
+**Impact:** Container orchestration (Railway, Kubernetes) cannot probe worker health.
 
 ---
 
 ## Implementation Order (Bottom-Up)
 
-### Phase 1: Backend Foundation [Priority P0]
+### Phase 1: Build Fix [P0] ⚡ CRITICAL
 
-| Order | Task | Gap ID | Estimated Effort |
-|-------|------|--------|------------------|
-| 1.1 | Create Integration Server Module | GAP-BE-001 | 4-6 hours |
-| 1.2 | Wire OAuth flow and callbacks | GAP-BE-001 | 2-3 hours |
-| 1.3 | Implement webhook ingestion | GAP-BE-001 | 2-3 hours |
+| # | Task | Gap | Effort |
+|---|------|-----|--------|
+| 1.1 | Add exports to config package.json | GAP-001 | 5 min |
+| 1.2 | Generate Prisma client | GAP-002 | 2 min |
+| 1.3 | Verify `pnpm build` passes | - | 5 min |
 
-### Phase 2: Frontend Critical Auth [Priority P0]
+### Phase 2: Infrastructure [P1]
 
-| Order | Task | Gap ID | Estimated Effort |
-|-------|------|--------|------------------|
-| 2.1 | Implement platform admin check | GAP-FE-001 | 1 hour |
-| 2.2 | Implement org admin check | GAP-FE-002 | 1-2 hours |
+| # | Task | Gap | Effort |
+|---|------|-----|--------|
+| 2.1 | Add worker health HTTP endpoint | GAP-011 | 1 hour |
+| 2.2 | Setup vitest test framework | GAP-009 | 2 hours |
+| 2.3 | Add initial unit tests | GAP-009 | 4 hours |
 
-### Phase 3: Frontend Core Mutations [Priority P1]
+### Phase 3: Admin Features [P1]
 
-| Order | Task | Gap ID | Estimated Effort |
-|-------|------|--------|------------------|
-| 3.1 | Profile update mutation | GAP-FE-003 | 1 hour |
-| 3.2 | Password change mutation | GAP-FE-004 | 1 hour |
-| 3.3 | Session revocation | GAP-FE-005 | 1 hour |
-| 3.4 | Plan upgrade/downgrade | GAP-FE-006 | 2 hours |
-| 3.5 | Member invitation | GAP-FE-007 | 2 hours |
-| 3.6 | Role change | GAP-FE-008 | 1 hour |
-| 3.7 | Member removal | GAP-FE-009 | 1 hour |
-| 3.8 | Org update | GAP-FE-010 | 1 hour |
-| 3.9 | Org deletion | GAP-FE-011 | 1 hour |
-| 3.10 | Branding save | GAP-FE-012 | 1 hour |
+| # | Task | Gap | Effort |
+|---|------|-----|--------|
+| 3.1 | Wire admin user CRUD | GAP-003 | 2 hours |
+| 3.2 | Wire admin org CRUD | GAP-004 | 2 hours |
 
-### Phase 4: Frontend Polish [Priority P2]
+### Phase 4: Task Features [P2]
 
-| Order | Task | Gap ID | Estimated Effort |
-|-------|------|--------|------------------|
-| 4.1 | Logo upload | GAP-FE-013 | 2 hours |
-| 4.2 | Favicon upload | GAP-FE-014 | 1 hour |
-| 4.3 | Avatar upload | GAP-FE-015 | 2 hours |
-| 4.4 | Admin plan CRUD | GAP-FE-016 | 3 hours |
-| 4.5 | Error toast | GAP-FE-017 | 30 min |
+| # | Task | Gap | Effort |
+|---|------|-----|--------|
+| 4.1 | Implement bulk task operations | GAP-005 | 2 hours |
+| 4.2 | Build dependencies UI component | GAP-006 | 3 hours |
+| 4.3 | Build activity feed component | GAP-007 | 3 hours |
+| 4.4 | Add timeline dependency arrows | GAP-008 | 2 hours |
+
+### Phase 5: Maintenance [P2]
+
+| # | Task | Gap | Effort |
+|---|------|-----|--------|
+| 5.1 | Implement orphaned files cleanup | GAP-010 | 2 hours |
+
+---
+
+## Effort Summary
+
+| Phase | Effort | Priority |
+|-------|--------|----------|
+| Phase 1: Build Fix | 15 min | P0 |
+| Phase 2: Infrastructure | 7 hours | P1 |
+| Phase 3: Admin Features | 4 hours | P1 |
+| Phase 4: Task Features | 10 hours | P2 |
+| Phase 5: Maintenance | 2 hours | P2 |
+
+**Total: ~24 hours to 100% completion**
 
 ---
 
 ## Verification Checklist
 
-After implementation, verify:
+### Phase 1
+- [ ] `pnpm run build` passes without errors
+- [ ] All packages can import `@grandplan/config/base.json`
+- [ ] Prisma types available in tenant package
 
-### Backend
-- [ ] Integration OAuth flow works end-to-end (Slack, Jira, etc.)
-- [ ] Webhook events processed correctly
-- [ ] Platform admin endpoint returns correct status
+### Phase 2
+- [ ] Worker responds to GET /health
+- [ ] Test framework configured
+- [ ] At least 1 test per major service
 
-### Frontend
-- [ ] Platform admin access properly restricted
-- [ ] Org admin access properly scoped
-- [ ] All profile/settings forms persist data
-- [ ] Member management CRUD works
-- [ ] File uploads work (avatar, logo, favicon)
-- [ ] Billing plan changes work
-- [ ] All TODO comments removed
+### Phase 3
+- [ ] Admin can view/edit/suspend/delete users
+- [ ] Admin can view/edit/suspend/delete organizations
 
-### Integration
-- [ ] Docker compose starts all services
-- [ ] Integration connections persist
-- [ ] Sync jobs execute correctly
+### Phase 4
+- [ ] Bulk delete/archive/duplicate works
+- [ ] Dependencies shown in task detail
+- [ ] Activity feed shows task history
+- [ ] Timeline shows dependency arrows
 
 ---
 
 ## Principle Compliance
 
 ### Backend (DDD/SOLID/KISS/YAGNI)
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| DDD | ✅ | Domain layers present, events defined |
-| SOLID | ✅ | Service separation good, interfaces used |
-| KISS | ✅ | No over-engineering detected |
-| YAGNI | ✅ | Only required features implemented |
+| Principle | Status |
+|-----------|--------|
+| DDD | ✅ Domain layers present |
+| SOLID | ✅ Service separation |
+| KISS | ✅ No over-engineering |
+| YAGNI | ✅ Only required features |
 
-### Frontend (Atomic/Gestalt/Visual Hierarchy)
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| Atomic Design | ✅ | Components properly structured |
-| Gestalt | ✅ | Card-based layouts present |
-| Visual Hierarchy | ✅ | Consistent spacing/typography |
-| ShadCN | ✅ | 28 UI components implemented |
-| Theme | ✅ | Centralized TailwindCSS config |
-
----
-
-## Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        GRANDPLAN ARCHITECTURE                    │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐          │
-│  │   WEB APP   │────│   SERVER    │────│   WORKER    │          │
-│  │  (React)    │    │  (Express)  │    │  (BullMQ)   │          │
-│  └─────────────┘    └─────────────┘    └─────────────┘          │
-│        │                  │                  │                   │
-│        │           ┌──────┴──────┐          │                   │
-│        │           │             │          │                   │
-│        ▼           ▼             ▼          ▼                   │
-│  ┌──────────────────────────────────────────────────┐           │
-│  │                    PACKAGES                       │           │
-│  ├──────┬──────┬──────┬──────┬──────┬──────┬───────┤           │
-│  │  AI  │ Auth │  DB  │Queue │Notif │ RBAC │ Tenant│           │
-│  └──────┴──────┴──────┴──────┴──────┴──────┴───────┘           │
-│                          │                                       │
-│                          ▼                                       │
-│  ┌─────────────────────────────────────────────────┐            │
-│  │              POSTGRESQL + REDIS                  │            │
-│  └─────────────────────────────────────────────────┘            │
-│                                                                  │
-│  ✅ Schema Layer: 100%                                          │
-│  ✅ Packages Layer: 100%                                        │
-│  ⚠️  Backend Layer: 95% (Missing: Integration Module)           │
-│  ✅ Worker Layer: 100%                                          │
-│  ⚠️  Frontend Layer: 82% (17 TODO items)                        │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Estimated Total Effort
-
-| Phase | Effort | Cumulative |
-|-------|--------|------------|
-| Phase 1: Backend | 8-12 hours | 12 hours |
-| Phase 2: Frontend Auth | 2-3 hours | 15 hours |
-| Phase 3: Frontend Mutations | 12-14 hours | 29 hours |
-| Phase 4: Frontend Polish | 8-10 hours | 39 hours |
-
-**Total Estimated: ~39 hours to 100% completion**
-
----
-
-## Notes
-
-1. The CRITICAL_REVIEW.md claiming 35% completion is significantly outdated
-2. Prior BEADS_REMEDIATION_PLAN.md was accurate - this is a validation and minor update
-3. All gaps have clear fix locations with file:line references
-4. No schema changes required - foundation is solid
-5. Integration module is the single backend blocker
-6. Most frontend gaps are mutation wiring (hooks exist, just need connection)
+### Frontend (Atomic/Gestalt/ShadCN)
+| Principle | Status |
+|-----------|--------|
+| Atomic Design | ✅ Components structured |
+| Gestalt | ✅ Card-based layouts |
+| Visual Hierarchy | ✅ Consistent |
+| ShadCN | ✅ 28 components |
+| Theme | ✅ Centralized Tailwind |
 
 ---
 
 ## Ready for Implementation?
 
-Once you confirm this plan, I will proceed with **bottom-up implementation**:
+**Phase 1 (Build Fix) is CRITICAL and must be done first.**
 
-1. **First**: Create Integration Server Module (GAP-BE-001)
-2. **Then**: Fix frontend auth checks (GAP-FE-001, GAP-FE-002)
-3. **Finally**: Wire remaining frontend mutations (GAP-FE-003 through GAP-FE-017)
-
-**Awaiting your confirmation to proceed with Phase 1.**
+Confirm to proceed with implementation?

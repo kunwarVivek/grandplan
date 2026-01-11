@@ -2,7 +2,7 @@
 // EMAIL SERVICE - SendGrid integration
 // ============================================
 
-import { db } from "@grandplan/db";
+import { db, type EmailTemplateType } from "@grandplan/db";
 import sgMail from "@sendgrid/mail";
 import Handlebars from "handlebars";
 import type { EmailPayload } from "./types.js";
@@ -112,7 +112,7 @@ export class EmailService {
 	): Promise<string> {
 		// Try to get custom template from database
 		const customTemplate = await db.emailTemplate.findFirst({
-			where: { templateType: templateId },
+			where: { templateType: templateId as EmailTemplateType },
 		});
 
 		let template: Handlebars.TemplateDelegate;

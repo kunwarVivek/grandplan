@@ -15,9 +15,9 @@ export function registerNotificationWorker(): void {
 	queueManager.registerWorker<NotificationJobData, JobResult>(
 		"notifications",
 		async (job: Job<NotificationJobData>): Promise<JobResult> => {
-			const { notificationId, channels, userId } = job.data;
+			const { notificationId, channels } = job.data;
 
-			console.log(`Processing notification job ${job.id} for user ${userId}`);
+			console.log(`Processing notification job ${job.id}`);
 
 			try {
 				// Get notification from database
@@ -30,22 +30,23 @@ export function registerNotificationWorker(): void {
 				}
 
 				// Process each channel
+				const notificationData = notification.data as Record<string, unknown> | null;
 				for (const channel of channels) {
 					switch (channel) {
 						case "push":
 							await pushService.send({
-								userId,
+								userId: notification.userId,
 								title: notification.title,
-								body: notification.body,
-								url: notification.actionUrl ?? undefined,
-								data: notification.data as Record<string, unknown>,
+								body: notification.body ?? "",
+								url: (notificationData?.actionUrl as string | undefined) ?? undefined,
+								data: notificationData ?? undefined,
 							});
 							break;
 
 						case "slack":
 							// Would integrate with Slack service
 							console.log(
-								`Slack notification for user ${userId}: ${notification.title}`,
+								`Slack notification for user ${notification.userId}: ${notification.title}`,
 							);
 							break;
 

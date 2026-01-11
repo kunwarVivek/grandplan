@@ -112,7 +112,7 @@ export class EstimationService {
 				provider: aiProvider.name,
 				model: provider === "anthropic" ? "claude-sonnet-4-20250514" : "gpt-4o",
 				prompt: JSON.stringify({ taskContext, options }),
-				response: result as unknown as Record<string, unknown>,
+				response: JSON.parse(JSON.stringify(result)),
 				reasoning: result.reasoning,
 				confidence: result.confidence,
 				tokensUsed: 0,
@@ -167,7 +167,7 @@ export class EstimationService {
 					taskId,
 					action: "ESTIMATE_UPDATED",
 					field: "estimatedHours",
-					oldValue: task.estimatedHours,
+					oldValue: task.estimatedHours ?? undefined,
 					newValue: estimatedHours,
 					reason: "AI estimation applied",
 					aiTriggered: true,
@@ -306,8 +306,7 @@ export class EstimationService {
 		const velocities = completedTasks.map(
 			(t) => (t.actualHours ?? 0) / (t.estimatedHours ?? 1),
 		);
-		const avgVelocity =
-			velocities.reduce((a, b) => a + b, 0) / velocities.length;
+		void velocities.reduce((a, b) => a + b, 0);
 
 		// Convert to story points equivalent (rough approximation)
 		const avgHoursPerPoint = 4; // Typical 4 hours per story point
@@ -350,7 +349,7 @@ export class EstimationService {
 					taskId,
 					action: "UPDATED",
 					field: "actualHours",
-					oldValue: task.actualHours,
+					oldValue: task.actualHours ?? undefined,
 					newValue: actualHours,
 					actorId: completedById,
 				},

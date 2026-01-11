@@ -2,11 +2,11 @@
 // NOTIFICATION SERVICE - Unified notification delivery
 // ============================================
 
-import { db } from "@grandplan/db";
+import { db, type Prisma } from "@grandplan/db";
 import { queueManager } from "@grandplan/queue";
-import { emailService } from "./email-service.js";
 import { pushService } from "./push-service.js";
 import type {
+	DigestFrequency,
 	NotificationChannel,
 	NotificationPayload,
 	NotificationPreferences,
@@ -21,15 +21,18 @@ export class NotificationService {
 		// Get user preferences
 		const preferences = await this.getUserPreferences(payload.userId);
 
-		// Check if notification type is muted
-		if (preferences.mutedTypes.includes(payload.type)) {
+		// Check if notification type is disabled in typeSettings
+		const typeConfig = preferences.typeSettings[payload.type];
+		if (typeConfig && !typeConfig.email && !typeConfig.push) {
 			return;
 		}
 
 		// Check quiet hours
 		if (this.isQuietHours(preferences)) {
 			// Queue for digest instead
-			await this.queueForDigest(payload);
+			if (preferences.digestEnabled) {
+				await this.queueForDigest(payload, preferences.digestFrequency);
+			}
 			return;
 		}
 
@@ -40,10 +43,7 @@ export class NotificationService {
 		const channels = this.getDeliveryChannels(preferences, payload.type);
 
 		// Queue deliveries
-		if (
-			channels.includes("email") &&
-			preferences.digestFrequency === "realtime"
-		) {
+		if (channels.includes("email") && !preferences.digestEnabled) {
 			await this.queueEmailDelivery(payload, notification.id);
 		}
 
@@ -56,11 +56,8 @@ export class NotificationService {
 		}
 
 		// Handle digest scheduling
-		if (
-			preferences.digestFrequency !== "realtime" &&
-			preferences.digestFrequency !== "none"
-		) {
-			await this.queueForDigest(payload);
+		if (preferences.digestEnabled) {
+			await this.queueForDigest(payload, preferences.digestFrequency);
 		}
 	}
 
@@ -86,10 +83,12 @@ export class NotificationService {
 				type: payload.type,
 				title: payload.title,
 				body: payload.body,
-				data: payload.data ?? {},
+				data: {
+					...payload.data,
+					actionUrl: payload.actionUrl,
+				} as Prisma.InputJsonValue,
 				resourceType: payload.resourceType,
 				resourceId: payload.resourceId,
-				actionUrl: payload.actionUrl,
 				read: false,
 			},
 		});
@@ -108,12 +107,17 @@ export class NotificationService {
 			emailEnabled: prefs?.emailEnabled ?? true,
 			pushEnabled: prefs?.pushEnabled ?? true,
 			slackEnabled: prefs?.slackEnabled ?? false,
+			digestEnabled: prefs?.digestEnabled ?? false,
 			digestFrequency:
-				(prefs?.digestFrequency as NotificationPreferences["digestFrequency"]) ??
-				"realtime",
+				(prefs?.digestFrequency as DigestFrequency) ?? "DAILY",
+			quietHoursEnabled: prefs?.quietHoursEnabled ?? false,
 			quietHoursStart: prefs?.quietHoursStart ?? undefined,
 			quietHoursEnd: prefs?.quietHoursEnd ?? undefined,
-			mutedTypes: (prefs?.mutedTypes as NotificationType[]) ?? [],
+			typeSettings:
+				(prefs?.typeSettings as Record<
+					string,
+					{ email?: boolean; push?: boolean }
+				>) ?? {},
 		};
 	}
 
@@ -124,13 +128,34 @@ export class NotificationService {
 		userId: string,
 		updates: Partial<Omit<NotificationPreferences, "userId">>,
 	): Promise<void> {
+		const data: Record<string, unknown> = {};
+
+		if (updates.emailEnabled !== undefined)
+			data.emailEnabled = updates.emailEnabled;
+		if (updates.pushEnabled !== undefined)
+			data.pushEnabled = updates.pushEnabled;
+		if (updates.slackEnabled !== undefined)
+			data.slackEnabled = updates.slackEnabled;
+		if (updates.digestEnabled !== undefined)
+			data.digestEnabled = updates.digestEnabled;
+		if (updates.digestFrequency !== undefined)
+			data.digestFrequency = updates.digestFrequency;
+		if (updates.quietHoursEnabled !== undefined)
+			data.quietHoursEnabled = updates.quietHoursEnabled;
+		if (updates.quietHoursStart !== undefined)
+			data.quietHoursStart = updates.quietHoursStart;
+		if (updates.quietHoursEnd !== undefined)
+			data.quietHoursEnd = updates.quietHoursEnd;
+		if (updates.typeSettings !== undefined)
+			data.typeSettings = updates.typeSettings;
+
 		await db.notificationPreference.upsert({
 			where: { userId },
 			create: {
 				userId,
-				...updates,
+				...data,
 			},
-			update: updates,
+			update: data,
 		});
 	}
 
@@ -145,7 +170,7 @@ export class NotificationService {
 	}
 
 	/**
-	 * Mark all notifications as read for a user
+	 * Mark all notifications as read
 	 */
 	async markAllAsRead(userId: string): Promise<void> {
 		await db.notification.updateMany({
@@ -164,22 +189,22 @@ export class NotificationService {
 	}
 
 	/**
-	 * Get user notifications
+	 * Get notifications with pagination
 	 */
-	async getUserNotifications(
+	async getNotifications(
 		userId: string,
-		options: { limit?: number; offset?: number; unreadOnly?: boolean } = {},
+		options: { limit?: number; cursor?: string; unreadOnly?: boolean } = {},
 	) {
-		const { limit = 20, offset = 0, unreadOnly = false } = options;
+		const { limit = 20, cursor, unreadOnly = false } = options;
 
 		return db.notification.findMany({
 			where: {
 				userId,
-				...(unreadOnly && { read: false }),
+				...(unreadOnly ? { read: false } : {}),
+				...(cursor ? { id: { lt: cursor } } : {}),
 			},
 			orderBy: { createdAt: "desc" },
-			take: limit,
-			skip: offset,
+			take: limit + 1,
 		});
 	}
 
@@ -187,21 +212,26 @@ export class NotificationService {
 	 * Check if currently in quiet hours
 	 */
 	private isQuietHours(preferences: NotificationPreferences): boolean {
-		if (!preferences.quietHoursStart || !preferences.quietHoursEnd) {
+		if (
+			!preferences.quietHoursEnabled ||
+			!preferences.quietHoursStart ||
+			!preferences.quietHoursEnd
+		) {
 			return false;
 		}
 
 		const now = new Date();
-		const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+		const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
 		const start = preferences.quietHoursStart;
 		const end = preferences.quietHoursEnd;
 
-		if (start <= end) {
-			return currentTime >= start && currentTime <= end;
+		// Handle overnight quiet hours (e.g., 22:00 - 08:00)
+		if (start > end) {
+			return currentTime >= start || currentTime < end;
 		}
-		// Quiet hours span midnight
-		return currentTime >= start || currentTime <= end;
+
+		return currentTime >= start && currentTime < end;
 	}
 
 	/**
@@ -209,15 +239,18 @@ export class NotificationService {
 	 */
 	private getDeliveryChannels(
 		preferences: NotificationPreferences,
-		_type: NotificationType,
+		type: NotificationType,
 	): NotificationChannel[] {
 		const channels: NotificationChannel[] = ["in_app"];
 
-		if (preferences.emailEnabled) {
+		// Check type-specific settings
+		const typeConfig = preferences.typeSettings[type];
+
+		if (preferences.emailEnabled && (typeConfig?.email !== false)) {
 			channels.push("email");
 		}
 
-		if (preferences.pushEnabled) {
+		if (preferences.pushEnabled && (typeConfig?.push !== false)) {
 			channels.push("push");
 		}
 
@@ -235,29 +268,27 @@ export class NotificationService {
 		payload: NotificationPayload,
 		notificationId: string,
 	): Promise<void> {
-		await queueManager.addJob("email", {
+		await queueManager.addJob("notifications", {
 			notificationId,
+			channels: ["email"],
 			userId: payload.userId,
-			type: payload.type,
-			title: payload.title,
-			body: payload.body,
-			actionUrl: payload.actionUrl,
 		});
 	}
 
 	/**
-	 * Queue push notification delivery
+	 * Queue push notification
 	 */
 	private async queuePushDelivery(payload: NotificationPayload): Promise<void> {
-		await queueManager.addJob("notifications", {
-			notificationId: payload.resourceId,
-			channels: ["push"],
-			userId: payload.userId,
+		await pushService.sendToUser(payload.userId, {
+			title: payload.title,
+			body: payload.body,
+			url: payload.actionUrl,
+			data: payload.data,
 		});
 	}
 
 	/**
-	 * Queue Slack notification delivery
+	 * Queue Slack notification
 	 */
 	private async queueSlackDelivery(
 		payload: NotificationPayload,
@@ -273,14 +304,58 @@ export class NotificationService {
 	/**
 	 * Queue notification for digest
 	 */
-	private async queueForDigest(payload: NotificationPayload): Promise<void> {
+	private async queueForDigest(
+		payload: NotificationPayload,
+		frequency: DigestFrequency,
+	): Promise<void> {
+		const scheduledFor = this.getNextDigestTime(frequency);
+
 		await db.digestQueue.create({
 			data: {
 				userId: payload.userId,
-				notificationType: payload.type,
-				data: payload as unknown as Record<string, unknown>,
+				frequency,
+				notifications: [payload] as unknown as Prisma.InputJsonValue,
+				scheduledFor,
 			},
 		});
+	}
+
+	/**
+	 * Calculate next digest delivery time
+	 */
+	private getNextDigestTime(frequency: DigestFrequency): Date {
+		const now = new Date();
+
+		switch (frequency) {
+			case "HOURLY":
+				return new Date(
+					now.getFullYear(),
+					now.getMonth(),
+					now.getDate(),
+					now.getHours() + 1,
+					0,
+					0,
+				);
+			case "DAILY":
+				return new Date(
+					now.getFullYear(),
+					now.getMonth(),
+					now.getDate() + 1,
+					9,
+					0,
+					0,
+				);
+			case "WEEKLY":
+				const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
+				return new Date(
+					now.getFullYear(),
+					now.getMonth(),
+					now.getDate() + daysUntilMonday,
+					9,
+					0,
+					0,
+				);
+		}
 	}
 }
 

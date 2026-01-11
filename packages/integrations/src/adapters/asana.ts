@@ -2,7 +2,7 @@
 // ASANA ADAPTER - Asana integration
 // ============================================
 
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type {
 	ExternalItem,
 	IntegrationAdapter,
@@ -153,7 +153,7 @@ export class AsanaAdapter implements IntegrationAdapter {
 		this.webhookSecret = config.webhookSecret;
 	}
 
-	getAuthorizationUrl(state: string, scopes?: string[]): string {
+	getAuthorizationUrl(state: string, _scopes?: string[]): string {
 		// Asana doesn't use scopes in OAuth, access is determined by the app's permissions
 		const params = new URLSearchParams({
 			client_id: this.clientId,
@@ -259,8 +259,8 @@ export class AsanaAdapter implements IntegrationAdapter {
 	}
 
 	async fetchExternalItems(
-		connectionId: string,
-		options?: { since?: Date },
+		_connectionId: string,
+		_options?: { since?: Date },
 	): Promise<ExternalItem[]> {
 		throw new Error(
 			"Use fetchTasks directly with access token and project/workspace ID for Asana integration",
@@ -268,8 +268,8 @@ export class AsanaAdapter implements IntegrationAdapter {
 	}
 
 	async pushToExternal(
-		connectionId: string,
-		items: InternalItem[],
+		_connectionId: string,
+		_items: InternalItem[],
 	): Promise<SyncResult> {
 		throw new Error(
 			"Use createTask/updateTask directly with access token for Asana integration",
@@ -284,13 +284,12 @@ export class AsanaAdapter implements IntegrationAdapter {
 
 		// Asana uses HMAC-SHA256 for webhook signatures
 		// The signature is in the X-Hook-Signature header
-		const hmac = crypto
-			.createHmac("sha256", this.webhookSecret)
+		const hmac = createHmac("sha256", this.webhookSecret)
 			.update(payload)
 			.digest("hex");
 
 		try {
-			return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
+			return timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
 		} catch {
 			return false;
 		}
@@ -876,7 +875,7 @@ export class AsanaAdapter implements IntegrationAdapter {
 		const firstEvent = taskEvents[0];
 		let action: "created" | "updated" | "deleted" | "unknown" = "unknown";
 
-		switch (firstEvent.action) {
+		switch (firstEvent!.action) {
 			case "added":
 				action = "created";
 				break;
@@ -899,7 +898,7 @@ export class AsanaAdapter implements IntegrationAdapter {
 
 		return {
 			action,
-			taskId: firstEvent.resource.gid,
+			taskId: firstEvent!.resource.gid,
 			changes: changes.length > 0 ? changes : undefined,
 		};
 	}

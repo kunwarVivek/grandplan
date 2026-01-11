@@ -509,6 +509,9 @@ importers:
       '@grandplan/core':
         specifier: workspace:*
         version: link:../core
+      '@grandplan/queue':
+        specifier: workspace:*
+        version: link:../queue
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
@@ -672,9 +675,9 @@ importers:
       '@grandplan/core':
         specifier: workspace:*
         version: link:../core
-      '@prisma/client':
-        specifier: ^6.2.1
-        version: 6.19.1(prisma@7.2.0(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3)
+      '@grandplan/db':
+        specifier: workspace:*
+        version: link:../db
     devDependencies:
       '@grandplan/config':
         specifier: workspace:*
@@ -1443,18 +1446,6 @@ packages:
 
   '@prisma/client-runtime-utils@7.2.0':
     resolution: {integrity: sha512-dn7oB53v0tqkB0wBdMuTNFNPdEbfICEUe82Tn9FoKAhJCUkDH+fmyEp0ClciGh+9Hp2Tuu2K52kth2MTLstvmA==}
-
-  '@prisma/client@6.19.1':
-    resolution: {integrity: sha512-4SXj4Oo6HyQkLUWT8Ke5R0PTAfVOKip5Roo+6+b2EDTkFg5be0FnBWiuRJc0BC0sRQIWGMLKW1XguhVfW/z3/A==}
-    engines: {node: '>=18.18'}
-    peerDependencies:
-      prisma: '*'
-      typescript: '>=5.1.0'
-    peerDependenciesMeta:
-      prisma:
-        optional: true
-      typescript:
-        optional: true
 
   '@prisma/client@7.2.0':
     resolution: {integrity: sha512-JdLF8lWZ+LjKGKpBqyAlenxd/kXjd1Abf/xK+6vUA7R7L2Suo6AFTHFRpPSdAKCan9wzdFApsUpSa/F6+t1AtA==}
@@ -6472,11 +6463,6 @@ snapshots:
       - pg-native
 
   '@prisma/client-runtime-utils@7.2.0': {}
-
-  '@prisma/client@6.19.1(prisma@7.2.0(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3)':
-    optionalDependencies:
-      prisma: 7.2.0(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
-      typescript: 5.9.3
 
   '@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:

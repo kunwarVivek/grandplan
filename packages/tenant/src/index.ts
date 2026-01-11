@@ -1,6 +1,7 @@
 // Tenant package - Multi-tenancy context and Prisma extension
 export {
 	getCurrentTenant,
+	tryGetCurrentTenant,
 	runWithTenant,
 	TenantContext,
 	tenantStorage,

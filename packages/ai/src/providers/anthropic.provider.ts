@@ -6,7 +6,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import type {
 	AICompletionRequest,
 	AICompletionResponse,
-	AIMessage,
 	AIProviderConfig,
 } from "../types.js";
 import { BaseAIProvider } from "./base.provider.js";
@@ -41,7 +40,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
 			// Ensure messages alternate between user and assistant
 			// Add a user message if the first message is from assistant
-			if (messages.length > 0 && messages[0].role === "assistant") {
+			if (messages.length > 0 && messages[0]?.role === "assistant") {
 				messages.unshift({ role: "user", content: "Please proceed." });
 			}
 

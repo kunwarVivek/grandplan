@@ -2,6 +2,7 @@
 // WORKER APP - Background job processor
 // ============================================
 
+import { createServer } from "node:http";
 import { eventBus } from "@grandplan/events";
 import { queueManager } from "@grandplan/queue";
 import Redis from "ioredis";
@@ -16,6 +17,10 @@ import { registerMaintenanceWorker } from "./workers/maintenance-worker.js";
 import { registerNotificationWorker } from "./workers/notification-worker.js";
 
 const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
+const HEALTH_PORT = Number(process.env.WORKER_HEALTH_PORT ?? "3001");
+
+// Track worker health state
+let isHealthy = false;
 
 async function main(): Promise<void> {
 	console.log("Starting GrandPlan Worker...");
@@ -51,12 +56,39 @@ async function main(): Promise<void> {
 	await setupScheduledJobs();
 	console.log("Scheduled jobs configured");
 
+	// Mark as healthy
+	isHealthy = true;
 	console.log("Worker is ready and processing jobs");
+
+	// Start health check server
+	const healthServer = createServer((req, res) => {
+		if (req.url === "/health" || req.url === "/healthz") {
+			if (isHealthy) {
+				res.writeHead(200, { "Content-Type": "application/json" });
+				res.end(JSON.stringify({ status: "healthy", timestamp: new Date().toISOString() }));
+			} else {
+				res.writeHead(503, { "Content-Type": "application/json" });
+				res.end(JSON.stringify({ status: "unhealthy", timestamp: new Date().toISOString() }));
+			}
+		} else if (req.url === "/ready") {
+			res.writeHead(200, { "Content-Type": "application/json" });
+			res.end(JSON.stringify({ status: "ready", timestamp: new Date().toISOString() }));
+		} else {
+			res.writeHead(404);
+			res.end("Not Found");
+		}
+	});
+
+	healthServer.listen(HEALTH_PORT, () => {
+		console.log(`Health check server listening on port ${HEALTH_PORT}`);
+	});
 
 	// Graceful shutdown
 	const shutdown = async (signal: string): Promise<void> => {
 		console.log(`Received ${signal}, shutting down gracefully...`);
+		isHealthy = false;
 
+		healthServer.close();
 		await queueManager.disconnect();
 		await eventBus.disconnect();
 		await redis.quit();

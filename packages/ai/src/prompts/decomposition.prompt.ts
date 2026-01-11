@@ -2,7 +2,7 @@
 // DECOMPOSITION PROMPTS
 // ============================================
 
-import type { TaskContext, TaskNodeType } from "../types.js";
+import type { TaskContext } from "../types.js";
 
 interface DecompositionPromptOptions {
 	maxSubtasks: number;

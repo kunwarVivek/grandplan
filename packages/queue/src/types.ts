@@ -92,4 +92,5 @@ export type QueueName =
 	| "integration:sync"
 	| "integration:webhooks"
 	| "maintenance"
-	| "analytics";
+	| "analytics"
+	| "events:dlq";

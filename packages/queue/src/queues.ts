@@ -127,4 +127,14 @@ export const QUEUE_CONFIGS: Record<QueueName, QueueConfig> = {
 			removeOnFail: { count: 100 },
 		},
 	},
+
+	"events:dlq": {
+		name: "events:dlq",
+		defaultJobOptions: {
+			attempts: 1,
+			backoff: { type: "fixed", delay: 0 },
+			removeOnComplete: false,
+			removeOnFail: false,
+		},
+	},
 };

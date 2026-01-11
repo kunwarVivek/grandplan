@@ -2,7 +2,7 @@
 // OUTLOOK CALENDAR ADAPTER - Microsoft Outlook Calendar integration
 // ============================================
 
-import { createHmac } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import type {
 	ExternalItem,
 	IntegrationAdapter,
@@ -305,8 +305,8 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 	}
 
 	async fetchExternalItems(
-		connectionId: string,
-		options?: { since?: Date },
+		_connectionId: string,
+		_options?: { since?: Date },
 	): Promise<ExternalItem[]> {
 		// This would need access to the connection's credentials
 		throw new Error(
@@ -315,8 +315,8 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 	}
 
 	async pushToExternal(
-		connectionId: string,
-		items: InternalItem[],
+		_connectionId: string,
+		_items: InternalItem[],
 	): Promise<SyncResult> {
 		// This would need access to the connection's credentials
 		throw new Error(
@@ -921,7 +921,7 @@ export class OutlookCalendarAdapter implements IntegrationAdapter {
 			? `/me/calendars/${calendarId}/events`
 			: "/me/calendar/events";
 
-		const state = clientState ?? crypto.randomBytes(32).toString("hex");
+		const state = clientState ?? randomBytes(32).toString("hex");
 
 		const expirationDateTime = new Date(
 			Date.now() + expirationMinutes * 60 * 1000,

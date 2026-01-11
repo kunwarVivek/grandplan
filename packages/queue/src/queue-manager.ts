@@ -10,7 +10,7 @@ import {
 	type WorkerOptions,
 } from "bullmq";
 import type { Redis } from "ioredis";
-import { QUEUE_CONFIGS, type QueueConfig } from "./queues.js";
+import { QUEUE_CONFIGS } from "./queues.js";
 import type { JobResult, QueueName } from "./types.js";
 
 export class QueueManager {
@@ -140,13 +140,20 @@ export class QueueManager {
 		delayed: number;
 	}> {
 		const queue = this.getQueue(queueName);
-		return queue.getJobCounts(
+		const counts = await queue.getJobCounts(
 			"waiting",
 			"active",
 			"completed",
 			"failed",
 			"delayed",
 		);
+		return {
+			waiting: counts.waiting ?? 0,
+			active: counts.active ?? 0,
+			completed: counts.completed ?? 0,
+			failed: counts.failed ?? 0,
+			delayed: counts.delayed ?? 0,
+		};
 	}
 
 	async pauseQueue(queueName: QueueName): Promise<void> {

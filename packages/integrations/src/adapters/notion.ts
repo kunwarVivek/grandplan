@@ -2,7 +2,6 @@
 // NOTION ADAPTER - Notion integration
 // ============================================
 
-import { createHmac } from "node:crypto";
 import type {
 	ExternalItem,
 	IntegrationAdapter,
@@ -191,8 +190,8 @@ export class NotionAdapter implements IntegrationAdapter {
 	}
 
 	async fetchExternalItems(
-		connectionId: string,
-		options?: { since?: Date },
+		_connectionId: string,
+		_options?: { since?: Date },
 	): Promise<ExternalItem[]> {
 		// This would need access to the connection's credentials
 		// In practice, this would be called with credentials from storage
@@ -202,8 +201,8 @@ export class NotionAdapter implements IntegrationAdapter {
 	}
 
 	async pushToExternal(
-		connectionId: string,
-		items: InternalItem[],
+		_connectionId: string,
+		_items: InternalItem[],
 	): Promise<SyncResult> {
 		// This would need access to the connection's credentials and database mapping
 		throw new Error(
@@ -211,7 +210,7 @@ export class NotionAdapter implements IntegrationAdapter {
 		);
 	}
 
-	verifyWebhook(payload: string, signature: string): boolean {
+	verifyWebhook(payload: string, _signature: string): boolean {
 		// Notion uses webhook verification differently - they send a verification challenge
 		// For ongoing requests, there's no signature verification (security is based on the webhook URL being secret)
 		// However, we can implement a simple HMAC verification if a signing secret is configured

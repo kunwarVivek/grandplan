@@ -89,7 +89,7 @@ export class OAuthManager {
 	 */
 	async getValidCredentials(
 		connectionId: string,
-		integrationId: IntegrationProvider,
+		_integrationId: IntegrationProvider,
 		credentials: OAuthCredentials,
 	): Promise<OAuthCredentials> {
 		if (!this.needsRefresh(credentials)) {

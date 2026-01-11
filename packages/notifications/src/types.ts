@@ -2,23 +2,42 @@
 // NOTIFICATION TYPE DEFINITIONS
 // ============================================
 
+// Using Prisma enum-compatible types
 export type NotificationType =
-	| "task.assigned"
-	| "task.mentioned"
-	| "task.status_changed"
-	| "task.due_soon"
-	| "task.overdue"
-	| "task.comment_added"
-	| "project.invited"
-	| "workspace.invited"
-	| "organization.invited"
-	| "team.added"
-	| "ai.decomposition_ready"
-	| "ai.suggestion_available"
-	| "integration.sync_completed"
-	| "integration.sync_failed"
-	| "billing.payment_failed"
-	| "billing.subscription_expiring";
+	| "TASK_ASSIGNED"
+	| "TASK_UNASSIGNED"
+	| "TASK_UPDATED"
+	| "TASK_COMPLETED"
+	| "TASK_DUE_SOON"
+	| "TASK_OVERDUE"
+	| "TASK_BLOCKED"
+	| "TASK_UNBLOCKED"
+	| "COMMENT_ADDED"
+	| "COMMENT_REPLY"
+	| "MENTION"
+	| "PROJECT_CREATED"
+	| "PROJECT_ARCHIVED"
+	| "WORKSPACE_INVITE"
+	| "TEAM_INVITE"
+	| "TEAM_MEMBER_JOINED"
+	| "TEAM_MEMBER_LEFT"
+	| "ORG_INVITE"
+	| "ORG_MEMBER_JOINED"
+	| "AI_DECOMPOSITION_READY"
+	| "AI_SUGGESTION_AVAILABLE"
+	| "INTEGRATION_CONNECTED"
+	| "INTEGRATION_DISCONNECTED"
+	| "INTEGRATION_SYNC_COMPLETE"
+	| "INTEGRATION_SYNC_FAILED"
+	| "SUBSCRIPTION_CREATED"
+	| "SUBSCRIPTION_RENEWED"
+	| "SUBSCRIPTION_CANCELLED"
+	| "PAYMENT_FAILED"
+	| "TRIAL_ENDING"
+	| "SYSTEM_ANNOUNCEMENT"
+	| "SYSTEM_MAINTENANCE";
+
+export type DigestFrequency = "HOURLY" | "DAILY" | "WEEKLY";
 
 export type NotificationChannel = "in_app" | "email" | "push" | "slack";
 
@@ -38,10 +57,12 @@ export interface NotificationPreferences {
 	emailEnabled: boolean;
 	pushEnabled: boolean;
 	slackEnabled: boolean;
-	digestFrequency: "realtime" | "daily" | "weekly" | "none";
+	digestEnabled: boolean;
+	digestFrequency: DigestFrequency;
+	quietHoursEnabled: boolean;
 	quietHoursStart?: string; // HH:mm format
 	quietHoursEnd?: string;
-	mutedTypes: NotificationType[];
+	typeSettings: Record<string, { email?: boolean; push?: boolean }>;
 }
 
 export interface EmailPayload {

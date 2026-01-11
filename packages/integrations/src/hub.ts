@@ -2,7 +2,7 @@
 // INTEGRATION HUB - Central integration management
 // ============================================
 
-import { db } from "@grandplan/db";
+import { db, Prisma } from "@grandplan/db";
 import { queueManager } from "@grandplan/queue";
 import type {
 	IntegrationAdapter,
@@ -129,18 +129,25 @@ export class IntegrationHub {
 	 */
 	async getUserConnections(userId: string): Promise<IntegrationConnection[]> {
 		const connections = await db.integrationConnection.findMany({
-			where: { userId, status: "active" },
+			where: { userId, status: "ACTIVE" },
 		});
 
-		return connections.map((c) => ({
-			id: c.id,
-			userId: c.userId,
-			organizationId: c.organizationId ?? undefined,
-			integrationId: c.integrationId as IntegrationProvider,
-			credentials: c.credentials as unknown as OAuthCredentials,
-			status: c.status as "active" | "expired" | "error",
-			metadata: c.metadata as Record<string, unknown> | undefined,
-		}));
+		return connections.map((c) => {
+			const credentials: OAuthCredentials = {
+				accessToken: c.accessToken!,
+				refreshToken: c.refreshToken ?? undefined,
+				expiresAt: c.tokenExpiresAt ?? undefined,
+			};
+			return {
+				id: c.id,
+				userId: c.userId,
+				organizationId: c.organizationId ?? undefined,
+				integrationId: c.integrationId as IntegrationProvider,
+				credentials,
+				status: c.status as "active" | "expired" | "error",
+				metadata: c.metadata as Record<string, unknown> | undefined,
+			};
+		});
 	}
 
 	/**
@@ -157,8 +164,10 @@ export class IntegrationHub {
 				userId,
 				integrationId,
 				organizationId,
-				credentials: credentials as unknown as Record<string, unknown>,
-				status: "active",
+				accessToken: credentials.accessToken,
+				refreshToken: credentials.refreshToken,
+				tokenExpiresAt: credentials.expiresAt,
+				status: "ACTIVE",
 			},
 		});
 
@@ -178,7 +187,7 @@ export class IntegrationHub {
 	async disconnect(connectionId: string, userId: string): Promise<void> {
 		await db.integrationConnection.updateMany({
 			where: { id: connectionId, userId },
-			data: { status: "disconnected" },
+			data: { status: "INACTIVE" },
 		});
 	}
 
@@ -197,7 +206,11 @@ export class IntegrationHub {
 		const adapter = this.getAdapter(
 			connection.integrationId as IntegrationProvider,
 		);
-		const credentials = connection.credentials as unknown as OAuthCredentials;
+		const credentials: OAuthCredentials = {
+			accessToken: connection.accessToken!,
+			refreshToken: connection.refreshToken ?? undefined,
+			expiresAt: connection.tokenExpiresAt ?? undefined,
+		};
 
 		if (!credentials.refreshToken) {
 			throw new Error("No refresh token available");
@@ -210,8 +223,10 @@ export class IntegrationHub {
 		await db.integrationConnection.update({
 			where: { id: connectionId },
 			data: {
-				credentials: newCredentials as unknown as Record<string, unknown>,
-				status: "active",
+				accessToken: newCredentials.accessToken,
+				refreshToken: newCredentials.refreshToken,
+				tokenExpiresAt: newCredentials.expiresAt,
+				status: "ACTIVE",
 			},
 		});
 
@@ -222,39 +237,43 @@ export class IntegrationHub {
 	 * Configure sync settings
 	 */
 	async configureSyncSettings(config: SyncConfig): Promise<void> {
-		await db.integrationSyncConfig.upsert({
-			where: {
-				connectionId_entityType: {
-					connectionId: config.connectionId,
-					entityType: config.entityType,
-				},
-			},
-			create: {
-				connectionId: config.connectionId,
-				entityType: config.entityType,
-				direction: config.direction,
-				fieldMappings: config.fieldMappings as unknown as Record<
-					string,
-					unknown
-				>[],
-				filters: config.filters as unknown as
-					| Record<string, unknown>[]
-					| undefined,
-				schedule: config.schedule,
-				enabled: true,
-			},
-			update: {
-				direction: config.direction,
-				fieldMappings: config.fieldMappings as unknown as Record<
-					string,
-					unknown
-				>[],
-				filters: config.filters as unknown as
-					| Record<string, unknown>[]
-					| undefined,
-				schedule: config.schedule,
-			},
+		const existing = await db.integrationSyncConfig.findFirst({
+			where: { connectionId: config.connectionId },
 		});
+
+		const syncDirection = (
+			config.direction === "toExternal"
+				? "TO_EXTERNAL"
+				: config.direction === "fromExternal"
+					? "FROM_EXTERNAL"
+					: "BIDIRECTIONAL"
+		) as "TO_EXTERNAL" | "FROM_EXTERNAL" | "BIDIRECTIONAL";
+
+		const data = {
+			syncDirection,
+			syncTasks: config.entityType === "task",
+			syncComments: config.entityType === "comment",
+			statusMapping: config.fieldMappings
+				? (config.fieldMappings as unknown as Prisma.InputJsonValue)
+				: Prisma.JsonNull,
+			filterQuery: config.filters
+				? JSON.stringify(config.filters)
+				: undefined,
+		};
+
+		if (existing) {
+			await db.integrationSyncConfig.update({
+				where: { id: existing.id },
+				data,
+			});
+		} else {
+			await db.integrationSyncConfig.create({
+				data: {
+					connectionId: config.connectionId,
+					...data,
+				},
+			});
+		}
 	}
 
 	/**

@@ -2,7 +2,7 @@
 // JIRA ADAPTER - Atlassian Jira integration
 // ============================================
 
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type {
 	ExternalItem,
 	IntegrationAdapter,
@@ -127,8 +127,9 @@ export class JiraAdapter implements IntegrationAdapter {
 	private authBaseUrl = "https://auth.atlassian.com";
 	private apiBaseUrl = "https://api.atlassian.com";
 
-	// Cache for cloud resources (sites)
-	private cloudResources: Map<string, JiraCloudResource[]> = new Map();
+	// Cache for cloud resources (sites) - reserved for future use
+	// @ts-expect-error Reserved for future caching implementation
+	private _cloudResources: Map<string, JiraCloudResource[]> = new Map();
 
 	constructor(config: {
 		clientId: string;
@@ -256,8 +257,8 @@ export class JiraAdapter implements IntegrationAdapter {
 	}
 
 	async fetchExternalItems(
-		connectionId: string,
-		options?: { since?: Date; cloudId?: string; projectKey?: string },
+		_connectionId: string,
+		_options?: { since?: Date; cloudId?: string; projectKey?: string },
 	): Promise<ExternalItem[]> {
 		// This would typically get the access token and cloud ID from a connection store
 		// For now, we'll assume it's passed via options or stored
@@ -267,8 +268,8 @@ export class JiraAdapter implements IntegrationAdapter {
 	}
 
 	async pushToExternal(
-		connectionId: string,
-		items: InternalItem[],
+		_connectionId: string,
+		_items: InternalItem[],
 	): Promise<SyncResult> {
 		// This would typically get the access token and cloud ID from a connection store
 		throw new Error(
@@ -284,13 +285,12 @@ export class JiraAdapter implements IntegrationAdapter {
 
 		// Jira webhooks can use a shared secret for HMAC verification
 		// The signature format depends on webhook configuration
-		const hmac = crypto
-			.createHmac("sha256", this.webhookSecret)
+		const hmac = createHmac("sha256", this.webhookSecret)
 			.update(payload)
 			.digest("hex");
 
 		try {
-			return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
+			return timingSafeEqual(Buffer.from(signature), Buffer.from(hmac));
 		} catch {
 			return false;
 		}

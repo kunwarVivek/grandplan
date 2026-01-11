@@ -11,12 +11,11 @@ import type {
 	PaymentProvider,
 	PaymentProviderInterface,
 	PortalSession,
-	SubscriptionResult,
 } from "./types.js";
 
 export class PaymentService {
 	private providers: Map<PaymentProvider, PaymentProviderInterface> = new Map();
-	private defaultProvider: PaymentProvider = "polar";
+	private defaultProvider: PaymentProvider = "POLAR";
 	private initialized = false;
 
 	initialize(config: {
@@ -26,14 +25,14 @@ export class PaymentService {
 	}): void {
 		if (config.polar) {
 			this.providers.set(
-				"polar",
+				"POLAR",
 				new PolarProvider(config.polar.accessToken, config.polar.webhookSecret),
 			);
 		}
 
 		if (config.stripe) {
 			this.providers.set(
-				"stripe",
+				"STRIPE",
 				new StripeProvider(
 					config.stripe.secretKey,
 					config.stripe.webhookSecret,
@@ -87,7 +86,7 @@ export class PaymentService {
 		const subscription = await db.subscription.findFirst({
 			where: {
 				organizationId,
-				status: { in: ["active", "trialing", "past_due"] },
+				status: { in: ["ACTIVE", "TRIALING", "PAST_DUE"] },
 			},
 		});
 
@@ -99,7 +98,7 @@ export class PaymentService {
 			(subscription.paymentProvider as PaymentProvider) ?? provider,
 		);
 		return providerInstance.createPortalSession(
-			subscription.externalCustomerId!,
+			subscription.externalId!,
 		);
 	}
 
@@ -125,7 +124,7 @@ export class PaymentService {
 		atPeriodEnd = true,
 	): Promise<void> {
 		const subscription = await db.subscription.findFirst({
-			where: { organizationId, status: { in: ["active", "trialing"] } },
+			where: { organizationId, status: { in: ["ACTIVE", "TRIALING"] } },
 		});
 
 		if (!subscription) {
@@ -193,24 +192,21 @@ export class PaymentService {
 		if (!organizationId) return;
 
 		const externalId = (data.subscription as string) ?? (data.id as string);
-		const customerId = data.customer as string;
 
 		await db.subscription.upsert({
 			where: { organizationId },
 			create: {
 				organizationId,
 				planId: await this.resolvePlanId(provider, data),
-				status: "active",
+				status: "ACTIVE",
 				paymentProvider: provider,
 				externalId,
-				externalCustomerId: customerId,
 				currentPeriodStart: new Date(),
 				currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 			},
 			update: {
-				status: "active",
+				status: "ACTIVE",
 				externalId,
-				externalCustomerId: customerId,
 			},
 		});
 	}
@@ -220,11 +216,23 @@ export class PaymentService {
 		data: Record<string, unknown>,
 	): Promise<void> {
 		const externalId = data.id as string;
+		const rawStatus = (data.status as string)?.toUpperCase().replace("-", "_");
+		// Map to Prisma SubscriptionStatus enum
+		const statusMap: Record<string, "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELLED" | "PAUSED" | "INCOMPLETE"> = {
+			ACTIVE: "ACTIVE",
+			TRIALING: "TRIALING",
+			PAST_DUE: "PAST_DUE",
+			CANCELED: "CANCELLED",
+			CANCELLED: "CANCELLED",
+			PAUSED: "PAUSED",
+			INCOMPLETE: "INCOMPLETE",
+		};
+		const status = statusMap[rawStatus] ?? "ACTIVE";
 
 		await db.subscription.updateMany({
 			where: { externalId, paymentProvider: provider },
 			data: {
-				status: data.status as string,
+				status,
 				cancelAtPeriodEnd: data.cancel_at_period_end as boolean,
 			},
 		});
@@ -238,12 +246,12 @@ export class PaymentService {
 
 		await db.subscription.updateMany({
 			where: { externalId, paymentProvider: provider },
-			data: { status: "canceled" },
+			data: { status: "CANCELLED" },
 		});
 	}
 
 	private async handleInvoicePaid(
-		provider: PaymentProvider,
+		_provider: PaymentProvider,
 		data: Record<string, unknown>,
 	): Promise<void> {
 		const subscriptionId = data.subscription as string;
@@ -252,14 +260,23 @@ export class PaymentService {
 		});
 
 		if (subscription) {
+			const periodStart = data.period_start
+				? new Date((data.period_start as number) * 1000)
+				: new Date();
+			const periodEnd = data.period_end
+				? new Date((data.period_end as number) * 1000)
+				: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
 			await db.invoice.create({
 				data: {
 					subscriptionId: subscription.id,
 					amount: (data.amount_paid as number) ?? (data.amount as number) ?? 0,
 					currency: (data.currency as string) ?? "usd",
-					status: "paid",
+					status: "PAID",
 					externalId: data.id as string,
 					paidAt: new Date(),
+					periodStart,
+					periodEnd,
 				},
 			});
 		}
@@ -273,7 +290,7 @@ export class PaymentService {
 
 		await db.subscription.updateMany({
 			where: { externalId: subscriptionId, paymentProvider: provider },
-			data: { status: "past_due" },
+			data: { status: "PAST_DUE" },
 		});
 	}
 
@@ -289,7 +306,7 @@ export class PaymentService {
 		if (priceId) {
 			const plan = await db.plan.findFirst({
 				where:
-					provider === "stripe"
+					provider === "STRIPE"
 						? { stripePriceIdMonthly: priceId }
 						: { polarProductId: priceId },
 			});

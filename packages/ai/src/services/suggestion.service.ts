@@ -7,14 +7,9 @@ import { getAIProvider } from "../providers/provider-factory.js";
 import type {
 	AIDecisionType,
 	AIProviderName,
-	DescriptionSuggestion,
-	PrioritySuggestion,
-	StatusSuggestion,
-	SuggestionOptions,
 	SuggestionResult,
 	SuggestionType,
 	TaskContext,
-	TitleSuggestion,
 } from "../types.js";
 
 export interface SuggestImprovementInput {
@@ -126,7 +121,7 @@ export class SuggestionService {
 				provider: aiProvider.name,
 				model: provider === "anthropic" ? "claude-sonnet-4-20250514" : "gpt-4o",
 				prompt: JSON.stringify({ taskContext, type, context }),
-				response: result as unknown as Record<string, unknown>,
+				response: JSON.parse(JSON.stringify(result)),
 				confidence: result.confidence,
 				tokensUsed: 0,
 				latencyMs,
@@ -225,7 +220,7 @@ export class SuggestionService {
 					taskId,
 					action: "UPDATED",
 					field: "description",
-					oldValue: task.description,
+					oldValue: task.description ?? undefined,
 					newValue: newDescription,
 					reason: "AI suggestion applied",
 					actorId: userId,
@@ -386,7 +381,7 @@ export class SuggestionService {
 	 */
 	async assessTaskQuality(
 		taskId: string,
-		provider?: AIProviderName,
+		_provider?: AIProviderName,
 	): Promise<QualityAssessment> {
 		const task = await db.taskNode.findUnique({
 			where: { id: taskId },

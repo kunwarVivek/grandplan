@@ -16,7 +16,7 @@ import type {
 } from "../types.js";
 
 export class PolarProvider implements PaymentProviderInterface {
-	name = "polar" as const;
+	name = "POLAR" as const;
 	private client: Polar;
 	private webhookSecret?: string;
 
@@ -32,7 +32,7 @@ export class PolarProvider implements PaymentProviderInterface {
 	}
 
 	async createSubscription(
-		params: CreateSubscriptionParams,
+		_params: CreateSubscriptionParams,
 	): Promise<SubscriptionResult> {
 		// Polar subscriptions are created via checkout
 		// This would be called after webhook confirmation
@@ -42,8 +42,9 @@ export class PolarProvider implements PaymentProviderInterface {
 	async createCheckoutSession(
 		params: CreateCheckoutParams,
 	): Promise<CheckoutSession> {
-		const checkout = await this.client.checkouts.custom.create({
-			productPriceId: params.planId,
+		// Use the Polar SDK checkouts API
+		const checkout = await this.client.checkouts.create({
+			products: [params.planId],
 			successUrl: params.successUrl,
 			metadata: {
 				organizationId: params.organizationId,
@@ -68,9 +69,13 @@ export class PolarProvider implements PaymentProviderInterface {
 
 	async cancelSubscription(
 		subscriptionId: string,
-		atPeriodEnd = true,
+		_atPeriodEnd = true,
 	): Promise<void> {
-		await this.client.subscriptions.cancel({ id: subscriptionId });
+		// Polar SDK update subscription - use SubscriptionCancel type
+		await this.client.subscriptions.update({
+			id: subscriptionId,
+			subscriptionUpdate: { cancelAtPeriodEnd: true },
+		});
 	}
 
 	async getSubscription(subscriptionId: string): Promise<SubscriptionResult> {
@@ -81,7 +86,9 @@ export class PolarProvider implements PaymentProviderInterface {
 		return {
 			id: subscription.id,
 			status: subscription.status,
-			currentPeriodEnd: new Date(subscription.currentPeriodEnd),
+			currentPeriodEnd: subscription.currentPeriodEnd
+				? new Date(subscription.currentPeriodEnd)
+				: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 			cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
 		};
 	}
