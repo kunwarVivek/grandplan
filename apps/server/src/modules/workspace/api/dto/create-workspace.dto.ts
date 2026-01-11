@@ -31,7 +31,7 @@ export type CreateWorkspaceDto = z.infer<typeof createWorkspaceSchema>;
 export const addMemberSchema = z.object({
 	userId: z.string().min(1, "User ID is required"),
 	role: z.enum(["ADMIN", "MEMBER", "VIEWER"], {
-		errorMap: () => ({ message: "Role must be ADMIN, MEMBER, or VIEWER" }),
+		message: "Role must be ADMIN, MEMBER, or VIEWER",
 	}),
 });
 
@@ -39,7 +39,7 @@ export type AddMemberDto = z.infer<typeof addMemberSchema>;
 
 export const updateMemberRoleSchema = z.object({
 	role: z.enum(["ADMIN", "MEMBER", "VIEWER"], {
-		errorMap: () => ({ message: "Role must be ADMIN, MEMBER, or VIEWER" }),
+		message: "Role must be ADMIN, MEMBER, or VIEWER",
 	}),
 });
 

@@ -43,6 +43,9 @@ const PLATFORM_ROLES = {
 		"platform:announcements:write",
 		"platform:feature-flags:read",
 		"platform:feature-flags:write",
+		"platform:plans:read",
+		"platform:plans:write",
+		"platform:plans:delete",
 	],
 	admin: [
 		"platform:users:read",
@@ -54,6 +57,8 @@ const PLATFORM_ROLES = {
 		"platform:announcements:read",
 		"platform:announcements:write",
 		"platform:feature-flags:read",
+		"platform:plans:read",
+		"platform:plans:write",
 	],
 	support: [
 		"platform:users:read",
@@ -61,6 +66,7 @@ const PLATFORM_ROLES = {
 		"platform:organizations:read",
 		"platform:analytics:read",
 		"platform:announcements:read",
+		"platform:plans:read",
 	],
 };
 
@@ -89,7 +95,7 @@ export async function requirePlatformAuth(
 			},
 		});
 
-		if (!platformAdmin || !platformAdmin.active) {
+		if (!platformAdmin) {
 			throw new ForbiddenError("Platform admin access required");
 		}
 
@@ -201,10 +207,8 @@ export async function logPlatformAction(
 			action: `platform:${action}`,
 			resourceType,
 			resourceId,
-			metadata: metadata ?? {},
-			ipAddress: req.ip ?? "unknown",
-			userAgent: req.headers["user-agent"] ?? "unknown",
-			timestamp: new Date(),
+			metadata: (metadata ?? {}) as object,
+			description: `${action} on ${resourceType}${resourceId ? ` (${resourceId})` : ""}`,
 		},
 	});
 }

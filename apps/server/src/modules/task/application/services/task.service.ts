@@ -16,7 +16,7 @@ import type {
 	TaskNodeType,
 	TaskPriority,
 	TaskStatus,
-} from "@prisma/client";
+} from "@grandplan/db";
 import { projectRepository } from "../../../project/infrastructure/repositories/project.repository.js";
 import { workspaceRepository } from "../../../workspace/infrastructure/repositories/workspace.repository.js";
 import type {

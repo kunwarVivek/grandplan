@@ -12,12 +12,22 @@ import type {
 	UsageStats,
 } from "../types";
 
+// API response wrapper type
+interface ApiResponse<T> {
+	success: boolean;
+	data: T;
+}
+
 // Fetch current subscription
 export function useSubscription() {
 	return useQuery({
 		queryKey: queryKeys.billing.subscription,
 		queryFn: async ({ signal }) => {
-			return api.get<Subscription>("/api/billing/subscription", signal);
+			const response = await api.get<ApiResponse<Subscription | null>>(
+				"/api/billing/subscription",
+				signal,
+			);
+			return response.data;
 		},
 	});
 }
@@ -27,7 +37,11 @@ export function usePlans() {
 	return useQuery({
 		queryKey: queryKeys.billing.plans,
 		queryFn: async ({ signal }) => {
-			return api.get<{ plans: Plan[] }>("/api/billing/plans", signal);
+			const response = await api.get<ApiResponse<Plan[]>>(
+				"/api/billing/plans",
+				signal,
+			);
+			return response.data;
 		},
 	});
 }
@@ -41,10 +55,10 @@ export function useInvoices(options?: { limit?: number; offset?: number }) {
 			if (options?.limit) params.set("limit", options.limit.toString());
 			if (options?.offset) params.set("offset", options.offset.toString());
 			const query = params.toString();
-			return api.get<{ invoices: Invoice[]; total: number }>(
-				`/api/billing/invoices${query ? `?${query}` : ""}`,
-				signal,
-			);
+			const response = await api.get<
+				ApiResponse<{ invoices: Invoice[]; total: number }>
+			>(`/api/billing/invoices${query ? `?${query}` : ""}`, signal);
+			return response.data;
 		},
 	});
 }
@@ -54,7 +68,11 @@ export function useUsage() {
 	return useQuery({
 		queryKey: queryKeys.billing.usage,
 		queryFn: async ({ signal }) => {
-			return api.get<UsageStats>("/api/billing/usage", signal);
+			const response = await api.get<ApiResponse<UsageStats>>(
+				"/api/billing/usage",
+				signal,
+			);
+			return response.data;
 		},
 	});
 }
@@ -64,10 +82,10 @@ export function useLimits() {
 	return useQuery({
 		queryKey: queryKeys.billing.limits,
 		queryFn: async ({ signal }) => {
-			return api.get<{ limits: Record<string, number> }>(
-				"/api/billing/limits",
-				signal,
-			);
+			const response = await api.get<
+				ApiResponse<{ limits: Record<string, number> }>
+			>("/api/billing/limits", signal);
+			return response.data;
 		},
 	});
 }
@@ -78,7 +96,11 @@ export function useUpgradePlan() {
 
 	return useMutation({
 		mutationFn: async (input: UpgradePlanInput) => {
-			return api.post<Subscription>("/api/billing/upgrade", input);
+			const response = await api.post<ApiResponse<Subscription>>(
+				"/api/billing/upgrade",
+				input,
+			);
+			return response.data;
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -94,7 +116,11 @@ export function useUpgradePlan() {
 export function useCreateCheckout() {
 	return useMutation({
 		mutationFn: async (input: CreateCheckoutInput) => {
-			return api.post<CheckoutSession>("/api/billing/checkout", input);
+			const response = await api.post<ApiResponse<CheckoutSession>>(
+				"/api/billing/checkout",
+				input,
+			);
+			return response.data;
 		},
 	});
 }
@@ -105,7 +131,11 @@ export function useCancelSubscription() {
 
 	return useMutation({
 		mutationFn: async (options?: { cancelImmediately?: boolean }) => {
-			return api.post<Subscription>("/api/billing/cancel", options);
+			const response = await api.post<ApiResponse<Subscription>>(
+				"/api/billing/cancel",
+				options,
+			);
+			return response.data;
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -121,7 +151,9 @@ export function useResumeSubscription() {
 
 	return useMutation({
 		mutationFn: async () => {
-			return api.post<Subscription>("/api/billing/resume");
+			const response =
+				await api.post<ApiResponse<Subscription>>("/api/billing/resume");
+			return response.data;
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -135,9 +167,13 @@ export function useResumeSubscription() {
 export function useCreateBillingPortal() {
 	return useMutation({
 		mutationFn: async (returnUrl?: string) => {
-			return api.post<BillingPortalSession>("/api/billing/portal", {
-				returnUrl,
-			});
+			const response = await api.post<ApiResponse<BillingPortalSession>>(
+				"/api/billing/portal",
+				{
+					returnUrl,
+				},
+			);
+			return response.data;
 		},
 	});
 }
@@ -146,7 +182,10 @@ export function useCreateBillingPortal() {
 export function useUpdatePaymentMethod() {
 	return useMutation({
 		mutationFn: async () => {
-			return api.post<{ url: string }>("/api/billing/update-payment");
+			const response = await api.post<ApiResponse<{ url: string }>>(
+				"/api/billing/update-payment",
+			);
+			return response.data;
 		},
 	});
 }

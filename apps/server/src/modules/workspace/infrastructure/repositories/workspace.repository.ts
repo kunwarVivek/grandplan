@@ -3,29 +3,27 @@
 // ============================================
 
 import db from "@grandplan/db";
-import type { Prisma, WorkspaceRole } from "@prisma/client";
+import type { Prisma, WorkspaceRole } from "@grandplan/db";
 import type {
 	WorkspaceEntity,
 	WorkspaceWithMembers,
 } from "../../domain/entities/workspace.entity.js";
+import type {
+	IWorkspaceMemberRepository,
+	IWorkspaceRepository,
+	WorkspaceQueryOptions,
+	WorkspaceQueryResult,
+} from "./interfaces/index.js";
 
-export interface WorkspaceQueryOptions {
-	page?: number;
-	limit?: number;
-	search?: string;
-	sortBy?: "name" | "createdAt" | "updatedAt";
-	sortOrder?: "asc" | "desc";
-}
+// Re-export interfaces for backwards compatibility
+export type {
+	WorkspaceQueryOptions,
+	WorkspaceQueryResult,
+} from "./interfaces/index.js";
 
-export interface WorkspaceQueryResult {
-	workspaces: WorkspaceEntity[];
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-}
-
-export class WorkspaceRepository {
+export class WorkspaceRepository
+	implements IWorkspaceRepository, IWorkspaceMemberRepository
+{
 	async create(data: {
 		name: string;
 		slug: string;

@@ -1,11 +1,31 @@
 export type OrganizationRole = "owner" | "admin" | "member";
 
+export type BrandingConfig = {
+	primaryColor?: string;
+	secondaryColor?: string;
+	accentColor?: string;
+	logo?: string;
+	logoDark?: string;
+	favicon?: string;
+	fontFamily?: string;
+	customCSS?: string;
+};
+
+export type OrganizationStatus =
+	| "PENDING"
+	| "ACTIVE"
+	| "SUSPENDED"
+	| "CANCELLED";
+
 export type Organization = {
 	id: string;
 	name: string;
 	slug: string;
 	logo?: string | null;
 	description?: string | null;
+	status?: OrganizationStatus;
+	brandingConfig?: BrandingConfig | null;
+	customDomain?: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 };

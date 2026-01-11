@@ -2,8 +2,44 @@
 	"name": "@grandplan/config",
 	"version": "0.0.0",
 	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
 		"./tsconfig.base.json": "./tsconfig.base.json",
-		"./base.json": "./tsconfig.base.json"
+		"./base.json": "./tsconfig.base.json",
+		"./path-aliases": {
+			"types": "./dist/path-aliases.d.ts",
+			"import": "./dist/path-aliases.js"
+		},
+		"./env-types": {
+			"types": "./dist/env-types.d.ts",
+			"import": "./dist/env-types.js"
+		},
+		"./validation-types": {
+			"types": "./dist/validation-types.d.ts",
+			"import": "./dist/validation-types.js"
+		},
+		"./utility-types": {
+			"types": "./dist/utility-types.d.ts",
+			"import": "./dist/utility-types.js"
+		}
+	},
+	"files": [
+		"dist",
+		"tsconfig.base.json"
+	],
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"clean": "rm -rf dist",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"typescript": "^5.3.0"
 	}
 }

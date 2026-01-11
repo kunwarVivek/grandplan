@@ -25,7 +25,9 @@ export class WebhookService {
 		signature: string,
 	): Promise<WebhookResult> {
 		// Delegate to payment service which handles event parsing and routing
-		await paymentService.handleWebhook(provider, payload, signature);
+		// Convert to uppercase PaymentProvider type
+		const paymentProvider = provider.toUpperCase() as "POLAR" | "STRIPE";
+		await paymentService.handleWebhook(paymentProvider, payload, signature);
 
 		// Parse the event for our internal handling
 		const event = JSON.parse(payload.toString());
@@ -44,7 +46,7 @@ export class WebhookService {
 	 * Handle side effects of webhook events
 	 */
 	private async handleEventSideEffects(
-		provider: WebhookProvider,
+		_provider: WebhookProvider,
 		eventType: string,
 		data: Record<string, unknown>,
 	): Promise<void> {
@@ -111,7 +113,7 @@ export class WebhookService {
 		// Notify admins
 		for (const admin of admins) {
 			await notificationService.send({
-				type: "billing.subscription_expiring", // Using closest available type
+				type: "SUBSCRIPTION_CREATED",
 				userId: admin.userId,
 				title: "Subscription Activated",
 				body: `Your ${subscription.plan.name} subscription is now active!`,
@@ -176,7 +178,7 @@ export class WebhookService {
 		// Notify admins
 		for (const admin of admins) {
 			await notificationService.send({
-				type: "billing.subscription_expiring",
+				type: "SUBSCRIPTION_CANCELLED",
 				userId: admin.userId,
 				title: "Subscription Canceled",
 				body: "Your subscription has been canceled. Access will continue until the end of the billing period.",
@@ -217,7 +219,7 @@ export class WebhookService {
 		// Notify about successful payment
 		for (const admin of admins) {
 			await notificationService.send({
-				type: "billing.subscription_expiring", // Using available type
+				type: "SUBSCRIPTION_RENEWED",
 				userId: admin.userId,
 				title: "Payment Successful",
 				body: "Your subscription payment was processed successfully.",
@@ -255,7 +257,7 @@ export class WebhookService {
 		// Notify about failed payment
 		for (const admin of admins) {
 			await notificationService.send({
-				type: "billing.payment_failed",
+				type: "PAYMENT_FAILED",
 				userId: admin.userId,
 				title: "Payment Failed",
 				body: "We were unable to process your subscription payment. Please update your payment method.",
@@ -301,7 +303,7 @@ export class WebhookService {
 		// Notify about trial ending
 		for (const admin of admins) {
 			await notificationService.send({
-				type: "billing.subscription_expiring",
+				type: "TRIAL_ENDING",
 				userId: admin.userId,
 				title: "Trial Ending Soon",
 				body: `Your trial ends in ${daysLeft} days. Add a payment method to continue using ${subscription.plan.name}.`,
@@ -334,9 +336,9 @@ export class WebhookService {
 	 * Verify webhook signature for Stripe
 	 */
 	verifyStripeSignature(
-		payload: string,
-		signature: string,
-		secret: string,
+		_payload: string,
+		_signature: string,
+		_secret: string,
 	): boolean {
 		// Stripe signature verification is handled by the Stripe SDK
 		// This is a placeholder - actual verification happens in payment service

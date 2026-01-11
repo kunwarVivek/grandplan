@@ -95,9 +95,66 @@ export class OpenAIProvider extends BaseAIProvider {
 }
 
 /**
- * Custom error class for OpenAI-specific errors
+ * Error class for OpenAI API-specific errors.
+ *
+ * OpenAIError wraps errors from the OpenAI API, providing additional context
+ * such as HTTP status codes, error codes, and request latency. It includes
+ * helper methods to identify common error conditions for appropriate handling.
+ *
+ * Common HTTP status codes from OpenAI API:
+ * - 400: Bad request (invalid parameters)
+ * - 401: Authentication failed (invalid API key)
+ * - 403: Permission denied or content policy violation
+ * - 429: Rate limit exceeded or quota exhausted
+ * - 500: Internal server error
+ * - 503: Service unavailable (high load)
+ *
+ * Common error codes from OpenAI:
+ * - "invalid_api_key": API key is invalid
+ * - "rate_limit_exceeded": Too many requests
+ * - "insufficient_quota": API quota exhausted
+ * - "context_length_exceeded": Input too long for model
+ * - "content_filter": Content filtered due to policy
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   const response = await openaiProvider.complete(request);
+ * } catch (error) {
+ *   if (error instanceof OpenAIError) {
+ *     if (error.isRateLimitError()) {
+ *       // Implement exponential backoff
+ *       await delay(calculateBackoff(retryCount));
+ *       return retry();
+ *     }
+ *     if (error.code === 'context_length_exceeded') {
+ *       // Truncate input and retry
+ *       return retryWithShorterInput();
+ *     }
+ *     if (error.isAuthenticationError()) {
+ *       logger.error('Invalid OpenAI API key');
+ *       throw new AppError('AI service configuration error', 500);
+ *     }
+ *     // Log for monitoring
+ *     logger.warn('OpenAI API error', {
+ *       status: error.status,
+ *       code: error.code,
+ *       latencyMs: error.latencyMs
+ *     });
+ *   }
+ *   throw error;
+ * }
+ * ```
  */
 export class OpenAIError extends Error {
+	/**
+	 * Creates a new OpenAIError instance.
+	 *
+	 * @param message - Error message from the OpenAI API
+	 * @param status - HTTP status code returned by the API
+	 * @param code - OpenAI-specific error code (e.g., "rate_limit_exceeded")
+	 * @param latencyMs - Time in milliseconds from request start to error
+	 */
 	constructor(
 		message: string,
 		public readonly status: number,
@@ -108,14 +165,36 @@ export class OpenAIError extends Error {
 		this.name = "OpenAIError";
 	}
 
+	/**
+	 * Check if this error is due to rate limiting (HTTP 429).
+	 *
+	 * When rate limited, implement exponential backoff before retrying.
+	 * Note: This can indicate either request rate limits or quota exhaustion.
+	 *
+	 * @returns True if the error is a rate limit error
+	 */
 	isRateLimitError(): boolean {
 		return this.status === 429;
 	}
 
+	/**
+	 * Check if this error is due to authentication failure (HTTP 401).
+	 *
+	 * Typically indicates an invalid, expired, or revoked API key.
+	 *
+	 * @returns True if the error is an authentication error
+	 */
 	isAuthenticationError(): boolean {
 		return this.status === 401;
 	}
 
+	/**
+	 * Check if this error is a server-side error (HTTP 5xx).
+	 *
+	 * Server errors may be transient and worth retrying with backoff.
+	 *
+	 * @returns True if the error is a server error
+	 */
 	isServerError(): boolean {
 		return this.status >= 500;
 	}

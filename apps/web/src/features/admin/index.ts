@@ -7,10 +7,19 @@ export { AuditLogTable } from "./components/audit-log-table";
 export { SystemStatus } from "./components/system-status";
 // Hooks
 export {
+	// Analytics (new)
+	useAnalyticsGrowth,
+	useAnalyticsOverview,
+	useAnalyticsRevenue,
+	useAnalyticsUsage,
 	// Audit
 	useAuditLogs,
+	// Users
+	useBanUser,
 	useCreatePlan,
+	useDeleteOrganization,
 	useDeletePlan,
+	useDeleteUser,
 	useImpersonateUser,
 	usePlatformOrganization,
 	// Organizations
@@ -20,24 +29,32 @@ export {
 	// Stats & Health
 	usePlatformStats,
 	usePlatformUser,
-	// Users
 	usePlatformUsers,
+	useSuspendOrganization,
 	useSystemHealth,
+	useUnbanUser,
+	useUnsuspendOrganization,
+	useUpdateOrganization,
 	useUpdateOrgStatus,
 	useUpdatePlan,
-	useUpdateUserRole,
-	useUpdateUserStatus,
+	useUpdateUser,
+	useUserActivity,
 } from "./hooks/use-admin";
 export type {
 	AuditLogEntry,
 	AuditLogsFilters,
+	DateRange,
+	GrowthMetrics,
+	OverviewMetrics,
 	PlatformOrganization,
 	PlatformOrganizationsFilters,
 	PlatformPlan,
 	PlatformStats,
 	PlatformUser,
 	PlatformUsersFilters,
+	RevenueMetrics,
 	SystemHealth,
+	UsageMetrics,
 } from "./types";
 export {
 	HEALTH_STATUS_CONFIG,

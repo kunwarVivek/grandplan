@@ -63,13 +63,14 @@ function ProfileSettings() {
 		setIsSubmitting(true);
 
 		try {
+			// Update name via better-auth's update-user endpoint (POST method)
 			const response = await fetch(
 				`${import.meta.env.VITE_API_URL || ""}/api/auth/update-user`,
 				{
-					method: "PATCH",
+					method: "POST",
 					credentials: "include",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ name, email }),
+					body: JSON.stringify({ name, image: avatarUrl }),
 				},
 			);
 

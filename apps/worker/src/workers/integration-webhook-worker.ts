@@ -13,12 +13,24 @@ import {
 	queueManager,
 } from "@grandplan/queue";
 import type { Job } from "bullmq";
+import {
+	IntegrationWebhookJobSchema,
+	validateJobPayload,
+} from "../schemas/job-schemas.js";
 
 export function registerIntegrationWebhookWorker(): void {
 	queueManager.registerWorker<IntegrationWebhookJobData, JobResult>(
 		"integration:webhooks",
 		async (job: Job<IntegrationWebhookJobData>): Promise<JobResult> => {
-			const { integrationId, eventType, payload } = job.data;
+			// Validate job payload with Zod schema
+			const validatedData = validateJobPayload(
+				IntegrationWebhookJobSchema,
+				job.data,
+				job.id,
+				"integration:webhooks"
+			);
+
+			const { integrationId, eventType, payload } = validatedData;
 
 			console.log(
 				`Processing webhook event ${eventType} from ${integrationId}`,

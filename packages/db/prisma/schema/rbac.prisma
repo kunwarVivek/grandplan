@@ -4,25 +4,25 @@
 
 // Role definitions
 model Role {
-  id              String            @id @default(cuid())
-  name            String
-  description     String?
+  id          String  @id @default(cuid())
+  name        String
+  description String?
 
   // Scope: PLATFORM = admin roles, ORGANIZATION = org-specific, TEAM = team-specific
-  scope           RoleScope         @default(ORGANIZATION)
+  scope RoleScope @default(ORGANIZATION)
 
   // If null, it's a system role; otherwise org-specific custom role
-  organizationId  String?
+  organizationId String?
 
-  isSystem        Boolean           @default(false)  // System roles cannot be modified/deleted
+  isSystem Boolean @default(false) // System roles cannot be modified/deleted
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  permissions     RolePermission[]
-  members         OrganizationMember[]
-  teamMembers     TeamMember[]      @relation("TeamRole")
-  invitations     OrganizationInvitation[]
+  permissions RolePermission[]
+  members     OrganizationMember[]
+  teamMembers TeamMember[]             @relation("TeamRole")
+  invitations OrganizationInvitation[]
 
   @@unique([name, organizationId, scope])
   @@index([organizationId])
@@ -32,18 +32,18 @@ model Role {
 }
 
 enum RoleScope {
-  PLATFORM      // Platform-wide admin roles
-  ORGANIZATION  // Organization-level roles
-  TEAM          // Team-specific roles
+  PLATFORM // Platform-wide admin roles
+  ORGANIZATION // Organization-level roles
+  TEAM // Team-specific roles
 }
 
 // Permission definitions
 model Permission {
-  id              String            @id @default(cuid())
-  code            String            @unique  // e.g., "users:read", "billing:manage"
-  name            String
-  description     String?
-  category        String            // Grouping: "users", "billing", "teams", etc.
+  id          String  @id @default(cuid())
+  code        String  @unique // e.g., "users:read", "billing:manage"
+  name        String
+  description String?
+  category    String // Grouping: "users", "billing", "teams", etc.
 
   rolePermissions RolePermission[]
 
@@ -53,14 +53,14 @@ model Permission {
 
 // Role-Permission junction table
 model RolePermission {
-  id              String      @id @default(cuid())
-  roleId          String
-  permissionId    String
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
 
-  createdAt       DateTime    @default(now())
+  createdAt DateTime @default(now())
 
-  role            Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission      Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
   @@index([roleId])

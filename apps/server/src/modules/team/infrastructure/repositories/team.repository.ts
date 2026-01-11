@@ -3,58 +3,32 @@
 // ============================================
 
 import db from "@grandplan/db";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@grandplan/db";
 import type {
 	TeamEntity,
 	TeamMemberEntity,
 	TeamWithMembers,
 } from "../../domain/entities/team.entity.js";
+import type {
+	ITeamMemberRepository,
+	ITeamRepository,
+	TeamMemberQueryOptions,
+	TeamMemberQueryResult,
+	TeamQueryOptions,
+	TeamQueryResult,
+} from "./interfaces/index.js";
 
-export interface TeamQueryOptions {
-	page?: number;
-	limit?: number;
-	search?: string;
-	sortBy?: "name" | "createdAt" | "updatedAt";
-	sortOrder?: "asc" | "desc";
-}
+// Re-export interfaces for backwards compatibility
+export type {
+	TeamMemberQueryOptions,
+	TeamMemberQueryResult,
+	TeamQueryOptions,
+	TeamQueryResult,
+} from "./interfaces/index.js";
 
-export interface TeamQueryResult {
-	teams: TeamEntity[];
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-}
-
-export interface TeamMemberQueryOptions {
-	page?: number;
-	limit?: number;
-	search?: string;
-}
-
-export interface TeamMemberQueryResult {
-	members: Array<
-		TeamMemberEntity & {
-			organizationMember: {
-				id: string;
-				userId: string;
-				user: {
-					id: string;
-					name: string | null;
-					email: string;
-					image: string | null;
-				};
-			};
-			teamRole: { id: string; name: string } | null;
-		}
-	>;
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-}
-
-export class TeamRepository {
+export class TeamRepository
+	implements ITeamRepository, ITeamMemberRepository
+{
 	async create(data: {
 		name: string;
 		description?: string | null;

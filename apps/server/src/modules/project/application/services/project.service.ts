@@ -6,7 +6,7 @@ import { auditService } from "@grandplan/audit";
 import { ForbiddenError, NotFoundError } from "@grandplan/core/errors";
 import { eventBus } from "@grandplan/events";
 import { getCurrentTenant } from "@grandplan/tenant";
-import type { ProjectStatus } from "@prisma/client";
+import type { ProjectStatus } from "@grandplan/db";
 import { workspaceRepository } from "../../../workspace/infrastructure/repositories/workspace.repository.js";
 import type { CreateProjectDto } from "../../api/dto/create-project.dto.js";
 import type { UpdateProjectDto } from "../../api/dto/update-project.dto.js";

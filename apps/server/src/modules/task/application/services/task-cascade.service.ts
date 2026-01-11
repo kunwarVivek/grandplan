@@ -4,7 +4,7 @@
 
 import db from "@grandplan/db";
 import { eventBus } from "@grandplan/events";
-import type { TaskStatus } from "@prisma/client";
+import type { TaskStatus } from "@grandplan/db";
 import {
 	isTaskBlocking,
 	isTaskCompleted,

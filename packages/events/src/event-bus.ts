@@ -3,6 +3,7 @@
 // ============================================
 
 import { generateId } from "@grandplan/core/utils";
+import { createLogger } from "@grandplan/core";
 import { queueManager } from "@grandplan/queue";
 import EventEmitter from "eventemitter3";
 import Redis from "ioredis";
@@ -12,6 +13,8 @@ import type {
 	EventType,
 	EventTypeMap,
 } from "./types.js";
+
+const logger = createLogger({ context: { service: 'events' } });
 
 const CHANNEL_NAME = "grandplan:events";
 
@@ -43,13 +46,13 @@ export class EventBus {
 					// Emit locally for handlers on this instance
 					this.emitter.emit(event.type, event);
 				} catch (error) {
-					console.error("Failed to parse event message:", error);
+					logger.error("Failed to parse event message", { error });
 				}
 			}
 		});
 
 		this.isConnected = true;
-		console.log("EventBus connected to Redis");
+		logger.info("EventBus connected to Redis");
 	}
 
 	async disconnect(): Promise<void> {
@@ -126,7 +129,7 @@ export class EventBus {
 			try {
 				await handler.handle(event);
 			} catch (error) {
-				console.error(`Event handler failed for ${type}:`, error);
+				logger.error("Event handler failed", { type, error });
 				await this.sendToDeadLetterQueue(
 					event,
 					error instanceof Error ? error : new Error(String(error)),
@@ -156,7 +159,7 @@ export class EventBus {
 				failedAt: new Date().toISOString(),
 			});
 		} catch (dlqError) {
-			console.error("Failed to send to DLQ:", dlqError);
+			logger.error("Failed to send to DLQ", { error: dlqError });
 		}
 	}
 }

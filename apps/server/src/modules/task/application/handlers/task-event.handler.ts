@@ -2,11 +2,14 @@
 // TASK EVENT HANDLER
 // ============================================
 
+import { createLogger } from "@grandplan/core";
 import {
 	type DomainEvent,
 	type EventHandler,
 	eventBus,
 } from "@grandplan/events";
+
+const logger = createLogger({ context: { service: "server", module: "events", handler: "task" } });
 import { realtimeServer } from "@grandplan/realtime";
 import {
 	type DependencyAddedEvent,
@@ -62,24 +65,20 @@ export class TaskStatusChangedHandler
 
 		// Handle completion cascade
 		if (newStatus === "COMPLETED" && previousStatus !== "COMPLETED") {
-			console.log(
-				`[TaskEventHandler] Task ${taskId} completed, triggering cascade`,
-			);
+			logger.info("Task completed, triggering cascade", { taskId });
 			const result = await taskCascadeService.onTaskCompleted(
 				taskId,
 				changedById,
 			);
 
 			if (result.updatedTasks.length > 0) {
-				console.log(
-					`[TaskEventHandler] Cascade updated ${result.updatedTasks.length} tasks`,
-				);
+				logger.info("Cascade updated tasks", { taskId, updatedCount: result.updatedTasks.length });
 			}
 		}
 
 		// Handle reopening cascade
 		if (previousStatus === "COMPLETED" && newStatus !== "COMPLETED") {
-			console.log(`[TaskEventHandler] Task ${taskId} reopened`);
+			logger.info("Task reopened", { taskId, newStatus });
 			// This is handled in the service layer when the parent relationship is known
 		}
 	}
@@ -94,9 +93,7 @@ export class TaskCreatedHandler
 {
 	async handle(event: DomainEvent<TaskCreatedEvent>): Promise<void> {
 		const { taskId, title, projectId, createdById, nodeType } = event.payload;
-		console.log(
-			`[TaskEventHandler] Task created: ${taskId} - ${title} in project ${projectId}`,
-		);
+		logger.info("Task created", { taskId, title, projectId });
 
 		// Emit realtime event to project room
 		try {
@@ -124,7 +121,7 @@ export class TaskUpdatedHandler
 		const task = await taskRepository.findById(taskId);
 		if (!task) return;
 
-		console.log(`[TaskEventHandler] Task updated: ${taskId}`);
+		logger.debug("Task updated", { taskId });
 
 		// Emit realtime event
 		try {
@@ -150,7 +147,7 @@ export class TaskDeletedHandler
 	async handle(event: DomainEvent<TaskDeletedEvent>): Promise<void> {
 		const { taskId, projectId } = event.payload;
 
-		console.log(`[TaskEventHandler] Task deleted: ${taskId}`);
+		logger.info("Task deleted", { taskId, projectId });
 
 		// Emit realtime event
 		try {
@@ -175,7 +172,7 @@ export class TaskAssignedHandler
 		const task = await taskRepository.findById(taskId);
 		if (!task) return;
 
-		console.log(`[TaskEventHandler] Task ${taskId} assigned to ${assigneeId}`);
+		logger.info("Task assigned", { taskId, assigneeId });
 
 		// Emit realtime event to project
 		try {
@@ -188,10 +185,10 @@ export class TaskAssignedHandler
 
 			// Notify the assignee directly
 			realtimeServer.emitToUser(assigneeId, "notification:new", {
+				id: `task-assigned-${taskId}-${Date.now()}`,
 				type: "task.assigned",
 				title: `You have been assigned to: ${task.title}`,
-				taskId,
-				projectId: task.projectId,
+				body: `Task in project ${task.projectId}`,
 			});
 		} catch {
 			// Realtime server may not be initialized yet
@@ -212,9 +209,7 @@ export class TaskUnassignedHandler
 		const task = await taskRepository.findById(taskId);
 		if (!task) return;
 
-		console.log(
-			`[TaskEventHandler] Task ${taskId} unassigned from ${previousAssigneeId}`,
-		);
+		logger.info("Task unassigned", { taskId, previousAssigneeId });
 
 		// Emit realtime event to project
 		try {
@@ -227,10 +222,10 @@ export class TaskUnassignedHandler
 
 			// Notify the previous assignee
 			realtimeServer.emitToUser(previousAssigneeId, "notification:new", {
+				id: `task-unassigned-${taskId}-${Date.now()}`,
 				type: "task.unassigned",
 				title: `You have been unassigned from: ${task.title}`,
-				taskId,
-				projectId: task.projectId,
+				body: `Task in project ${task.projectId}`,
 			});
 		} catch {
 			// Realtime server may not be initialized yet
@@ -258,9 +253,7 @@ export class TaskMovedHandler
 		const task = await taskRepository.findById(taskId);
 		if (!task) return;
 
-		console.log(
-			`[TaskEventHandler] Task ${taskId} moved from ${previousParentId ?? "root"} to ${newParentId ?? "root"}`,
-		);
+		logger.info("Task moved", { taskId, previousParentId: previousParentId ?? "root", newParentId: newParentId ?? "root" });
 
 		// Emit realtime event to project
 		try {
@@ -293,9 +286,7 @@ export class DependencyAddedHandler
 		const fromTask = await taskRepository.findById(fromTaskId);
 		if (!fromTask) return;
 
-		console.log(
-			`[TaskEventHandler] Dependency added: ${fromTaskId} ${type} ${toTaskId}`,
-		);
+		logger.info("Dependency added", { dependencyId, fromTaskId, toTaskId, type });
 
 		// Emit realtime event to project
 		try {
@@ -327,9 +318,7 @@ export class DependencyRemovedHandler
 		const fromTask = await taskRepository.findById(fromTaskId);
 		if (!fromTask) return;
 
-		console.log(
-			`[TaskEventHandler] Dependency removed: ${fromTaskId} ${type} ${toTaskId}`,
-		);
+		logger.info("Dependency removed", { dependencyId, fromTaskId, toTaskId, type });
 
 		// Emit realtime event to project
 		try {
@@ -364,7 +353,7 @@ export class CommentAddedHandler
 		const task = await taskRepository.findById(taskId);
 		if (!task) return;
 
-		console.log(`[TaskEventHandler] Comment added to task ${taskId}`);
+		logger.debug("Comment added to task", { taskId, commentId });
 
 		// Emit realtime event to project
 		try {
@@ -379,11 +368,10 @@ export class CommentAddedHandler
 			// Notify task assignee if different from comment author
 			if (task.assigneeId && task.assigneeId !== authorId) {
 				realtimeServer.emitToUser(task.assigneeId, "notification:new", {
+					id: `task-commented-${commentId}-${Date.now()}`,
 					type: "task.commented",
 					title: `New comment on: ${task.title}`,
-					taskId,
-					projectId: task.projectId,
-					commentId,
+					body: content.slice(0, 100) + (content.length > 100 ? "..." : ""),
 				});
 			}
 		} catch {
@@ -405,9 +393,7 @@ export class CommentUpdatedHandler
 		const task = await taskRepository.findById(taskId);
 		if (!task) return;
 
-		console.log(
-			`[TaskEventHandler] Comment ${commentId} updated on task ${taskId}`,
-		);
+		logger.debug("Comment updated on task", { taskId, commentId });
 
 		// Emit realtime event to project
 		try {
@@ -437,9 +423,7 @@ export class CommentDeletedHandler
 		const task = await taskRepository.findById(taskId);
 		if (!task) return;
 
-		console.log(
-			`[TaskEventHandler] Comment ${commentId} deleted from task ${taskId}`,
-		);
+		logger.debug("Comment deleted from task", { taskId, commentId });
 
 		// Emit realtime event to project
 		try {

@@ -2,7 +2,7 @@
 // BILLING CONTROLLER
 // ============================================
 
-import { NotFoundError, ValidationError } from "@grandplan/core";
+import { ValidationError } from "@grandplan/core";
 import { db } from "@grandplan/db";
 import { getCurrentTenant } from "@grandplan/tenant";
 import type { NextFunction, Request, Response } from "express";
@@ -21,11 +21,6 @@ const CreateCheckoutSchema = z.object({
 	cancelUrl: z.string().url(),
 });
 
-const UsageQuerySchema = z.object({
-	metric: z.string().optional(),
-	startDate: z.string().datetime().optional(),
-	endDate: z.string().datetime().optional(),
-});
 
 // ============================================
 // CONTROLLER METHODS
@@ -36,7 +31,7 @@ const UsageQuerySchema = z.object({
  * GET /api/billing/subscription
  */
 export async function getSubscription(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -61,7 +56,7 @@ export async function getSubscription(
  * GET /api/billing/plans
  */
 export async function getPlans(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -91,7 +86,7 @@ export async function createCheckout(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -103,13 +98,17 @@ export async function createCheckout(
 			select: { email: true },
 		});
 
+		if (!user?.email) {
+			throw new ValidationError("User email is required for checkout");
+		}
+
 		const session = await subscriptionService.createCheckout({
 			organizationId: tenant.organizationId,
 			planId: parseResult.data.planId,
 			billingInterval: parseResult.data.billingInterval,
 			successUrl: parseResult.data.successUrl,
 			cancelUrl: parseResult.data.cancelUrl,
-			customerEmail: user?.email,
+			customerEmail: user.email,
 		});
 
 		res.status(200).json({
@@ -126,7 +125,7 @@ export async function createCheckout(
  * POST /api/billing/portal
  */
 export async function createPortal(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -180,7 +179,7 @@ export async function cancelSubscription(
  * POST /api/billing/reactivate
  */
 export async function reactivateSubscription(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -268,7 +267,7 @@ export async function getInvoices(
  * GET /api/billing/usage
  */
 export async function getUsage(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -307,7 +306,7 @@ export async function getUsageByMetric(
 
 		const usage = await usageService.getUsageByMetric(
 			tenant.organizationId,
-			metric,
+			metric!,
 			start,
 			end,
 		);
@@ -326,7 +325,7 @@ export async function getUsageByMetric(
  * GET /api/billing/limits
  */
 export async function checkLimits(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -371,7 +370,7 @@ export async function checkFeature(
 
 		const hasFeature = await subscriptionService.hasFeature(
 			tenant.organizationId,
-			feature,
+			feature!,
 		);
 
 		res.status(200).json({

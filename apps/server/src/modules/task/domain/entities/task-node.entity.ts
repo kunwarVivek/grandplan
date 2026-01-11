@@ -7,7 +7,7 @@ import type {
 	TaskNodeType,
 	TaskPriority,
 	TaskStatus,
-} from "@prisma/client";
+} from "@grandplan/db";
 
 export interface TaskNodeEntity {
 	id: string;

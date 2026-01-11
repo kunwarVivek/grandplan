@@ -68,7 +68,7 @@ export async function decomposeTask(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -84,7 +84,7 @@ export async function decomposeTask(
 		// Queue for async processing if requested
 		if (body.async) {
 			const jobId = await aiJobService.queueDecomposition({
-				taskId,
+				taskId: taskId!,
 				workspaceId: context.workspaceId ?? "",
 				maxSubtasks: body.maxSubtasks,
 				provider: body.provider,
@@ -106,7 +106,7 @@ export async function decomposeTask(
 		// Synchronous processing
 		const result = await aiOrchestrator.decomposeTask(
 			{
-				taskId,
+				taskId: taskId!,
 				maxSubtasks: body.maxSubtasks,
 				includeEstimates: body.includeEstimates,
 				autoApply: body.autoApply,
@@ -139,7 +139,7 @@ export async function estimateTask(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -155,7 +155,7 @@ export async function estimateTask(
 		// Queue for async processing if requested
 		if (body.async) {
 			const jobId = await aiJobService.queueEstimation({
-				taskId,
+				taskId: taskId!,
 				provider: body.provider,
 				userId: context.userId,
 				organizationId: context.organizationId,
@@ -175,7 +175,7 @@ export async function estimateTask(
 		// Synchronous processing
 		const result = await aiOrchestrator.estimateTask(
 			{
-				taskId,
+				taskId: taskId!,
 				includeBreakdown: body.includeBreakdown,
 				autoApply: body.autoApply,
 				provider: body.provider,
@@ -207,7 +207,7 @@ export async function suggestImprovement(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -222,7 +222,7 @@ export async function suggestImprovement(
 
 		const result = await aiOrchestrator.suggestImprovement(
 			{
-				taskId,
+				taskId: taskId!,
 				type: body.type,
 				provider: body.provider,
 			},
@@ -257,7 +257,7 @@ export async function getDecisionHistory(
 			workspaceId: tenant.workspaceId,
 		};
 
-		const decisions = await aiOrchestrator.getDecisionHistory(taskId, context);
+		const decisions = await aiOrchestrator.getDecisionHistory(taskId!, context);
 
 		res.status(200).json({
 			success: true,
@@ -283,7 +283,7 @@ export async function applyDecision(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -294,7 +294,7 @@ export async function applyDecision(
 			workspaceId: tenant.workspaceId,
 		};
 
-		await aiOrchestrator.applyDecision(decisionId, context);
+		await aiOrchestrator.applyDecision(decisionId!, context);
 
 		res.status(200).json({
 			success: true,
@@ -320,7 +320,7 @@ export async function rejectDecision(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -332,7 +332,7 @@ export async function rejectDecision(
 		};
 
 		await aiOrchestrator.rejectDecision(
-			decisionId,
+			decisionId!,
 			parseResult.data.reason,
 			context,
 		);
@@ -365,7 +365,7 @@ export async function assessTaskQuality(
 			workspaceId: tenant.workspaceId,
 		};
 
-		const assessment = await aiOrchestrator.assessTaskQuality(taskId, context);
+		const assessment = await aiOrchestrator.assessTaskQuality(taskId!, context);
 
 		res.status(200).json({
 			success: true,
@@ -391,7 +391,7 @@ export async function getJobStatus(
 
 		const queueName =
 			queue === "suggestions" ? "ai:suggestions" : "ai:decomposition";
-		const status = await aiJobService.getJobStatus(queueName, jobId);
+		const status = await aiJobService.getJobStatus(queueName, jobId!);
 
 		res.status(200).json({
 			success: true,
@@ -407,7 +407,7 @@ export async function getJobStatus(
  * GET /api/ai/stats
  */
 export async function getQueueStats(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {

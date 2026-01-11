@@ -2,7 +2,7 @@
 // WORKSPACE ENTITY
 // ============================================
 
-import type { WorkspaceRole } from "@prisma/client";
+import type { WorkspaceRole } from "@grandplan/db";
 
 export interface WorkspaceEntity {
 	id: string;

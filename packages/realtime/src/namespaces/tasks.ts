@@ -2,6 +2,7 @@
 // TASKS NAMESPACE - Yjs CRDT sync for tasks
 // ============================================
 
+import { createLogger } from "@grandplan/core";
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
 import type { Namespace } from "socket.io";
@@ -13,6 +14,8 @@ import type {
 	ServerToClientEvents,
 	SocketData,
 } from "../types.js";
+
+const logger = createLogger({ context: { service: 'realtime', namespace: 'tasks' } });
 
 // Document storage (in production, persist to database)
 const documents = new Map<string, Y.Doc>();
@@ -53,7 +56,7 @@ export function setupTasksNamespace(
 	>,
 ): void {
 	namespace.on("connection", (socket) => {
-		console.log(`Tasks namespace: Client connected ${socket.id}`);
+		logger.info("Client connected to tasks namespace", { socketId: socket.id });
 
 		let currentProjectId: string | null = null;
 		let currentAwareness: awarenessProtocol.Awareness | null = null;
@@ -95,7 +98,7 @@ export function setupTasksNamespace(
 			);
 			socket.emit("sync:awareness", encoding.toUint8Array(awarenessEncoder));
 
-			console.log(`Socket ${socket.id} joined project ${projectId}`);
+			logger.info("Socket joined project", { socketId: socket.id, projectId });
 		});
 
 		// Leave a project room
@@ -183,7 +186,7 @@ export function setupTasksNamespace(
 				}
 			}
 
-			console.log(`Tasks namespace: Client disconnected ${socket.id}`);
+			logger.info("Client disconnected from tasks namespace", { socketId: socket.id });
 		});
 	});
 }

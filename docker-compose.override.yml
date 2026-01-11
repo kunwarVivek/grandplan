@@ -1,0 +1,171 @@
+# ============================================================================
+# Docker Compose Override for Local Development
+# ============================================================================
+# This file automatically overrides settings in docker-compose.yml for
+# local development. Use this for:
+# - Port mappings you want to change
+# - Volume mounts for your workspace
+# - Environment overrides for development
+# - Service dependencies adjustments
+#
+# To use different settings:
+# 1. Create a docker-compose.override.yml file (this file is automatically loaded)
+# 2. Specify only the services and settings you want to override
+#
+# Usage:
+#   docker-compose up              # Loads both .yml and override.yml
+#   docker-compose -f docker-compose.yml up   # Ignore override
+#
+# ============================================================================
+
+services:
+  # ========================================================================
+  # PostgreSQL - Local Overrides
+  # ========================================================================
+  postgres:
+    # Uncomment to use local postgres instead of container
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.postgres
+    # volumes:
+    #   - /Users/vivek/postgres_data:/var/lib/postgresql/data
+    restart: on-failure:5
+
+  # ========================================================================
+  # Redis - Local Overrides
+  # ========================================================================
+  redis:
+    restart: on-failure:5
+
+  # ========================================================================
+  # Server - Development with pnpm
+  # ========================================================================
+  server:
+    # Use development image
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+      target: development
+      cache_from:
+        - grandplan-server:latest
+    # Enable interactive terminal for debugging
+    stdin_open: true
+    tty: true
+    # Override restart policy
+    restart: on-failure:5
+    # Add volume for pnpm install
+    volumes:
+      - ./apps/server/src:/app/apps/server/src
+      - ./apps/server/package.json:/app/apps/server/package.json
+      - ./packages:/app/packages
+      - pnpm-store:/root/.pnpm-store
+      - node-modules-server:/app/node_modules
+      - node-modules-server-app:/app/apps/server/node_modules
+    # Environment for development
+    environment:
+      # Enable debug logging
+      DEBUG: grandplan:*
+      # Use local dev auth secret
+      BETTER_AUTH_SECRET: dev-secret-local-dev-only
+      # Allow connections from vite dev server
+      CORS_ORIGIN: http://localhost:3001,http://localhost:5173
+    # Override healthcheck for dev (be more lenient)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ========================================================================
+  # Web - Development with Vite HMR
+  # ========================================================================
+  web:
+    # Use development image
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: development
+      cache_from:
+        - grandplan-web:latest
+    # Enable interactive terminal for debugging
+    stdin_open: true
+    tty: true
+    # Override restart policy
+    restart: on-failure:5
+    # Add volumes for hot-reload
+    volumes:
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/index.html:/app/apps/web/index.html
+      - ./apps/web/vite.config.ts:/app/apps/web/vite.config.ts
+      - ./packages:/app/packages
+      - pnpm-store:/root/.pnpm-store
+      - node-modules-web:/app/node_modules
+      - node-modules-web-app:/app/apps/web/node_modules
+    # Environment for development
+    environment:
+      # Vite HMR settings for Docker
+      VITE_SERVER_URL: http://localhost:3000
+      # Enable HMR with host exposed to localhost
+      VITE_HMR_HOST: localhost
+      VITE_HMR_PORT: 5173
+      VITE_HMR_PROTOCOL: ws
+    # Override healthcheck for dev
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ========================================================================
+  # Worker - Development
+  # ========================================================================
+  worker:
+    # Use development image
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+      target: development
+      cache_from:
+        - grandplan-worker:latest
+    # Enable interactive terminal for debugging
+    stdin_open: true
+    tty: true
+    # Override restart policy
+    restart: on-failure:5
+    # Add volume for pnpm install
+    volumes:
+      - ./apps/worker/src:/app/apps/worker/src
+      - ./apps/worker/package.json:/app/apps/worker/package.json
+      - ./packages:/app/packages
+      - pnpm-store:/root/.pnpm-store
+      - node-modules-worker:/app/node_modules
+      - node-modules-worker-app:/app/apps/worker/node_modules
+    # Environment for development
+    environment:
+      DEBUG: grandplan:*
+      # Scale workers for development
+      WORKER_CONCURRENCY: 5
+
+# ============================================================================
+# Additional Volumes for Development
+# ============================================================================
+volumes:
+  # Shared pnpm cache
+  pnpm-store:
+    driver: local
+
+  # Named volumes for node_modules (avoid permission issues)
+  node-modules-server:
+    driver: local
+  node-modules-server-app:
+    driver: local
+  node-modules-web:
+    driver: local
+  node-modules-web-app:
+    driver: local
+  node-modules-worker:
+    driver: local
+  node-modules-worker-app:
+    driver: local

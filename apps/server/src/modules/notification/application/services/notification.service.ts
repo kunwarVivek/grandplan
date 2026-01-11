@@ -4,7 +4,6 @@
 
 import { NotFoundError } from "@grandplan/core";
 import { db } from "@grandplan/db";
-import { notificationService as coreNotificationService } from "@grandplan/notifications";
 
 export interface NotificationFilters {
 	unreadOnly?: boolean;

@@ -11,7 +11,7 @@ import {
 import { slugify } from "@grandplan/core/utils";
 import { eventBus } from "@grandplan/events";
 import { getCurrentTenant } from "@grandplan/tenant";
-import type { WorkspaceRole } from "@prisma/client";
+import type { WorkspaceRole } from "@grandplan/db";
 import type {
 	AddMemberDto,
 	CreateWorkspaceDto,

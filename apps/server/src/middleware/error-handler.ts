@@ -2,7 +2,7 @@
 // ERROR HANDLER MIDDLEWARE
 // ============================================
 
-import { isAppError } from "@grandplan/core/errors";
+import { isAppError, logger } from "@grandplan/core";
 import type { NextFunction, Request, Response } from "express";
 
 export interface ErrorResponse {
@@ -10,17 +10,32 @@ export interface ErrorResponse {
 	error: {
 		code: string;
 		message: string;
+		requestId?: string;
 		details?: Record<string, unknown>;
 	};
 }
 
+/**
+ * Get the logger for a request (falls back to default logger)
+ */
+function getRequestLogger(req: Request) {
+	return req.log || logger;
+}
+
 export function errorHandler(
 	err: Error,
-	_req: Request,
+	req: Request,
 	res: Response,
 	_next: NextFunction,
 ): void {
-	console.error("Error:", err);
+	const log = getRequestLogger(req);
+	const requestId = req.requestId;
+
+	// Log the error with request context
+	log.error("Request error", err, {
+		errorName: err.name,
+		errorCode: (err as { code?: string }).code,
+	});
 
 	if (isAppError(err)) {
 		const response: ErrorResponse = {
@@ -28,6 +43,7 @@ export function errorHandler(
 			error: {
 				code: err.code,
 				message: err.message,
+				requestId,
 			},
 		};
 
@@ -50,9 +66,10 @@ export function errorHandler(
 				error: {
 					code: "CONFLICT",
 					message: "A record with this value already exists",
+					requestId,
 					details: { fields: prismaError.meta?.target },
 				},
-			});
+			} satisfies ErrorResponse);
 			return;
 		}
 
@@ -62,8 +79,9 @@ export function errorHandler(
 				error: {
 					code: "NOT_FOUND",
 					message: "Record not found",
+					requestId,
 				},
-			});
+			} satisfies ErrorResponse);
 			return;
 		}
 	}
@@ -75,8 +93,9 @@ export function errorHandler(
 			error: {
 				code: "UNAUTHORIZED",
 				message: "Invalid or expired token",
+				requestId,
 			},
-		});
+		} satisfies ErrorResponse);
 		return;
 	}
 
@@ -89,16 +108,24 @@ export function errorHandler(
 				process.env.NODE_ENV === "production"
 					? "An unexpected error occurred"
 					: err.message,
+			requestId,
 		},
-	});
+	} satisfies ErrorResponse);
 }
 
 export function notFoundHandler(req: Request, res: Response): void {
+	const log = getRequestLogger(req);
+	log.warn("Route not found", {
+		method: req.method,
+		path: req.path,
+	});
+
 	res.status(404).json({
 		success: false,
 		error: {
 			code: "NOT_FOUND",
 			message: `Route ${req.method} ${req.path} not found`,
+			requestId: req.requestId,
 		},
-	});
+	} satisfies ErrorResponse);
 }

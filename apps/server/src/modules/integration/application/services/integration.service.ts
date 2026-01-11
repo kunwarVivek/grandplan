@@ -3,7 +3,7 @@
 // ============================================
 
 import { NotFoundError } from "@grandplan/core";
-import { db } from "@grandplan/db";
+import { Prisma, db } from "@grandplan/db";
 import {
 	type IntegrationProvider,
 	integrationHub,
@@ -154,7 +154,7 @@ export class IntegrationService {
 				externalTeamId: credentials.additionalData?.teamId as
 					| string
 					| undefined,
-				metadata: credentials.additionalData ?? null,
+				metadata: (credentials.additionalData as Prisma.InputJsonValue) ?? Prisma.JsonNull,
 				status: "ACTIVE",
 			},
 			include: {

@@ -10,7 +10,7 @@ import type {
 	TaskNodeType,
 	TaskPriority,
 	TaskStatus,
-} from "@prisma/client";
+} from "@grandplan/db";
 import type {
 	TaskCommentEntity,
 	TaskDependencyEntity,
@@ -19,40 +19,25 @@ import type {
 	TaskNodeWithRelations,
 } from "../../domain/entities/task-node.entity.js";
 import { materializedPathUtils } from "../../domain/value-objects/materialized-path.vo.js";
+import type {
+	ITaskCommentRepository,
+	ITaskDependencyRepository,
+	ITaskHistoryRepository,
+	ITaskRepository,
+	TaskQueryOptions,
+	TaskQueryResult,
+} from "./interfaces/index.js";
 
-export interface TaskQueryOptions {
-	page?: number;
-	limit?: number;
-	projectId?: string;
-	parentId?: string | null;
-	status?: TaskStatus;
-	priority?: TaskPriority;
-	nodeType?: TaskNodeType;
-	assigneeId?: string;
-	createdById?: string;
-	search?: string;
-	includeCompleted?: boolean;
-	dueBefore?: Date;
-	dueAfter?: Date;
-	sortBy?:
-		| "title"
-		| "createdAt"
-		| "updatedAt"
-		| "dueDate"
-		| "priority"
-		| "position";
-	sortOrder?: "asc" | "desc";
-}
+// Re-export interfaces for backwards compatibility
+export type { TaskQueryOptions, TaskQueryResult } from "./interfaces/index.js";
 
-export interface TaskQueryResult {
-	tasks: TaskNodeEntity[];
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-}
-
-export class TaskRepository {
+export class TaskRepository
+	implements
+		ITaskRepository,
+		ITaskDependencyRepository,
+		ITaskHistoryRepository,
+		ITaskCommentRepository
+{
 	async create(data: {
 		title: string;
 		description?: string | null;

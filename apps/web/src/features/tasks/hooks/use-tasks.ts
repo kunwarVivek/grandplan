@@ -9,10 +9,14 @@ import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import { useTasksSocket } from "@/providers";
 import type {
+	CreateCommentInput,
 	CreateTaskInput,
 	MoveTaskInput,
 	Task,
+	TaskComment,
 	TaskFilters,
+	TaskHistory,
+	UpdateCommentInput,
 	UpdateTaskInput,
 } from "../types";
 
@@ -474,6 +478,125 @@ export function useBulkUpdateTasks() {
 	});
 }
 
+// Dependency types
+export type DependencyType = "BLOCKS" | "REQUIRED_BY" | "RELATED_TO";
+
+export type TaskDependency = {
+	id: string;
+	fromTaskId: string;
+	toTaskId: string;
+	type: DependencyType;
+	createdAt: Date;
+	fromTask?: { id: string; title: string; status: string };
+	toTask?: { id: string; title: string; status: string };
+};
+
+export type DependenciesResponse = {
+	blocking: TaskDependency[];
+	blockedBy: TaskDependency[];
+	related: TaskDependency[];
+};
+
+// Fetch task dependencies
+export function useTaskDependencies(taskId: string) {
+	return useQuery({
+		queryKey: queryKeys.tasks.dependencies(taskId),
+		queryFn: async ({ signal }) => {
+			const response = await api.get<{
+				success: boolean;
+				data: DependenciesResponse;
+			}>(`/api/tasks/${taskId}/dependencies`, signal);
+			return response.data;
+		},
+		enabled: !!taskId,
+	});
+}
+
+// Add a dependency
+export function useAddDependency() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			taskId,
+			toTaskId,
+			type,
+		}: {
+			taskId: string;
+			toTaskId: string;
+			type: DependencyType;
+			projectId: string;
+		}) => {
+			return api.post<{ success: boolean; data: TaskDependency }>(
+				`/api/tasks/${taskId}/dependencies`,
+				{ toTaskId, type },
+			);
+		},
+		onSuccess: (_, variables) => {
+			// Invalidate dependencies for both tasks
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.dependencies(variables.taskId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.dependencies(variables.toTaskId),
+			});
+			// Invalidate task details as dependencies may affect display
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.detail(variables.taskId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.detail(variables.toTaskId),
+			});
+			// Invalidate tasks list
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.all(variables.projectId),
+			});
+		},
+	});
+}
+
+// Remove a dependency
+export function useRemoveDependency() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			taskId,
+			toTaskId,
+			type,
+		}: {
+			taskId: string;
+			toTaskId: string;
+			type: DependencyType;
+			projectId: string;
+		}) => {
+			return api.delete<void>(
+				`/api/tasks/${taskId}/dependencies/${toTaskId}/${type}`,
+			);
+		},
+		onSuccess: (_, variables) => {
+			// Invalidate dependencies for both tasks
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.dependencies(variables.taskId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.dependencies(variables.toTaskId),
+			});
+			// Invalidate task details
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.detail(variables.taskId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.detail(variables.toTaskId),
+			});
+			// Invalidate tasks list
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.all(variables.projectId),
+			});
+		},
+	});
+}
+
 /**
  * Hook to sync task queries with realtime socket events.
  * Listens to task:created, task:updated, task:deleted events
@@ -542,4 +665,263 @@ export function useTasksRealtimeSync(projectId: string | null) {
 			socket.off("task:deleted", handleTaskDeleted);
 		};
 	}, [socket, projectId, queryClient]);
+}
+
+// ============================================
+// COMMENTS
+// ============================================
+
+type CommentsResponse = {
+	success: boolean;
+	data: TaskComment[];
+};
+
+type CommentResponse = {
+	success: boolean;
+	data: TaskComment;
+};
+
+// Fetch task comments
+export function useTaskComments(taskId: string) {
+	return useQuery({
+		queryKey: queryKeys.tasks.comments(taskId),
+		queryFn: async ({ signal }) => {
+			const response = await api.get<CommentsResponse>(
+				`/api/tasks/${taskId}/comments`,
+				signal,
+			);
+			return response.data;
+		},
+		enabled: !!taskId,
+	});
+}
+
+// Add a comment
+export function useAddComment() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			taskId,
+			content,
+			parentId,
+		}: CreateCommentInput & { taskId: string }) => {
+			return api.post<CommentResponse>(`/api/tasks/${taskId}/comments`, {
+				content,
+				parentId,
+			});
+		},
+		onMutate: async ({ taskId, content }) => {
+			// Cancel outgoing refetches
+			await queryClient.cancelQueries({
+				queryKey: queryKeys.tasks.comments(taskId),
+			});
+
+			// Snapshot previous value
+			const previousComments = queryClient.getQueryData<TaskComment[]>(
+				queryKeys.tasks.comments(taskId),
+			);
+
+			// Create optimistic comment
+			const optimisticComment: TaskComment = {
+				id: `temp-${Date.now()}`,
+				taskId,
+				content,
+				aiGenerated: false,
+				authorId: null,
+				parentId: null,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				author: null,
+			};
+
+			// Optimistically add comment
+			if (previousComments) {
+				queryClient.setQueryData<TaskComment[]>(
+					queryKeys.tasks.comments(taskId),
+					[...previousComments, optimisticComment],
+				);
+			}
+
+			return { previousComments };
+		},
+		onError: (_, variables, context) => {
+			// Rollback on error
+			if (context?.previousComments) {
+				queryClient.setQueryData(
+					queryKeys.tasks.comments(variables.taskId),
+					context.previousComments,
+				);
+			}
+		},
+		onSettled: (_, __, variables) => {
+			// Refetch to ensure consistency
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.comments(variables.taskId),
+			});
+			// Also invalidate history as comments appear there
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.history(variables.taskId),
+			});
+		},
+	});
+}
+
+// Update a comment
+export function useUpdateComment() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			taskId,
+			commentId,
+			content,
+		}: UpdateCommentInput & { taskId: string; commentId: string }) => {
+			return api.patch<CommentResponse>(
+				`/api/tasks/${taskId}/comments/${commentId}`,
+				{ content },
+			);
+		},
+		onMutate: async ({ taskId, commentId, content }) => {
+			// Cancel outgoing refetches
+			await queryClient.cancelQueries({
+				queryKey: queryKeys.tasks.comments(taskId),
+			});
+
+			// Snapshot previous value
+			const previousComments = queryClient.getQueryData<TaskComment[]>(
+				queryKeys.tasks.comments(taskId),
+			);
+
+			// Optimistically update comment
+			if (previousComments) {
+				const updatedComments = previousComments.map((comment) =>
+					comment.id === commentId
+						? { ...comment, content, updatedAt: new Date() }
+						: comment,
+				);
+				queryClient.setQueryData<TaskComment[]>(
+					queryKeys.tasks.comments(taskId),
+					updatedComments,
+				);
+			}
+
+			return { previousComments };
+		},
+		onError: (_, variables, context) => {
+			// Rollback on error
+			if (context?.previousComments) {
+				queryClient.setQueryData(
+					queryKeys.tasks.comments(variables.taskId),
+					context.previousComments,
+				);
+			}
+		},
+		onSettled: (_, __, variables) => {
+			// Refetch to ensure consistency
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.comments(variables.taskId),
+			});
+		},
+	});
+}
+
+// Delete a comment
+export function useDeleteComment() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			taskId,
+			commentId,
+		}: {
+			taskId: string;
+			commentId: string;
+		}) => {
+			return api.delete<void>(`/api/tasks/${taskId}/comments/${commentId}`);
+		},
+		onMutate: async ({ taskId, commentId }) => {
+			// Cancel outgoing refetches
+			await queryClient.cancelQueries({
+				queryKey: queryKeys.tasks.comments(taskId),
+			});
+
+			// Snapshot previous value
+			const previousComments = queryClient.getQueryData<TaskComment[]>(
+				queryKeys.tasks.comments(taskId),
+			);
+
+			// Optimistically remove comment
+			if (previousComments) {
+				const updatedComments = previousComments.filter(
+					(comment) => comment.id !== commentId,
+				);
+				queryClient.setQueryData<TaskComment[]>(
+					queryKeys.tasks.comments(taskId),
+					updatedComments,
+				);
+			}
+
+			return { previousComments };
+		},
+		onError: (_, variables, context) => {
+			// Rollback on error
+			if (context?.previousComments) {
+				queryClient.setQueryData(
+					queryKeys.tasks.comments(variables.taskId),
+					context.previousComments,
+				);
+			}
+		},
+		onSettled: (_, __, variables) => {
+			// Refetch to ensure consistency
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.comments(variables.taskId),
+			});
+		},
+	});
+}
+
+// ============================================
+// HISTORY
+// ============================================
+
+type HistoryResponse = {
+	success: boolean;
+	data: TaskHistory[];
+	pagination: {
+		total: number;
+	};
+};
+
+// Fetch task history
+export function useTaskHistory(
+	taskId: string,
+	options?: { page?: number; limit?: number; action?: string },
+) {
+	return useQuery({
+		queryKey: [...queryKeys.tasks.history(taskId), options],
+		queryFn: async ({ signal }) => {
+			const params = new URLSearchParams();
+			if (options?.page) {
+				params.set("page", options.page.toString());
+			}
+			if (options?.limit) {
+				params.set("limit", options.limit.toString());
+			}
+			if (options?.action) {
+				params.set("action", options.action);
+			}
+			const query = params.toString();
+			const response = await api.get<HistoryResponse>(
+				`/api/tasks/${taskId}/history${query ? `?${query}` : ""}`,
+				signal,
+			);
+			return {
+				history: response.data,
+				total: response.pagination.total,
+			};
+		},
+		enabled: !!taskId,
+	});
 }

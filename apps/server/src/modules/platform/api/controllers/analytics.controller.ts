@@ -41,7 +41,7 @@ export async function getOverview(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid query parameters", {
-				query: parseResult.error.errors.map((e) => e.message),
+				query: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -83,7 +83,7 @@ export async function getRevenue(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid query parameters", {
-				query: parseResult.error.errors.map((e) => e.message),
+				query: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -125,7 +125,7 @@ export async function getUsage(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid query parameters", {
-				query: parseResult.error.errors.map((e) => e.message),
+				query: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -167,7 +167,7 @@ export async function getGrowth(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid query parameters", {
-				query: parseResult.error.errors.map((e) => e.message),
+				query: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -209,7 +209,7 @@ export async function exportAnalytics(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid query parameters", {
-				query: parseResult.error.errors.map((e) => e.message),
+				query: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 

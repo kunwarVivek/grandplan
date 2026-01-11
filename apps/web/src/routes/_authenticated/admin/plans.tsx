@@ -1,8 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
+import {
+	AlertTriangleIcon,
+	CheckIcon,
+	Loader2Icon,
+	PencilIcon,
+	PlusIcon,
+	RefreshCwIcon,
+	TrashIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogMedia,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +42,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
 	Table,
@@ -32,184 +59,204 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import {
+	useCreatePlan,
+	useDeletePlan,
+	usePlatformPlans,
+	useUpdatePlan,
+} from "@/features/admin/hooks/use-admin";
+import { PLAN_TIER_CONFIG, type PlatformPlan } from "@/features/admin/types";
+import { handleApiError } from "@/lib/api-client";
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
 	component: AdminPlans,
 });
 
-interface Plan {
-	id: string;
+type PlanFormData = {
 	name: string;
-	slug: string;
-	price: number;
-	interval: "month" | "year";
-	features: string[];
-	isActive: boolean;
-	subscribers: number;
-}
+	tier: PlatformPlan["tier"];
+	price: string;
+	interval: PlatformPlan["interval"];
+	features: string;
+};
+
+const defaultFormData: PlanFormData = {
+	name: "",
+	tier: "starter",
+	price: "",
+	interval: "monthly",
+	features: "",
+};
 
 function AdminPlans() {
 	const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-	const [newPlan, setNewPlan] = useState({
-		name: "",
-		slug: "",
-		price: "",
-		features: "",
-	});
+	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [selectedPlan, setSelectedPlan] = useState<PlatformPlan | null>(null);
+	const [formData, setFormData] = useState<PlanFormData>(defaultFormData);
 
-	const plans: Plan[] = [
-		{
-			id: "1",
-			name: "Free",
-			slug: "free",
-			price: 0,
-			interval: "month",
-			features: [
-				"Up to 5 team members",
-				"10 projects",
-				"1GB storage",
-				"Basic support",
-			],
-			isActive: true,
-			subscribers: 8432,
-		},
-		{
-			id: "2",
-			name: "Pro",
-			slug: "pro",
-			price: 29,
-			interval: "month",
-			features: [
-				"Up to 20 team members",
-				"Unlimited projects",
-				"10GB storage",
-				"Priority support",
-				"Advanced analytics",
-			],
-			isActive: true,
-			subscribers: 1256,
-		},
-		{
-			id: "3",
-			name: "Enterprise",
-			slug: "enterprise",
-			price: 99,
-			interval: "month",
-			features: [
-				"Unlimited team members",
-				"Unlimited projects",
-				"Unlimited storage",
-				"24/7 support",
-				"Custom integrations",
-				"SLA guarantee",
-			],
-			isActive: true,
-			subscribers: 89,
-		},
-		{
-			id: "4",
-			name: "Pro Annual",
-			slug: "pro-annual",
-			price: 290,
-			interval: "year",
-			features: [
-				"Up to 20 team members",
-				"Unlimited projects",
-				"10GB storage",
-				"Priority support",
-				"Advanced analytics",
-				"2 months free",
-			],
-			isActive: true,
-			subscribers: 342,
-		},
-	];
+	// Queries and mutations
+	const { data, isLoading, isError, error, refetch } = usePlatformPlans();
+	const createPlanMutation = useCreatePlan();
+	const updatePlanMutation = useUpdatePlan();
+	const deletePlanMutation = useDeletePlan();
+
+	const plans = data?.plans ?? [];
+
+	function handleOpenCreate() {
+		setFormData(defaultFormData);
+		setIsCreateDialogOpen(true);
+	}
+
+	function handleOpenEdit(plan: PlatformPlan) {
+		setSelectedPlan(plan);
+		setFormData({
+			name: plan.name,
+			tier: plan.tier,
+			price: plan.price.toString(),
+			interval: plan.interval,
+			features: plan.features.join("\n"),
+		});
+		setIsEditDialogOpen(true);
+	}
+
+	function handleOpenDelete(plan: PlatformPlan) {
+		setSelectedPlan(plan);
+		setIsDeleteDialogOpen(true);
+	}
 
 	async function handleCreatePlan(e: React.FormEvent) {
 		e.preventDefault();
+
 		try {
-			const planData = {
-				name: newPlan.name,
-				slug: newPlan.slug,
-				price: Number(newPlan.price),
-				features: newPlan.features.split("\n").filter((f) => f.trim()),
-			};
-			const response = await fetch(
-				`${import.meta.env.VITE_API_URL || ""}/api/platform/plans`,
-				{
-					method: "POST",
-					credentials: "include",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(planData),
-				},
-			);
-
-			if (!response.ok) throw new Error("Failed to create plan");
-
-			toast.success("Plan created");
-			setNewPlan({ name: "", slug: "", price: "", features: "" });
+			await createPlanMutation.mutateAsync({
+				name: formData.name,
+				tier: formData.tier,
+				price: Number(formData.price),
+				interval: formData.interval,
+				features: formData.features.split("\n").filter((f) => f.trim()),
+				limits: {},
+				isActive: true,
+			});
+			toast.success("Plan created successfully");
 			setIsCreateDialogOpen(false);
-		} catch (error) {
-			toast.error("Failed to create plan");
+			setFormData(defaultFormData);
+		} catch (err) {
+			toast.error(handleApiError(err));
 		}
 	}
 
-	async function handleEditPlan(planId: string) {
+	async function handleUpdatePlan(e: React.FormEvent) {
+		e.preventDefault();
+		if (!selectedPlan) return;
+
 		try {
-			const response = await fetch(
-				`${import.meta.env.VITE_API_URL || ""}/api/platform/plans/${planId}`,
-				{
-					method: "PATCH",
-					credentials: "include",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({}),
-				},
-			);
-
-			if (!response.ok) throw new Error("Failed to update plan");
-
-			toast.success("Plan updated");
-		} catch (error) {
-			toast.error("Failed to update plan");
+			await updatePlanMutation.mutateAsync({
+				planId: selectedPlan.id,
+				name: formData.name,
+				tier: formData.tier,
+				price: Number(formData.price),
+				interval: formData.interval,
+				features: formData.features.split("\n").filter((f) => f.trim()),
+			});
+			toast.success("Plan updated successfully");
+			setIsEditDialogOpen(false);
+			setSelectedPlan(null);
+		} catch (err) {
+			toast.error(handleApiError(err));
 		}
 	}
 
-	async function handleTogglePlan(planId: string, isActive: boolean) {
+	async function handleTogglePlan(plan: PlatformPlan, isActive: boolean) {
 		try {
-			const response = await fetch(
-				`${import.meta.env.VITE_API_URL || ""}/api/platform/plans/${planId}`,
-				{
-					method: "PATCH",
-					credentials: "include",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ isActive }),
-				},
-			);
-
-			if (!response.ok) throw new Error("Failed to toggle plan");
-
+			await updatePlanMutation.mutateAsync({
+				planId: plan.id,
+				isActive,
+			});
 			toast.success(isActive ? "Plan activated" : "Plan deactivated");
-		} catch (error) {
-			toast.error("Failed to toggle plan");
+		} catch (err) {
+			toast.error(handleApiError(err));
 		}
 	}
 
-	async function handleDeletePlan(planId: string) {
+	async function handleDeletePlan() {
+		if (!selectedPlan) return;
+
 		try {
-			const response = await fetch(
-				`${import.meta.env.VITE_API_URL || ""}/api/platform/plans/${planId}`,
-				{
-					method: "DELETE",
-					credentials: "include",
-				},
-			);
-
-			if (!response.ok) throw new Error("Failed to delete plan");
-
-			toast.success("Plan deleted");
-		} catch (error) {
-			toast.error("Failed to delete plan");
+			await deletePlanMutation.mutateAsync(selectedPlan.id);
+			toast.success("Plan deleted successfully");
+			setIsDeleteDialogOpen(false);
+			setSelectedPlan(null);
+		} catch (err) {
+			toast.error(handleApiError(err));
 		}
+	}
+
+	function getTierConfig(tier: PlatformPlan["tier"]) {
+		return PLAN_TIER_CONFIG[tier] ?? PLAN_TIER_CONFIG.starter;
+	}
+
+	// Loading state
+	if (isLoading) {
+		return (
+			<div className="space-y-6">
+				<div className="flex items-center justify-between">
+					<div>
+						<h1 className="font-semibold text-2xl">Subscription Plans</h1>
+						<p className="text-muted-foreground text-sm">
+							Manage subscription plans and pricing.
+						</p>
+					</div>
+				</div>
+				<Card>
+					<CardHeader>
+						<Skeleton className="h-6 w-32" />
+						<Skeleton className="h-4 w-48" />
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-3">
+							{Array.from({ length: 4 }).map((_, i) => (
+								<div key={i} className="flex items-center gap-4 py-3">
+									<Skeleton className="h-10 w-32" />
+									<Skeleton className="h-6 w-20" />
+									<Skeleton className="h-6 w-16" />
+									<Skeleton className="h-6 w-24" />
+									<Skeleton className="ml-auto h-8 w-20" />
+								</div>
+							))}
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
+
+	// Error state
+	if (isError) {
+		return (
+			<div className="space-y-6">
+				<div>
+					<h1 className="font-semibold text-2xl">Subscription Plans</h1>
+					<p className="text-muted-foreground text-sm">
+						Manage subscription plans and pricing.
+					</p>
+				</div>
+				<Card>
+					<CardContent className="flex flex-col items-center justify-center py-12">
+						<AlertTriangleIcon className="mb-4 size-12 text-destructive" />
+						<h3 className="mb-2 font-medium text-lg">Failed to load plans</h3>
+						<p className="mb-4 text-muted-foreground text-sm">
+							{handleApiError(error)}
+						</p>
+						<Button variant="outline" onClick={() => refetch()}>
+							<RefreshCwIcon className="mr-2 size-4" />
+							Try Again
+						</Button>
+					</CardContent>
+				</Card>
+			</div>
+		);
 	}
 
 	return (
@@ -221,75 +268,126 @@ function AdminPlans() {
 						Manage subscription plans and pricing.
 					</p>
 				</div>
-				<Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-					<DialogTrigger render={<Button />}>
-						<PlusIcon className="size-4" />
-						Create Plan
-					</DialogTrigger>
-					<DialogContent>
-						<DialogHeader>
-							<DialogTitle>Create New Plan</DialogTitle>
-							<DialogDescription>
-								Add a new subscription plan to the platform.
-							</DialogDescription>
-						</DialogHeader>
-						<form onSubmit={handleCreatePlan} className="space-y-4">
-							<div className="space-y-2">
-								<Label htmlFor="plan-name">Plan Name</Label>
-								<Input
-									id="plan-name"
-									value={newPlan.name}
-									onChange={(e) =>
-										setNewPlan({ ...newPlan, name: e.target.value })
-									}
-									placeholder="Pro"
-									required
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor="plan-slug">Slug</Label>
-								<Input
-									id="plan-slug"
-									value={newPlan.slug}
-									onChange={(e) =>
-										setNewPlan({ ...newPlan, slug: e.target.value })
-									}
-									placeholder="pro"
-									required
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor="plan-price">Price (per month)</Label>
-								<Input
-									id="plan-price"
-									type="number"
-									value={newPlan.price}
-									onChange={(e) =>
-										setNewPlan({ ...newPlan, price: e.target.value })
-									}
-									placeholder="29"
-									required
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor="plan-features">Features (one per line)</Label>
-								<textarea
-									id="plan-features"
-									value={newPlan.features}
-									onChange={(e) =>
-										setNewPlan({ ...newPlan, features: e.target.value })
-									}
-									placeholder="Unlimited projects&#10;Priority support&#10;Advanced analytics"
-									className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-									required
-								/>
-							</div>
-							<DialogFooter>
-								<Button type="submit">Create Plan</Button>
-							</DialogFooter>
-						</form>
-					</DialogContent>
-				</Dialog>
+				<div className="flex items-center gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => refetch()}
+						disabled={isLoading}
+					>
+						<RefreshCwIcon className="mr-2 size-4" />
+						Refresh
+					</Button>
+					<Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+						<DialogTrigger render={<Button onClick={handleOpenCreate} />}>
+							<PlusIcon className="mr-2 size-4" />
+							Create Plan
+						</DialogTrigger>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>Create New Plan</DialogTitle>
+								<DialogDescription>
+									Add a new subscription plan to the platform.
+								</DialogDescription>
+							</DialogHeader>
+							<form onSubmit={handleCreatePlan} className="space-y-4">
+								<div className="space-y-2">
+									<Label htmlFor="plan-name">Plan Name</Label>
+									<Input
+										id="plan-name"
+										value={formData.name}
+										onChange={(e) =>
+											setFormData({ ...formData, name: e.target.value })
+										}
+										placeholder="Pro"
+										required
+									/>
+								</div>
+								<div className="grid grid-cols-2 gap-4">
+									<div className="space-y-2">
+										<Label htmlFor="plan-tier">Tier</Label>
+										<Select
+											value={formData.tier}
+											onValueChange={(val) =>
+												setFormData({ ...formData, tier: val as PlatformPlan["tier"] })
+											}
+										>
+											<SelectTrigger id="plan-tier">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="free">Free</SelectItem>
+												<SelectItem value="starter">Starter</SelectItem>
+												<SelectItem value="pro">Pro</SelectItem>
+												<SelectItem value="enterprise">Enterprise</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="plan-interval">Interval</Label>
+										<Select
+											value={formData.interval}
+											onValueChange={(val) =>
+												setFormData({ ...formData, interval: val as PlatformPlan["interval"] })
+											}
+										>
+											<SelectTrigger id="plan-interval">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="monthly">Monthly</SelectItem>
+												<SelectItem value="yearly">Yearly</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="plan-price">Price</Label>
+									<Input
+										id="plan-price"
+										type="number"
+										min="0"
+										step="0.01"
+										value={formData.price}
+										onChange={(e) =>
+											setFormData({ ...formData, price: e.target.value })
+										}
+										placeholder="29"
+										required
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="plan-features">Features (one per line)</Label>
+									<Textarea
+										id="plan-features"
+										value={formData.features}
+										onChange={(e) =>
+											setFormData({ ...formData, features: e.target.value })
+										}
+										placeholder={"Unlimited projects\nPriority support\nAdvanced analytics"}
+										className="min-h-[100px]"
+										required
+									/>
+								</div>
+								<DialogFooter>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => setIsCreateDialogOpen(false)}
+									>
+										Cancel
+									</Button>
+									<Button type="submit" disabled={createPlanMutation.isPending}>
+										{createPlanMutation.isPending && (
+											<Loader2Icon className="mr-2 size-4 animate-spin" />
+										)}
+										Create Plan
+									</Button>
+								</DialogFooter>
+							</form>
+						</DialogContent>
+					</Dialog>
+				</div>
 			</div>
 
 			<Card>
@@ -300,113 +398,271 @@ function AdminPlans() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Plan</TableHead>
-								<TableHead>Price</TableHead>
-								<TableHead>Subscribers</TableHead>
-								<TableHead>Status</TableHead>
-								<TableHead className="text-right">Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{plans.map((plan) => (
-								<TableRow key={plan.id}>
-									<TableCell>
-										<div>
-											<p className="font-medium text-sm">{plan.name}</p>
-											<p className="text-muted-foreground text-xs">
-												/{plan.slug}
-											</p>
-										</div>
-									</TableCell>
-									<TableCell>
-										{plan.price === 0 ? (
-											"Free"
-										) : (
-											<span>
-												${plan.price}/{plan.interval === "month" ? "mo" : "yr"}
-											</span>
-										)}
-									</TableCell>
-									<TableCell>{plan.subscribers.toLocaleString()}</TableCell>
-									<TableCell>
-										<div className="flex items-center gap-2">
-											<Switch
-												checked={plan.isActive}
-												onCheckedChange={(checked) =>
-													handleTogglePlan(plan.id, checked)
-												}
-												size="sm"
-											/>
-											<Badge variant={plan.isActive ? "default" : "secondary"}>
-												{plan.isActive ? "Active" : "Inactive"}
-											</Badge>
-										</div>
-									</TableCell>
-									<TableCell className="text-right">
-										<div className="flex items-center justify-end gap-1">
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onClick={() => handleEditPlan(plan.id)}
-											>
-												<PencilIcon className="size-4" />
-											</Button>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onClick={() => handleDeletePlan(plan.id)}
-												disabled={plan.subscribers > 0}
-											>
-												<TrashIcon className="size-4" />
-											</Button>
-										</div>
-									</TableCell>
+					{plans.length === 0 ? (
+						<div className="flex flex-col items-center justify-center py-12 text-center">
+							<p className="mb-2 font-medium text-muted-foreground">
+								No plans configured
+							</p>
+							<p className="text-muted-foreground text-sm">
+								Create your first subscription plan to get started.
+							</p>
+						</div>
+					) : (
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Plan</TableHead>
+									<TableHead>Tier</TableHead>
+									<TableHead>Price</TableHead>
+									<TableHead>Subscribers</TableHead>
+									<TableHead>Status</TableHead>
+									<TableHead className="text-right">Actions</TableHead>
 								</TableRow>
-							))}
-						</TableBody>
-					</Table>
+							</TableHeader>
+							<TableBody>
+								{plans.map((plan) => {
+									const tierConfig = getTierConfig(plan.tier);
+									return (
+										<TableRow key={plan.id}>
+											<TableCell>
+												<p className="font-medium text-sm">{plan.name}</p>
+											</TableCell>
+											<TableCell>
+												<Badge className={tierConfig.color}>
+													{tierConfig.label}
+												</Badge>
+											</TableCell>
+											<TableCell>
+												{plan.price === 0 ? (
+													"Free"
+												) : (
+													<span>
+														${plan.price}/{plan.interval === "monthly" ? "mo" : "yr"}
+													</span>
+												)}
+											</TableCell>
+											<TableCell>
+												{plan.subscriberCount.toLocaleString()}
+											</TableCell>
+											<TableCell>
+												<div className="flex items-center gap-2">
+													<Switch
+														checked={plan.isActive}
+														onCheckedChange={(checked) =>
+															handleTogglePlan(plan, checked)
+														}
+														size="sm"
+														disabled={updatePlanMutation.isPending}
+													/>
+													<Badge variant={plan.isActive ? "default" : "secondary"}>
+														{plan.isActive ? "Active" : "Inactive"}
+													</Badge>
+												</div>
+											</TableCell>
+											<TableCell className="text-right">
+												<div className="flex items-center justify-end gap-1">
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => handleOpenEdit(plan)}
+													>
+														<PencilIcon className="size-4" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => handleOpenDelete(plan)}
+														disabled={plan.subscriberCount > 0}
+													>
+														<TrashIcon className="size-4" />
+													</Button>
+												</div>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+							</TableBody>
+						</Table>
+					)}
 				</CardContent>
 			</Card>
 
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{plans.map((plan) => (
-					<Card key={plan.id}>
-						<CardHeader>
-							<div className="flex items-center justify-between">
-								<CardTitle className="text-lg">{plan.name}</CardTitle>
-								<Badge variant={plan.isActive ? "default" : "secondary"}>
-									{plan.isActive ? "Active" : "Inactive"}
-								</Badge>
+			{/* Plan cards grid */}
+			{plans.length > 0 && (
+				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+					{plans.map((plan) => {
+						const tierConfig = getTierConfig(plan.tier);
+						return (
+							<Card key={plan.id}>
+								<CardHeader>
+									<div className="flex items-center justify-between">
+										<CardTitle className="text-lg">{plan.name}</CardTitle>
+										<Badge className={tierConfig.color}>{tierConfig.label}</Badge>
+									</div>
+									<CardDescription>
+										{plan.price === 0 ? (
+											"Free forever"
+										) : (
+											<span>
+												${plan.price}/{plan.interval}
+											</span>
+										)}
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<p className="mb-3 text-muted-foreground text-sm">
+										{plan.subscriberCount.toLocaleString()} active subscribers
+									</p>
+									<ul className="space-y-2">
+										{plan.features.map((feature) => (
+											<li key={feature} className="flex items-center gap-2 text-xs">
+												<CheckIcon className="size-3 text-primary" />
+												{feature}
+											</li>
+										))}
+									</ul>
+								</CardContent>
+							</Card>
+						);
+					})}
+				</div>
+			)}
+
+			{/* Edit Plan Dialog */}
+			<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Edit Plan</DialogTitle>
+						<DialogDescription>
+							Update the subscription plan details.
+						</DialogDescription>
+					</DialogHeader>
+					<form onSubmit={handleUpdatePlan} className="space-y-4">
+						<div className="space-y-2">
+							<Label htmlFor="edit-plan-name">Plan Name</Label>
+							<Input
+								id="edit-plan-name"
+								value={formData.name}
+								onChange={(e) =>
+									setFormData({ ...formData, name: e.target.value })
+								}
+								placeholder="Pro"
+								required
+							/>
+						</div>
+						<div className="grid grid-cols-2 gap-4">
+							<div className="space-y-2">
+								<Label htmlFor="edit-plan-tier">Tier</Label>
+								<Select
+									value={formData.tier}
+									onValueChange={(val) =>
+										setFormData({ ...formData, tier: val as PlatformPlan["tier"] })
+									}
+								>
+									<SelectTrigger id="edit-plan-tier">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="free">Free</SelectItem>
+										<SelectItem value="starter">Starter</SelectItem>
+										<SelectItem value="pro">Pro</SelectItem>
+										<SelectItem value="enterprise">Enterprise</SelectItem>
+									</SelectContent>
+								</Select>
 							</div>
-							<CardDescription>
-								{plan.price === 0 ? (
-									"Free forever"
-								) : (
-									<span>
-										${plan.price}/{plan.interval}
-									</span>
+							<div className="space-y-2">
+								<Label htmlFor="edit-plan-interval">Interval</Label>
+								<Select
+									value={formData.interval}
+									onValueChange={(val) =>
+										setFormData({ ...formData, interval: val as PlatformPlan["interval"] })
+									}
+								>
+									<SelectTrigger id="edit-plan-interval">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="monthly">Monthly</SelectItem>
+										<SelectItem value="yearly">Yearly</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="edit-plan-price">Price</Label>
+							<Input
+								id="edit-plan-price"
+								type="number"
+								min="0"
+								step="0.01"
+								value={formData.price}
+								onChange={(e) =>
+									setFormData({ ...formData, price: e.target.value })
+								}
+								placeholder="29"
+								required
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="edit-plan-features">Features (one per line)</Label>
+							<Textarea
+								id="edit-plan-features"
+								value={formData.features}
+								onChange={(e) =>
+									setFormData({ ...formData, features: e.target.value })
+								}
+								placeholder={"Unlimited projects\nPriority support\nAdvanced analytics"}
+								className="min-h-[100px]"
+								required
+							/>
+						</div>
+						<DialogFooter>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => setIsEditDialogOpen(false)}
+							>
+								Cancel
+							</Button>
+							<Button type="submit" disabled={updatePlanMutation.isPending}>
+								{updatePlanMutation.isPending && (
+									<Loader2Icon className="mr-2 size-4 animate-spin" />
 								)}
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<p className="mb-3 text-muted-foreground text-sm">
-								{plan.subscribers.toLocaleString()} active subscribers
-							</p>
-							<ul className="space-y-2">
-								{plan.features.map((feature) => (
-									<li key={feature} className="flex items-center gap-2 text-xs">
-										<CheckIcon className="size-3 text-primary" />
-										{feature}
-									</li>
-								))}
-							</ul>
-						</CardContent>
-					</Card>
-				))}
-			</div>
+								Save Changes
+							</Button>
+						</DialogFooter>
+					</form>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete Plan Dialog */}
+			<AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogMedia className="bg-destructive/10">
+							<TrashIcon className="size-6 text-destructive" />
+						</AlertDialogMedia>
+						<AlertDialogTitle>Delete Plan</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete the "{selectedPlan?.name}" plan?
+							This action cannot be undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDeletePlan}
+							disabled={deletePlanMutation.isPending}
+							variant="destructive"
+						>
+							{deletePlanMutation.isPending && (
+								<Loader2Icon className="mr-2 size-4 animate-spin" />
+							)}
+							Delete Plan
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

@@ -22,6 +22,13 @@ import {
 	updateOrganization,
 } from "./controllers/organizations.controller.js";
 import {
+	createPlan,
+	deletePlan,
+	getPlan,
+	listPlans,
+	updatePlan,
+} from "./controllers/plans.controller.js";
+import {
 	createAnnouncement,
 	createFeatureFlag,
 	deleteAnnouncement,
@@ -315,4 +322,77 @@ router.delete(
 	deleteAnnouncement,
 );
 
+// ============================================
+// PLAN MANAGEMENT ROUTES
+// ============================================
+
+router.get("/plans", requirePlatformPermission("platform:plans:read"), listPlans);
+
+router.get(
+	"/plans/:id",
+	requirePlatformPermission("platform:plans:read"),
+	getPlan,
+);
+
+router.post(
+	"/plans",
+	requirePlatformPermission("platform:plans:write"),
+	createPlan,
+);
+
+router.patch(
+	"/plans/:id",
+	requirePlatformPermission("platform:plans:write"),
+	updatePlan,
+);
+
+router.delete(
+	"/plans/:id",
+	requirePlatformPermission("platform:plans:delete"),
+	deletePlan,
+);
+
 export const platformRoutes = router;
+
+// ============================================
+// ADMIN ROUTES (alias for /api/admin/*)
+// ============================================
+// The frontend calls /api/admin/plans, so we provide an alias router
+
+const adminRouter = Router();
+
+// All admin routes require platform admin authentication
+adminRouter.use(requirePlatformAuth);
+
+// Plan management routes
+adminRouter.get(
+	"/plans",
+	requirePlatformPermission("platform:plans:read"),
+	listPlans,
+);
+
+adminRouter.get(
+	"/plans/:id",
+	requirePlatformPermission("platform:plans:read"),
+	getPlan,
+);
+
+adminRouter.post(
+	"/plans",
+	requirePlatformPermission("platform:plans:write"),
+	createPlan,
+);
+
+adminRouter.patch(
+	"/plans/:id",
+	requirePlatformPermission("platform:plans:write"),
+	updatePlan,
+);
+
+adminRouter.delete(
+	"/plans/:id",
+	requirePlatformPermission("platform:plans:delete"),
+	deletePlan,
+);
+
+export const adminRoutes = adminRouter;

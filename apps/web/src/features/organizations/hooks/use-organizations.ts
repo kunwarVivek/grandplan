@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-client";
 import type {
+	BrandingConfig,
 	CreateOrganizationInput,
 	Invitation,
 	InviteMemberInput,
@@ -9,6 +10,8 @@ import type {
 	OrganizationMember,
 	UpdateOrganizationInput,
 } from "../types";
+
+export type { BrandingConfig } from "../types";
 
 // Types for API responses
 type OrganizationsResponse = {
@@ -112,11 +115,15 @@ export function useInviteMember() {
 			...input
 		}: InviteMemberInput & { organizationId: string }) => {
 			return api.post<Invitation>(
-				`/api/organizations/${organizationId}/invitations`,
+				`/api/organizations/${organizationId}/members/invite`,
 				input,
 			);
 		},
 		onSuccess: (_, variables) => {
+			// Invalidate both members and invitations as invite may affect both
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.organizations.members(variables.organizationId),
+			});
 			queryClient.invalidateQueries({
 				queryKey: queryKeys.organizations.invitations(variables.organizationId),
 			});
@@ -209,6 +216,85 @@ export function useUpdateMemberRole() {
 			queryClient.invalidateQueries({
 				queryKey: queryKeys.organizations.members(variables.organizationId),
 			});
+		},
+	});
+}
+
+// Delete an organization
+export function useDeleteOrganization() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (organizationId: string) => {
+			return api.delete<void>(`/api/organizations/${organizationId}`);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.organizations.all,
+			});
+		},
+	});
+}
+
+// Update organization branding
+export function useUpdateOrganizationBranding() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			organizationId,
+			branding,
+		}: {
+			organizationId: string;
+			branding: BrandingConfig;
+		}) => {
+			return api.patch<OrganizationResponse>(
+				`/api/organizations/${organizationId}/branding`,
+				{ brandingConfig: branding },
+			);
+		},
+		onSuccess: (data) => {
+			queryClient.setQueryData(queryKeys.organizations.detail(data.id), data);
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.organizations.all,
+			});
+		},
+	});
+}
+
+// Fetch organization by slug
+export function useOrganizationBySlug(slug: string) {
+	return useQuery({
+		queryKey: ["organizations", "slug", slug] as const,
+		queryFn: async ({ signal }) => {
+			return api.get<OrganizationResponse>(
+				`/api/organizations/slug/${slug}`,
+				signal,
+			);
+		},
+		enabled: !!slug,
+	});
+}
+
+// Upload file (logo/favicon)
+type UploadResponse = {
+	url: string;
+};
+
+export function useUploadFile() {
+	return useMutation({
+		mutationFn: async ({
+			file,
+			type,
+		}: {
+			file: File;
+			type: "avatar" | "logo" | "favicon";
+		}) => {
+			const formData = new FormData();
+			formData.append("file", file);
+			formData.append("type", type);
+
+			return api.postForm<UploadResponse>("/api/uploads", formData);
 		},
 	});
 }

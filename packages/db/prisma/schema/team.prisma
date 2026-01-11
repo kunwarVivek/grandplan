@@ -3,21 +3,22 @@
 // ============================================
 
 model Team {
-  id              String            @id @default(cuid())
-  name            String
-  description     String?
-  organizationId  String
+  id             String  @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
 
   // Soft delete
-  archivedAt      DateTime?
-  deletedAt       DateTime?
+  archivedAt DateTime?
+  deletedAt  DateTime?
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  members         TeamMember[]
-  invitations     OrganizationInvitation[]
+  organization Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      TeamMember[]
+  invitations  OrganizationInvitation[]
+  projects     TeamProject[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -26,19 +27,53 @@ model Team {
 }
 
 model TeamMember {
-  id                      String              @id @default(cuid())
-  teamId                  String
-  organizationMemberId    String
-  teamRoleId              String?             // Optional team-specific role override
+  id                   String  @id @default(cuid())
+  teamId               String
+  organizationMemberId String
+  teamRoleId           String? // Optional team-specific role override
 
-  createdAt               DateTime            @default(now())
+  createdAt DateTime @default(now())
 
-  team                    Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  organizationMember      OrganizationMember  @relation(fields: [organizationMemberId], references: [id], onDelete: Cascade)
-  teamRole                Role?               @relation("TeamRole", fields: [teamRoleId], references: [id], onDelete: SetNull)
+  team               Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  organizationMember OrganizationMember @relation(fields: [organizationMemberId], references: [id], onDelete: Cascade)
+  teamRole           Role?              @relation("TeamRole", fields: [teamRoleId], references: [id], onDelete: SetNull)
 
   @@unique([teamId, organizationMemberId])
   @@index([teamId])
   @@index([organizationMemberId])
   @@map("team_member")
+}
+
+// ============================================
+// TEAM-PROJECT JUNCTION TABLE
+// Many-to-many relationship between teams and projects
+// ============================================
+
+model TeamProject {
+  id String @id @default(cuid())
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Role of team in this project (e.g., owner, contributor, viewer)
+  role TeamProjectRole @default(CONTRIBUTOR)
+
+  // Timestamps
+  assignedAt   DateTime @default(now())
+  assignedById String? // Who assigned this team to the project
+
+  @@unique([teamId, projectId])
+  @@index([teamId])
+  @@index([projectId])
+  @@index([role])
+  @@map("team_project")
+}
+
+enum TeamProjectRole {
+  OWNER // Full control over the project
+  CONTRIBUTOR // Can edit tasks and project details
+  VIEWER // Read-only access
 }

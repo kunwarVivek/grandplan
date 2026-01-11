@@ -34,6 +34,7 @@ export type PlatformPlan = {
 	subscriberCount: number;
 };
 
+// Legacy type - keeping for backward compatibility
 export type PlatformStats = {
 	totalUsers: number;
 	activeUsers: number;
@@ -43,6 +44,88 @@ export type PlatformStats = {
 	monthlyRecurringRevenue: number;
 	userGrowth: { date: string; count: number }[];
 	revenueGrowth: { date: string; amount: number }[];
+};
+
+// New comprehensive analytics types matching server API responses
+export type OverviewMetrics = {
+	totalUsers: number;
+	activeUsers: number;
+	newUsersThisPeriod: number;
+	userGrowthPercent: number;
+	totalOrganizations: number;
+	activeOrganizations: number;
+	newOrgsThisPeriod: number;
+	orgGrowthPercent: number;
+	totalProjects: number;
+	totalTasks: number;
+	completedTasks: number;
+	taskCompletionRate: number;
+	totalAICreditsUsed: number;
+	aiCreditsUsedThisPeriod: number;
+};
+
+export type RevenueMetrics = {
+	mrr: number;
+	arr: number;
+	mrrGrowthPercent: number;
+	totalRevenue: number;
+	revenueThisPeriod: number;
+	revenueGrowthPercent: number;
+	averageRevenuePerUser: number;
+	customerLifetimeValue: number;
+	churnRate: number;
+	subscriptionsByPlan: Array<{
+		planId: string;
+		planName: string;
+		count: number;
+		revenue: number;
+	}>;
+	revenueHistory: Array<{
+		date: string;
+		revenue: number;
+		mrr: number;
+	}>;
+};
+
+export type UsageMetrics = {
+	activeSessionsToday: number;
+	averageSessionDuration: number;
+	tasksCreatedThisPeriod: number;
+	tasksCompletedThisPeriod: number;
+	aiRequestsThisPeriod: number;
+	topFeatures: Array<{
+		feature: string;
+		usageCount: number;
+	}>;
+	usageByOrganization: Array<{
+		orgId: string;
+		orgName: string;
+		aiCreditsUsed: number;
+		tasksCreated: number;
+		activeUsers: number;
+	}>;
+	usageHistory: Array<{
+		date: string;
+		activeUsers: number;
+		tasksCreated: number;
+		aiRequests: number;
+	}>;
+};
+
+export type GrowthMetrics = {
+	userSignups: Array<{ date: string; count: number }>;
+	orgCreations: Array<{ date: string; count: number }>;
+	subscriptionActivations: Array<{ date: string; count: number }>;
+	retentionCohorts: Array<{
+		cohortMonth: string;
+		initialUsers: number;
+		retentionByMonth: number[];
+	}>;
+};
+
+export type DateRange = {
+	startDate?: string;
+	endDate?: string;
 };
 
 export type SystemHealth = {

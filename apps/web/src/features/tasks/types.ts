@@ -119,3 +119,70 @@ export const TASK_PRIORITY_CONFIG: Record<
 	medium: { label: "Medium", color: "text-amber-500", icon: "!" },
 	low: { label: "Low", color: "text-blue-500", icon: "-" },
 };
+
+// Comment types
+export type TaskCommentAuthor = {
+	id: string;
+	name: string | null;
+	email: string;
+	image?: string | null;
+};
+
+export type TaskComment = {
+	id: string;
+	content: string;
+	aiGenerated: boolean;
+	taskId: string;
+	authorId: string | null;
+	parentId: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	author: TaskCommentAuthor | null;
+	replies?: TaskComment[];
+};
+
+export type CreateCommentInput = {
+	content: string;
+	parentId?: string | null;
+};
+
+export type UpdateCommentInput = {
+	content: string;
+};
+
+// History types
+export type TaskHistoryAction =
+	| "CREATED"
+	| "UPDATED"
+	| "STATUS_CHANGED"
+	| "ASSIGNED"
+	| "UNASSIGNED"
+	| "MOVED"
+	| "DEPENDENCY_ADDED"
+	| "DEPENDENCY_REMOVED"
+	| "COMMENTED";
+
+export type TaskHistoryActor = {
+	id: string;
+	name: string | null;
+	email: string;
+};
+
+export type TaskHistory = {
+	id: string;
+	action: TaskHistoryAction;
+	field: string | null;
+	oldValue: unknown;
+	newValue: unknown;
+	reason: string | null;
+	taskId: string;
+	actorId: string | null;
+	aiTriggered: boolean;
+	createdAt: Date;
+	actor: TaskHistoryActor | null;
+};
+
+// Activity item combining comments and history
+export type ActivityItem =
+	| { type: "comment"; data: TaskComment; timestamp: Date }
+	| { type: "history"; data: TaskHistory; timestamp: Date };

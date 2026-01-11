@@ -167,7 +167,7 @@ export class AIJobService {
 			});
 
 			await notificationService.send({
-				type: "ai.decomposition_ready",
+				type: "AI_DECOMPOSITION_READY",
 				userId,
 				title: "Task Decomposition Ready",
 				body: `AI has generated ${output.result.subtasks.length} subtasks for "${task?.title}"`,
@@ -196,14 +196,6 @@ export class AIJobService {
 	): Promise<{ decisionId: string }> {
 		const { taskId, suggestionType, userId } = data;
 
-		// Map job suggestion type to service suggestion type
-		const typeMap: Record<string, "status" | "priority" | "deadline"> = {
-			status: "status",
-			priority: "priority",
-			assignee: "status", // Use status for assignee
-			deadline: "deadline",
-		};
-
 		// For estimation requests
 		if (suggestionType === "deadline") {
 			const output = await estimationService.estimateTask({
@@ -220,7 +212,7 @@ export class AIJobService {
 				});
 
 				await notificationService.send({
-					type: "ai.suggestion_available",
+					type: "AI_SUGGESTION_AVAILABLE",
 					userId,
 					title: "Task Estimation Ready",
 					body: `AI estimated "${task?.title}" at ${output.result.estimatedHours} hours`,

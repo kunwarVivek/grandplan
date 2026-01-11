@@ -3,42 +3,42 @@
 // ============================================
 
 model Organization {
-  id                String              @id @default(cuid())
-  name              String
-  slug              String              @unique
-  description       String?
-  logo              String?
-  status            OrganizationStatus  @default(ACTIVE)
+  id          String             @id @default(cuid())
+  name        String
+  slug        String             @unique
+  description String?
+  logo        String?
+  status      OrganizationStatus @default(ACTIVE)
 
   // Organization metadata
-  industry          String?             // Industry classification
-  size              OrganizationSize?   // Company size range
-  timezone          String?             // Default timezone for org
+  industry String? // Industry classification
+  size     OrganizationSize? // Company size range
+  timezone String? // Default timezone for org
 
   // White-label settings
-  customDomain      String?             @unique
-  brandingConfig    Json?               // { primaryColor, secondaryColor, fontFamily, logo, favicon }
+  customDomain   String? @unique
+  brandingConfig Json? // { primaryColor, secondaryColor, fontFamily, logo, favicon }
 
   // Billing identifiers
-  polarCustomerId   String?
-  stripeCustomerId  String?
+  polarCustomerId  String?
+  stripeCustomerId String?
 
   // Soft delete for GDPR compliance
-  deletedAt         DateTime?
+  deletedAt DateTime?
 
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  members           OrganizationMember[]
-  teams             Team[]
-  invitations       OrganizationInvitation[]
-  subscription      Subscription?
-  featureFlags      OrganizationFeatureFlag[]
-  auditLogs         AuditLog[]
-  emailTemplates    EmailTemplate[]
-  workspaces        Workspace[]
-  labels            Label[]
+  members        OrganizationMember[]
+  teams          Team[]
+  invitations    OrganizationInvitation[]
+  subscription   Subscription?
+  featureFlags   OrganizationFeatureFlag[]
+  auditLogs      AuditLog[]
+  emailTemplates EmailTemplate[]
+  workspaces     Workspace[]
+  labels         Label[]
 
   @@index([slug])
   @@index([customDomain])
@@ -48,41 +48,45 @@ model Organization {
 }
 
 enum OrganizationSize {
-  SOLO        // 1 person
-  SMALL       // 2-10
-  MEDIUM      // 11-50
-  LARGE       // 51-200
-  ENTERPRISE  // 201+
+  SOLO // 1 person
+  SMALL // 2-10
+  MEDIUM // 11-50
+  LARGE // 51-200
+  ENTERPRISE // 201+
 }
 
 enum OrganizationStatus {
-  PENDING      // Awaiting setup completion
-  ACTIVE       // Fully operational
-  SUSPENDED    // Temporarily disabled
-  CANCELLED    // Subscription cancelled
+  PENDING // Awaiting setup completion
+  ACTIVE // Fully operational
+  SUSPENDED // Temporarily disabled
+  CANCELLED // Subscription cancelled
 }
 
 // Organization membership - Links users to organizations with roles
 model OrganizationMember {
-  id              String            @id @default(cuid())
-  userId          String
-  organizationId  String
-  roleId          String
+  id             String @id @default(cuid())
+  userId         String
+  organizationId String
+  roleId         String
 
-  status          MemberStatus      @default(ACTIVE)
-  joinedAt        DateTime          @default(now())
-  invitedById     String?
+  status      MemberStatus @default(ACTIVE)
+  joinedAt    DateTime     @default(now())
+  invitedById String?
 
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  role            Role              @relation(fields: [roleId], references: [id])
-  invitedBy       User?             @relation("InvitedMembers", fields: [invitedById], references: [id], onDelete: SetNull)
+  // Soft delete for audit trail
+  deletedAt DateTime?
+
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role            Role         @relation(fields: [roleId], references: [id])
+  invitedBy       User?        @relation("InvitedMembers", fields: [invitedById], references: [id], onDelete: SetNull)
   teamMemberships TeamMember[]
 
   @@unique([userId, organizationId])
   @@index([organizationId])
   @@index([userId])
   @@index([roleId])
+  @@index([deletedAt])
   @@map("organization_member")
 }
 
@@ -94,23 +98,23 @@ enum MemberStatus {
 
 // Organization invitations
 model OrganizationInvitation {
-  id              String            @id @default(cuid())
-  email           String
-  organizationId  String
-  roleId          String
-  teamId          String?
+  id             String  @id @default(cuid())
+  email          String
+  organizationId String
+  roleId         String
+  teamId         String?
 
-  token           String            @unique
-  status          InvitationStatus  @default(PENDING)
-  expiresAt       DateTime
+  token     String           @unique
+  status    InvitationStatus @default(PENDING)
+  expiresAt DateTime
 
-  invitedById     String
-  createdAt       DateTime          @default(now())
+  invitedById String
+  createdAt   DateTime @default(now())
 
-  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  role            Role              @relation(fields: [roleId], references: [id])
-  team            Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  invitedBy       User              @relation("SentInvitations", fields: [invitedById], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role         @relation(fields: [roleId], references: [id])
+  team         Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  invitedBy    User         @relation("SentInvitations", fields: [invitedById], references: [id], onDelete: Cascade)
 
   @@index([email])
   @@index([organizationId])

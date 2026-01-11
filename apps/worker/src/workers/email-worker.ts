@@ -10,12 +10,24 @@ import {
 	queueManager,
 } from "@grandplan/queue";
 import type { Job } from "bullmq";
+import {
+	EmailJobSchema,
+	validateJobPayload,
+} from "../schemas/job-schemas.js";
 
 export function registerEmailWorker(): void {
 	queueManager.registerWorker<EmailJobData, JobResult>(
 		"email",
 		async (job: Job<EmailJobData>): Promise<JobResult> => {
-			const { to, templateId, data, organizationBranding } = job.data;
+			// Validate job payload with Zod schema
+			const validatedData = validateJobPayload(
+				EmailJobSchema,
+				job.data,
+				job.id,
+				"email"
+			);
+
+			const { to, templateId, data, organizationBranding } = validatedData;
 
 			console.log(`Processing email job ${job.id} to ${to}`);
 

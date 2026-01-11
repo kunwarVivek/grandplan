@@ -10,8 +10,11 @@ import {
 	type WorkerOptions,
 } from "bullmq";
 import type { Redis } from "ioredis";
+import { createLogger } from "@grandplan/core";
 import { QUEUE_CONFIGS } from "./queues.js";
 import type { JobResult, QueueName } from "./types.js";
+
+const logger = createLogger({ context: { service: "queue" } });
 
 export class QueueManager {
 	private queues: Map<QueueName, Queue> = new Map();
@@ -30,7 +33,7 @@ export class QueueManager {
 			this.queues.set(config.name, queue);
 		}
 
-		console.log("QueueManager connected with all queues initialized");
+		logger.info("QueueManager connected", { queuesInitialized: true });
 	}
 
 	async disconnect(): Promise<void> {
@@ -114,18 +117,15 @@ export class QueueManager {
 
 		// Set up event handlers
 		worker.on("completed", (job: Job<T, R>) => {
-			console.log(`Job ${job.id} in queue ${queueName} completed`);
+			logger.debug("Job completed", { jobId: job.id, queueName, result: "success" });
 		});
 
 		worker.on("failed", (job: Job<T, R> | undefined, error: Error) => {
-			console.error(
-				`Job ${job?.id} in queue ${queueName} failed:`,
-				error.message,
-			);
+			logger.error("Job failed", error, { jobId: job?.id, queueName });
 		});
 
 		worker.on("error", (error: Error) => {
-			console.error(`Worker error in queue ${queueName}:`, error.message);
+			logger.error("Worker error", error, { queueName });
 		});
 
 		this.workers.set(queueName, worker as Worker);
@@ -204,6 +204,91 @@ export class QueueManager {
 	): Promise<boolean> {
 		const queue = this.getQueue(queueName);
 		return queue.removeRepeatableByKey(jobId);
+	}
+
+	/**
+	 * Get health status for all queues
+	 */
+	async getHealthStatus(): Promise<{
+		healthy: boolean;
+		queues: Record<
+			string,
+			{
+				status: "ok" | "error";
+				waiting: number;
+				active: number;
+				failed: number;
+			}
+		>;
+	}> {
+		const queues: Record<
+			string,
+			{
+				status: "ok" | "error";
+				waiting: number;
+				active: number;
+				failed: number;
+			}
+		> = {};
+		let healthy = true;
+
+		for (const [name, queue] of this.queues) {
+			try {
+				const counts = await queue.getJobCounts(
+					"waiting",
+					"active",
+					"failed",
+				);
+				queues[name] = {
+					status: "ok",
+					waiting: counts.waiting ?? 0,
+					active: counts.active ?? 0,
+					failed: counts.failed ?? 0,
+				};
+			} catch {
+				queues[name] = {
+					status: "error",
+					waiting: 0,
+					active: 0,
+					failed: 0,
+				};
+				healthy = false;
+			}
+		}
+
+		return { healthy, queues };
+	}
+
+	/**
+	 * Check if any workers are currently processing jobs
+	 */
+	hasActiveJobs(): boolean {
+		for (const worker of this.workers.values()) {
+			if (worker.isRunning()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Gracefully drain all workers (stop accepting new jobs, wait for current ones)
+	 */
+	async drainWorkers(timeoutMs = 30000): Promise<void> {
+		logger.info("Draining workers", { timeout: timeoutMs });
+
+		// Pause all workers to stop accepting new jobs
+		const pausePromises = Array.from(this.workers.values()).map((worker) =>
+			worker.pause(true), // Wait for current jobs to complete
+		);
+
+		// Wait with timeout
+		await Promise.race([
+			Promise.all(pausePromises),
+			new Promise((resolve) => setTimeout(resolve, timeoutMs)),
+		]);
+
+		logger.info("Workers drained successfully");
 	}
 }
 

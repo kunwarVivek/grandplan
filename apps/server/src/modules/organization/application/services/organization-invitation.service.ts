@@ -97,8 +97,8 @@ export class OrganizationInvitationService {
 		await eventBus.emit(ORGANIZATION_EVENTS.MEMBER_INVITED, {
 			invitationId: invitation.id,
 			organizationId,
-			email: dto.email,
-			roleId: dto.roleId,
+			inviteeEmail: dto.email,
+			role: dto.roleId,
 			invitedById: tenant.userId,
 		});
 
@@ -170,8 +170,7 @@ export class OrganizationInvitationService {
 		await eventBus.emit(ORGANIZATION_EVENTS.MEMBER_JOINED, {
 			organizationId: invitation.organizationId,
 			userId,
-			memberId: member.id,
-			roleId: invitation.roleId,
+			role: invitation.roleId,
 			invitationId: invitation.id,
 		});
 

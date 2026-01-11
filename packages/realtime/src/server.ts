@@ -6,6 +6,7 @@ import type { Server as HttpServer } from "node:http";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { Redis } from "ioredis";
 import { Server as SocketServer } from "socket.io";
+import { logger } from "@grandplan/core";
 import { setupNotificationsNamespace } from "./namespaces/notifications.js";
 import { setupPresenceNamespace } from "./namespaces/presence.js";
 import { setupTasksNamespace } from "./namespaces/tasks.js";
@@ -90,9 +91,10 @@ export class RealtimeServer {
 
 		// Default namespace connection handling
 		this.io.on("connection", (socket) => {
-			console.log(
-				`Client connected: ${socket.id} (user: ${socket.data.userId})`,
-			);
+			logger.info("Client connected", {
+				socketId: socket.id,
+				userId: socket.data.userId,
+			});
 
 			// Join organization room
 			socket.join(`org:${socket.data.organizationId}`);
@@ -103,11 +105,14 @@ export class RealtimeServer {
 			}
 
 			socket.on("disconnect", (reason) => {
-				console.log(`Client disconnected: ${socket.id} (reason: ${reason})`);
+				logger.info("Client disconnected", {
+					socketId: socket.id,
+					reason,
+				});
 			});
 		});
 
-		console.log("Realtime server initialized");
+		logger.info("Realtime server initialized");
 	}
 
 	getIO() {

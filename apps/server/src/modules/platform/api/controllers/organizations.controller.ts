@@ -71,7 +71,7 @@ export async function listOrganizations(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid query parameters", {
-				query: parseResult.error.errors.map((e) => e.message),
+				query: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -113,7 +113,7 @@ export async function getOrganization(
 	try {
 		const { id } = req.params;
 
-		const org = await platformOrgService.getOrganization(id);
+		const org = await platformOrgService.getOrganization(id!);
 
 		res.status(200).json({
 			success: true,
@@ -139,17 +139,17 @@ export async function updateOrganization(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
-		await platformOrgService.updateOrganization(id, parseResult.data);
+		await platformOrgService.updateOrganization(id!, parseResult.data);
 
 		await logPlatformAction(
 			req,
 			"update_organization",
 			"organization",
-			id,
+			id!,
 			parseResult.data,
 		);
 
@@ -177,13 +177,13 @@ export async function suspendOrganization(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
-		await platformOrgService.suspendOrganization(id, parseResult.data.reason);
+		await platformOrgService.suspendOrganization(id!, parseResult.data.reason);
 
-		await logPlatformAction(req, "suspend_organization", "organization", id, {
+		await logPlatformAction(req, "suspend_organization", "organization", id!, {
 			reason: parseResult.data.reason,
 		});
 
@@ -208,9 +208,9 @@ export async function unsuspendOrganization(
 	try {
 		const { id } = req.params;
 
-		await platformOrgService.unsuspendOrganization(id);
+		await platformOrgService.unsuspendOrganization(id!);
 
-		await logPlatformAction(req, "unsuspend_organization", "organization", id);
+		await logPlatformAction(req, "unsuspend_organization", "organization", id!);
 
 		res.status(200).json({
 			success: true,
@@ -233,9 +233,9 @@ export async function deleteOrganization(
 	try {
 		const { id } = req.params;
 
-		await platformOrgService.deleteOrganization(id);
+		await platformOrgService.deleteOrganization(id!);
 
-		await logPlatformAction(req, "delete_organization", "organization", id);
+		await logPlatformAction(req, "delete_organization", "organization", id!);
 
 		res.status(200).json({
 			success: true,
@@ -261,13 +261,13 @@ export async function transferOwnership(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
-		await platformOrgService.transferOwnership(id, parseResult.data.newOwnerId);
+		await platformOrgService.transferOwnership(id!, parseResult.data.newOwnerId);
 
-		await logPlatformAction(req, "transfer_ownership", "organization", id, {
+		await logPlatformAction(req, "transfer_ownership", "organization", id!, {
 			newOwnerId: parseResult.data.newOwnerId,
 		});
 
@@ -294,7 +294,7 @@ export async function getOrgAuditLog(
 		const limit = req.query.limit ? Number(req.query.limit) : 50;
 
 		const auditLog = await platformOrgService.getOrganizationAuditLog(
-			id,
+			id!,
 			limit,
 		);
 
@@ -322,11 +322,11 @@ export async function adjustSubscription(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
-		await platformOrgService.adjustSubscription(id, parseResult.data.planId, {
+		await platformOrgService.adjustSubscription(id!, parseResult.data.planId, {
 			startDate: parseResult.data.startDate
 				? new Date(parseResult.data.startDate)
 				: undefined,
@@ -340,7 +340,7 @@ export async function adjustSubscription(
 			req,
 			"adjust_subscription",
 			"organization",
-			id,
+			id!,
 			parseResult.data,
 		);
 

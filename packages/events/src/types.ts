@@ -161,6 +161,94 @@ export interface DependencyBlockedPayload {
 	dependencyType: string;
 }
 
+// Team Events
+export interface TeamCreatedPayload {
+	teamId: string;
+	name: string;
+	workspaceId: string;
+	createdById: string;
+	createdAt: Date;
+}
+
+export interface TeamUpdatedPayload {
+	teamId: string;
+	changes: Record<string, unknown>;
+	previousValues: Record<string, unknown>;
+	updatedById: string;
+}
+
+export interface TeamDeletedPayload {
+	teamId: string;
+	name: string;
+	workspaceId: string;
+	deletedById: string;
+}
+
+export interface TeamMemberAddedPayload {
+	teamId: string;
+	userId: string;
+	role: string;
+	addedById: string;
+}
+
+export interface TeamMemberRemovedPayload {
+	teamId: string;
+	userId: string;
+	removedById: string;
+}
+
+export interface TeamMemberRoleChangedPayload {
+	teamId: string;
+	userId: string;
+	previousRole: string;
+	newRole: string;
+	changedById: string;
+}
+
+// Workspace Events
+export interface WorkspaceCreatedPayload {
+	workspaceId: string;
+	name: string;
+	organizationId: string;
+	createdById: string;
+	createdAt: Date;
+}
+
+export interface WorkspaceUpdatedPayload {
+	workspaceId: string;
+	changes: Record<string, unknown>;
+	previousValues: Record<string, unknown>;
+	updatedById: string;
+}
+
+export interface WorkspaceDeletedPayload {
+	workspaceId: string;
+	name: string;
+	organizationId: string;
+	deletedById: string;
+}
+
+export interface WorkspaceMemberAddedPayload {
+	workspaceId: string;
+	userId: string;
+	role: string;
+	addedById: string;
+}
+
+export interface WorkspaceMemberRemovedPayload {
+	workspaceId: string;
+	userId: string;
+	removedById: string;
+}
+
+export interface WorkspaceMemberRoleChangedPayload {
+	workspaceId: string;
+	userId: string;
+	previousRole: string;
+	newRole: string;
+	changedById: string;
+}
+
 // Project Events
 export interface ProjectCreatedPayload {
 	projectId: string;
@@ -196,6 +284,71 @@ export interface ProjectArchivedPayload {
 	name: string;
 	workspaceId: string;
 	archivedById: string;
+}
+
+// Organization Events
+export interface OrganizationCreatedPayload {
+	organizationId: string;
+	name: string;
+	slug: string;
+	createdById: string;
+	createdAt: Date;
+}
+
+export interface OrganizationUpdatedPayload {
+	organizationId: string;
+	changes: Record<string, unknown>;
+	previousValues: Record<string, unknown>;
+	updatedById: string;
+}
+
+export interface OrganizationStatusChangedPayload {
+	organizationId: string;
+	previousStatus: string;
+	newStatus: string;
+	changedById: string;
+}
+
+export interface OrganizationBrandingUpdatedPayload {
+	organizationId: string;
+	changes: Record<string, unknown>;
+	previousValues?: Record<string, unknown>;
+	updatedById: string;
+}
+
+export interface OrganizationDeletedPayload {
+	organizationId: string;
+	name: string;
+	deletedById: string;
+}
+
+export interface OrganizationMemberInvitedPayload {
+	organizationId: string;
+	inviteeEmail: string;
+	role: string;
+	invitedById: string;
+	invitationId: string;
+}
+
+export interface OrganizationMemberJoinedPayload {
+	organizationId: string;
+	userId: string;
+	role: string;
+	invitationId?: string;
+}
+
+export interface OrganizationMemberRemovedPayload {
+	organizationId: string;
+	userId: string;
+	removedById: string;
+}
+
+export interface OrganizationMemberRoleChangedPayload {
+	organizationId: string;
+	userId: string;
+	previousRole: string;
+	newRole: string;
+	changedById: string;
 }
 
 // Event type map for type safety
@@ -253,6 +406,33 @@ export interface EventTypeMap {
 	"project.statusChanged": DomainEvent<ProjectStatusChangedPayload>;
 	"project.deleted": DomainEvent<ProjectDeletedPayload>;
 	"project.archived": DomainEvent<ProjectArchivedPayload>;
+	"team.created": DomainEvent<TeamCreatedPayload>;
+	"team.updated": DomainEvent<TeamUpdatedPayload>;
+	"team.deleted": DomainEvent<TeamDeletedPayload>;
+	"team.memberAdded": DomainEvent<TeamMemberAddedPayload>;
+	"team.memberRemoved": DomainEvent<TeamMemberRemovedPayload>;
+	"team.memberRoleChanged": DomainEvent<TeamMemberRoleChangedPayload>;
+	"workspace.created": DomainEvent<WorkspaceCreatedPayload>;
+	"workspace.updated": DomainEvent<WorkspaceUpdatedPayload>;
+	"workspace.deleted": DomainEvent<WorkspaceDeletedPayload>;
+	"workspace.memberAdded": DomainEvent<WorkspaceMemberAddedPayload>;
+	"workspace.memberRemoved": DomainEvent<WorkspaceMemberRemovedPayload>;
+	"workspace.memberRoleChanged": DomainEvent<WorkspaceMemberRoleChangedPayload>;
+	"organization.created": DomainEvent<OrganizationCreatedPayload>;
+	"organization.updated": DomainEvent<OrganizationUpdatedPayload>;
+	"organization.statusChanged": DomainEvent<OrganizationStatusChangedPayload>;
+	"organization.brandingUpdated": DomainEvent<OrganizationBrandingUpdatedPayload>;
+	"organization.deleted": DomainEvent<OrganizationDeletedPayload>;
+	"organization.memberInvited": DomainEvent<OrganizationMemberInvitedPayload>;
+	"organization.memberJoined": DomainEvent<OrganizationMemberJoinedPayload>;
+	"organization.memberRemoved": DomainEvent<OrganizationMemberRemovedPayload>;
+	"organization.memberRoleChanged": DomainEvent<OrganizationMemberRoleChangedPayload>;
+	"organization.invitationRevoked": DomainEvent<{
+		invitationId: string;
+		organizationId: string;
+		email: string;
+		revokedById: string;
+	}>;
 }
 
 export type EventType = keyof EventTypeMap;

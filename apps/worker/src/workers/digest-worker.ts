@@ -10,12 +10,24 @@ import {
 	queueManager,
 } from "@grandplan/queue";
 import type { Job } from "bullmq";
+import {
+	DigestJobSchema,
+	validateJobPayload,
+} from "../schemas/job-schemas.js";
 
 export function registerDigestWorker(): void {
 	queueManager.registerWorker<DigestJobData, JobResult>(
 		"digest",
 		async (job: Job<DigestJobData>): Promise<JobResult> => {
-			const { userId, frequency } = job.data;
+			// Validate job payload with Zod schema
+			const validatedData = validateJobPayload(
+				DigestJobSchema,
+				job.data,
+				job.id,
+				"digest"
+			);
+
+			const { userId, frequency } = validatedData;
 
 			console.log(`Processing ${frequency} digest for user ${userId}`);
 

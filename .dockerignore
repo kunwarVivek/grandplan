@@ -50,7 +50,5 @@ specifications.md
 .beads
 .husky
 
-# Local development
-docker-compose.yml
-docker-compose.*.yml
-!docker-compose.prod.yml
+# Local development (keep docker-compose files for building)
+# docker-compose.*.yml files are ok to include in context

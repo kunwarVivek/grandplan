@@ -115,6 +115,10 @@ export const queryKeys = {
 		subscriptions: ["platform", "subscriptions"] as const,
 		plans: ["platform", "plans"] as const,
 		analytics: ["platform", "analytics"] as const,
+		analyticsOverview: ["platform", "analytics", "overview"] as const,
+		analyticsRevenue: ["platform", "analytics", "revenue"] as const,
+		analyticsUsage: ["platform", "analytics", "usage"] as const,
+		analyticsGrowth: ["platform", "analytics", "growth"] as const,
 		system: ["platform", "system"] as const,
 	},
 

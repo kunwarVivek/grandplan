@@ -3,6 +3,7 @@
 // ============================================
 
 import { db, type EmailTemplateType } from "@grandplan/db";
+import { env } from "@grandplan/env/server";
 import sgMail from "@sendgrid/mail";
 import Handlebars from "handlebars";
 import type { EmailPayload } from "./types.js";
@@ -72,7 +73,7 @@ export class EmailService {
 		await sgMail.send({
 			to: payload.to,
 			from: {
-				email: process.env.EMAIL_FROM ?? "notifications@grandplan.app",
+				email: env.EMAIL_FROM,
 				name: payload.organizationBranding?.companyName ?? "GrandPlan",
 			},
 			subject: payload.subject,
@@ -90,7 +91,7 @@ export class EmailService {
 			payloads.map(async (payload) => ({
 				to: payload.to,
 				from: {
-					email: process.env.EMAIL_FROM ?? "notifications@grandplan.app",
+					email: env.EMAIL_FROM,
 					name: payload.organizationBranding?.companyName ?? "GrandPlan",
 				},
 				subject: payload.subject,

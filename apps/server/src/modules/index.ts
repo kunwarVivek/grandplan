@@ -13,7 +13,7 @@ export {
 	organizationRoutes,
 	organizationService,
 } from "./organization/index.js";
-export { platformRoutes } from "./platform/index.js";
+export { adminRoutes, platformRoutes } from "./platform/index.js";
 export {
 	projectRoutes,
 	projectService,
@@ -26,4 +26,5 @@ export {
 	taskService,
 } from "./task/index.js";
 export { teamRoutes, teamService } from "./team/index.js";
+export { uploadRoutes, uploadService } from "./upload/index.js";
 export { workspaceRoutes, workspaceService } from "./workspace/index.js";

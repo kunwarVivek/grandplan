@@ -16,10 +16,10 @@ import {
 	startOfWeek,
 } from "date-fns";
 import {
-	ArrowRight,
 	Calendar,
 	ChevronLeft,
 	ChevronRight,
+	GitBranch,
 	Plus,
 	ZoomIn,
 	ZoomOut,
@@ -39,6 +39,7 @@ import {
 	type Task,
 	type TaskStatus,
 } from "../types";
+import type { DependencyType } from "../hooks/use-tasks";
 
 // ============================================
 // VIEW PROPS TYPE
@@ -182,6 +183,321 @@ function getTaskPosition(
 		left: leftOffset * cellWidth,
 		width: widthInCells * cellWidth - 4, // Subtract padding
 	};
+}
+
+// ============================================
+// DEPENDENCY TYPES & ARROW CONFIG
+// ============================================
+
+type DependencyLink = {
+	id: string;
+	fromTaskId: string;
+	toTaskId: string;
+	type: DependencyType;
+};
+
+type ArrowPosition = {
+	startX: number;
+	startY: number;
+	endX: number;
+	endY: number;
+	type: DependencyType;
+	id: string;
+	fromTaskId: string;
+	toTaskId: string;
+};
+
+const DEPENDENCY_ARROW_CONFIG: Record<
+	DependencyType,
+	{ color: string; strokeDasharray?: string; label: string }
+> = {
+	BLOCKS: {
+		color: "#ef4444", // red-500
+		label: "Blocks",
+	},
+	REQUIRED_BY: {
+		color: "#f59e0b", // amber-500
+		label: "Required by",
+	},
+	RELATED_TO: {
+		color: "#6b7280", // gray-500
+		strokeDasharray: "4 2",
+		label: "Related to",
+	},
+};
+
+// Row height constant for arrow calculations
+const TASK_ROW_HEIGHT = 40;
+const TASK_LIST_WIDTH = 256; // w-64 = 16rem = 256px
+
+// ============================================
+// DEPENDENCY ARROW COMPONENT
+// ============================================
+
+interface DependencyArrowProps {
+	arrow: ArrowPosition;
+	isHovered: boolean;
+	onHover: (id: string | null) => void;
+}
+
+function DependencyArrow({ arrow, isHovered, onHover }: DependencyArrowProps) {
+	const config = DEPENDENCY_ARROW_CONFIG[arrow.type];
+
+	// Calculate control points for a smooth bezier curve
+	const dx = arrow.endX - arrow.startX;
+	const dy = arrow.endY - arrow.startY;
+
+	// Determine path based on relative positions
+	let path: string;
+
+	if (dx > 50) {
+		// Normal case: end is to the right of start
+		const controlOffset = Math.min(Math.abs(dx) * 0.4, 100);
+		path = `
+			M ${arrow.startX} ${arrow.startY}
+			C ${arrow.startX + controlOffset} ${arrow.startY},
+			  ${arrow.endX - controlOffset} ${arrow.endY},
+			  ${arrow.endX} ${arrow.endY}
+		`;
+	} else if (dx < -50) {
+		// Reverse case: end is to the left of start (task goes backwards)
+		// Create an arc that goes around
+		const arcHeight = Math.max(30, Math.abs(dy) * 0.5);
+		const midY = arrow.startY < arrow.endY
+			? Math.min(arrow.startY, arrow.endY) - arcHeight
+			: Math.max(arrow.startY, arrow.endY) + arcHeight;
+
+		path = `
+			M ${arrow.startX} ${arrow.startY}
+			Q ${arrow.startX + 30} ${midY},
+			  ${(arrow.startX + arrow.endX) / 2} ${midY}
+			Q ${arrow.endX - 30} ${midY},
+			  ${arrow.endX} ${arrow.endY}
+		`;
+	} else {
+		// Close horizontal distance: create a slight S-curve
+		const verticalOffset = dy > 0 ? 20 : -20;
+		path = `
+			M ${arrow.startX} ${arrow.startY}
+			C ${arrow.startX + 40} ${arrow.startY + verticalOffset},
+			  ${arrow.endX - 40} ${arrow.endY - verticalOffset},
+			  ${arrow.endX} ${arrow.endY}
+		`;
+	}
+
+	// Arrow head size
+	const headSize = 6;
+
+	// Calculate arrow head angle at the end point
+	// Using the tangent direction at the curve end
+	const tangentDx = dx > 50 ? 1 : dx < -50 ? 1 : 1;
+	const tangentDy = dy / (Math.abs(dx) + 1) * 0.3;
+	const angle = Math.atan2(tangentDy, tangentDx);
+
+	const headPoints = [
+		{ x: arrow.endX, y: arrow.endY },
+		{
+			x: arrow.endX - headSize * Math.cos(angle - Math.PI / 6),
+			y: arrow.endY - headSize * Math.sin(angle - Math.PI / 6),
+		},
+		{
+			x: arrow.endX - headSize * Math.cos(angle + Math.PI / 6),
+			y: arrow.endY - headSize * Math.sin(angle + Math.PI / 6),
+		},
+	];
+
+	return (
+		<g
+			onMouseEnter={() => onHover(arrow.id)}
+			onMouseLeave={() => onHover(null)}
+			className="cursor-pointer"
+		>
+			{/* Wider invisible path for easier hovering */}
+			<path
+				d={path}
+				fill="none"
+				stroke="transparent"
+				strokeWidth={12}
+			/>
+			{/* Visible path */}
+			<path
+				d={path}
+				fill="none"
+				stroke={config.color}
+				strokeWidth={isHovered ? 2.5 : 1.5}
+				strokeDasharray={config.strokeDasharray}
+				opacity={isHovered ? 1 : 0.7}
+				className="transition-all duration-150"
+			/>
+			{/* Arrow head */}
+			<polygon
+				points={headPoints.map((p) => `${p.x},${p.y}`).join(" ")}
+				fill={config.color}
+				opacity={isHovered ? 1 : 0.7}
+				className="transition-all duration-150"
+			/>
+			{/* Hover tooltip indicator */}
+			{isHovered && (
+				<text
+					x={(arrow.startX + arrow.endX) / 2}
+					y={(arrow.startY + arrow.endY) / 2 - 8}
+					fontSize="10"
+					fill={config.color}
+					textAnchor="middle"
+					className="pointer-events-none font-medium"
+				>
+					{config.label}
+				</text>
+			)}
+		</g>
+	);
+}
+
+// ============================================
+// DEPENDENCY ARROWS OVERLAY
+// ============================================
+
+interface DependencyArrowsOverlayProps {
+	arrows: ArrowPosition[];
+	width: number;
+	height: number;
+	scrollLeft: number;
+	scrollTop: number;
+}
+
+function DependencyArrowsOverlay({
+	arrows,
+	width,
+	height,
+}: DependencyArrowsOverlayProps) {
+	const [hoveredArrowId, setHoveredArrowId] = useState<string | null>(null);
+
+	if (arrows.length === 0) return null;
+
+	// Group arrows by vertical overlap to handle overlapping
+	const processedArrows = useMemo(() => {
+		// Sort arrows to render hovered one on top
+		return [...arrows].sort((a, b) => {
+			if (a.id === hoveredArrowId) return 1;
+			if (b.id === hoveredArrowId) return -1;
+			return 0;
+		});
+	}, [arrows, hoveredArrowId]);
+
+	return (
+		<svg
+			className="pointer-events-none absolute top-0 left-0 overflow-visible"
+			style={{
+				width,
+				height,
+				marginLeft: TASK_LIST_WIDTH,
+			}}
+		>
+			<defs>
+				{/* Gradient definitions for arrows */}
+				<linearGradient id="arrow-gradient-blocks" x1="0%" y1="0%" x2="100%" y2="0%">
+					<stop offset="0%" stopColor="#ef4444" stopOpacity="0.6" />
+					<stop offset="100%" stopColor="#ef4444" stopOpacity="1" />
+				</linearGradient>
+				<linearGradient id="arrow-gradient-required" x1="0%" y1="0%" x2="100%" y2="0%">
+					<stop offset="0%" stopColor="#f59e0b" stopOpacity="0.6" />
+					<stop offset="100%" stopColor="#f59e0b" stopOpacity="1" />
+				</linearGradient>
+				<linearGradient id="arrow-gradient-related" x1="0%" y1="0%" x2="100%" y2="0%">
+					<stop offset="0%" stopColor="#6b7280" stopOpacity="0.6" />
+					<stop offset="100%" stopColor="#6b7280" stopOpacity="1" />
+				</linearGradient>
+			</defs>
+			<g className="pointer-events-auto">
+				{processedArrows.map((arrow) => (
+					<DependencyArrow
+						key={arrow.id}
+						arrow={arrow}
+						isHovered={hoveredArrowId === arrow.id}
+						onHover={setHoveredArrowId}
+					/>
+				))}
+			</g>
+		</svg>
+	);
+}
+
+// ============================================
+// CALCULATE ARROW POSITIONS
+// ============================================
+
+function calculateArrowPositions(
+	_tasks: Task[],
+	dependencies: DependencyLink[],
+	taskPositions: Map<string, { left: number; width: number }>,
+	taskRowIndices: Map<string, number>,
+): ArrowPosition[] {
+	const arrows: ArrowPosition[] = [];
+
+	for (const dep of dependencies) {
+		const fromPosition = taskPositions.get(dep.fromTaskId);
+		const toPosition = taskPositions.get(dep.toTaskId);
+		const fromRowIndex = taskRowIndices.get(dep.fromTaskId);
+		const toRowIndex = taskRowIndices.get(dep.toTaskId);
+
+		// Skip if either task doesn't have a visible position
+		if (
+			!fromPosition ||
+			!toPosition ||
+			fromRowIndex === undefined ||
+			toRowIndex === undefined
+		) {
+			continue;
+		}
+
+		// Calculate start point (right edge of "from" task bar)
+		const startX = fromPosition.left + fromPosition.width + 2;
+		const startY = fromRowIndex * TASK_ROW_HEIGHT + TASK_ROW_HEIGHT / 2;
+
+		// Calculate end point (left edge of "to" task bar)
+		const endX = toPosition.left;
+		const endY = toRowIndex * TASK_ROW_HEIGHT + TASK_ROW_HEIGHT / 2;
+
+		arrows.push({
+			id: dep.id,
+			startX,
+			startY,
+			endX,
+			endY,
+			type: dep.type,
+			fromTaskId: dep.fromTaskId,
+			toTaskId: dep.toTaskId,
+		});
+	}
+
+	return arrows;
+}
+
+// ============================================
+// EXTRACT DEPENDENCIES FROM TASKS
+// ============================================
+
+function extractDependencies(tasks: Task[]): DependencyLink[] {
+	const dependencies: DependencyLink[] = [];
+	const taskIds = new Set(tasks.map((t) => t.id));
+
+	for (const task of tasks) {
+		if (task.dependencies && task.dependencies.length > 0) {
+			for (const depId of task.dependencies) {
+				// Only include dependencies where both tasks are visible
+				if (taskIds.has(depId)) {
+					dependencies.push({
+						id: `${depId}-${task.id}`,
+						fromTaskId: depId, // The blocking task
+						toTaskId: task.id, // The blocked task
+						type: "BLOCKS",
+					});
+				}
+			}
+		}
+	}
+
+	return dependencies;
 }
 
 // ============================================
@@ -383,13 +699,18 @@ function TimelineTaskRow({
 					</Tooltip>
 				)}
 
-				{/* Dependency Arrow Placeholder */}
+				{/* Dependency indicator badge */}
 				{task.dependencies && task.dependencies.length > 0 && position && (
 					<div
-						className="absolute top-4 text-muted-foreground"
-						style={{ left: position.left - 12 }}
+						className="absolute top-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[8px] font-bold"
+						style={{
+							left: position.left - 6,
+							width: 12,
+							height: 12,
+						}}
+						title={`Has ${task.dependencies.length} dependencies`}
 					>
-						<ArrowRight className="h-3 w-3" />
+						{task.dependencies.length}
 					</div>
 				)}
 			</div>
@@ -429,6 +750,7 @@ export function TimelineView({
 	isLoading,
 }: ViewProps) {
 	const [zoomLevel, setZoomLevel] = useState<ZoomLevel>("week");
+	const [showDependencies, setShowDependencies] = useState(true);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
 	const config = ZOOM_CONFIG[zoomLevel];
@@ -452,6 +774,76 @@ export function TimelineView({
 		() => tasks.filter((t) => !t.startDate && !t.dueDate),
 		[tasks],
 	);
+
+	// Calculate task positions for dependency arrows
+	const taskPositions = useMemo(() => {
+		const positions = new Map<string, { left: number; width: number }>();
+		for (const task of tasksWithDates) {
+			const position = getTaskPosition(
+				task,
+				timelineStart,
+				zoomLevel,
+				config.cellWidth,
+			);
+			if (position) {
+				positions.set(task.id, position);
+			}
+		}
+		return positions;
+	}, [tasksWithDates, timelineStart, zoomLevel, config.cellWidth]);
+
+	// Calculate row indices for dependency arrows
+	const taskRowIndices = useMemo(() => {
+		const indices = new Map<string, number>();
+		tasksWithDates.forEach((task, index) => {
+			indices.set(task.id, index);
+		});
+		return indices;
+	}, [tasksWithDates]);
+
+	// Extract dependencies from tasks
+	const dependencies = useMemo(
+		() => extractDependencies(tasksWithDates),
+		[tasksWithDates],
+	);
+
+	// Calculate arrow positions
+	const arrows = useMemo(
+		() =>
+			calculateArrowPositions(
+				tasksWithDates,
+				dependencies,
+				taskPositions,
+				taskRowIndices,
+			),
+		[tasksWithDates, dependencies, taskPositions, taskRowIndices],
+	);
+
+	// Timeline dimensions for SVG overlay
+	const timelineWidth = cells.length * config.cellWidth;
+	const timelineHeight = tasksWithDates.length * TASK_ROW_HEIGHT;
+
+	// Track scroll position for arrow rendering
+	const [scrollState, setScrollState] = useState({ left: 0, top: 0 });
+
+	// Update scroll state when scrolling
+	const handleScrollUpdate = useCallback(() => {
+		if (scrollContainerRef.current) {
+			setScrollState({
+				left: scrollContainerRef.current.scrollLeft,
+				top: scrollContainerRef.current.scrollTop,
+			});
+		}
+	}, []);
+
+	// Add scroll event listener
+	useEffect(() => {
+		const container = scrollContainerRef.current;
+		if (container) {
+			container.addEventListener("scroll", handleScrollUpdate);
+			return () => container.removeEventListener("scroll", handleScrollUpdate);
+		}
+	}, [handleScrollUpdate]);
 
 	const scrollToToday = useCallback(() => {
 		const todayIndex = cells.findIndex((cell) => {
@@ -548,6 +940,61 @@ export function TimelineView({
 					</Button>
 				</div>
 
+				{/* Dependencies Toggle */}
+				{dependencies.length > 0 && (
+					<Tooltip>
+						<TooltipTrigger
+							render={
+								<Button
+									variant={showDependencies ? "secondary" : "outline"}
+									size="sm"
+									onClick={() => setShowDependencies(!showDependencies)}
+									className="gap-1"
+								>
+									<GitBranch className="h-4 w-4" />
+									<span className="hidden sm:inline">Dependencies</span>
+									<span className="rounded-full bg-muted px-1.5 text-xs">
+										{dependencies.length}
+									</span>
+								</Button>
+							}
+						/>
+						<TooltipContent>
+							<div className="space-y-1">
+								<p className="font-medium">
+									{showDependencies ? "Hide" : "Show"} dependency arrows
+								</p>
+								<div className="flex flex-col gap-1 text-xs">
+									<div className="flex items-center gap-2">
+										<span
+											className="h-0.5 w-4 rounded"
+											style={{ backgroundColor: "#ef4444" }}
+										/>
+										<span>Blocks</span>
+									</div>
+									<div className="flex items-center gap-2">
+										<span
+											className="h-0.5 w-4 rounded"
+											style={{ backgroundColor: "#f59e0b" }}
+										/>
+										<span>Required by</span>
+									</div>
+									<div className="flex items-center gap-2">
+										<span
+											className="h-0.5 w-4 rounded border-dashed"
+											style={{
+												backgroundColor: "#6b7280",
+												borderStyle: "dashed",
+											}}
+										/>
+										<span>Related to</span>
+									</div>
+								</div>
+							</div>
+						</TooltipContent>
+					</Tooltip>
+				)}
+
 				<div className="flex-1" />
 
 				{/* Stats */}
@@ -576,24 +1023,38 @@ export function TimelineView({
 						cellWidth={config.cellWidth}
 					/>
 
-					{/* Task Rows */}
-					<div>
+					{/* Task Rows with Dependency Arrows */}
+					<div className="relative">
 						{tasksWithDates.length > 0 ? (
-							tasksWithDates.map((task) => (
-								<TimelineTaskRow
-									key={task.id}
-									task={task}
-									position={getTaskPosition(
-										task,
-										timelineStart,
-										zoomLevel,
-										config.cellWidth,
-									)}
-									cells={cells}
-									cellWidth={config.cellWidth}
-									onClick={() => onTaskClick(task.id)}
-								/>
-							))
+							<>
+								{/* Task Rows */}
+								{tasksWithDates.map((task) => (
+									<TimelineTaskRow
+										key={task.id}
+										task={task}
+										position={getTaskPosition(
+											task,
+											timelineStart,
+											zoomLevel,
+											config.cellWidth,
+										)}
+										cells={cells}
+										cellWidth={config.cellWidth}
+										onClick={() => onTaskClick(task.id)}
+									/>
+								))}
+
+								{/* Dependency Arrows Overlay */}
+								{showDependencies && arrows.length > 0 && (
+									<DependencyArrowsOverlay
+										arrows={arrows}
+										width={timelineWidth}
+										height={timelineHeight}
+										scrollLeft={scrollState.left}
+										scrollTop={scrollState.top}
+									/>
+								)}
+							</>
 						) : (
 							<div className="flex h-48 items-center justify-center text-muted-foreground">
 								<div className="text-center">

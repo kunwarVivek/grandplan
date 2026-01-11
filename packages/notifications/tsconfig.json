@@ -1,5 +1,5 @@
 {
-	"extends": "@grandplan/config/base.json",
+	"extends": "@grandplan/config/tsconfig.base.json",
 	"compilerOptions": {
 		"outDir": "./dist",
 		"rootDir": "./src"

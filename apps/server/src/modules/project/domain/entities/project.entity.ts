@@ -2,7 +2,7 @@
 // PROJECT ENTITY
 // ============================================
 
-import type { ProjectStatus } from "@prisma/client";
+import type { ProjectStatus } from "@grandplan/db";
 
 export interface ProjectEntity {
 	id: string;

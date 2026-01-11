@@ -12,6 +12,10 @@ import {
 } from "@grandplan/queue";
 import type { Job } from "bullmq";
 import OpenAI from "openai";
+import {
+	AIDecompositionJobSchema,
+	validateJobPayload,
+} from "../schemas/job-schemas.js";
 
 interface AISubtask {
 	title: string;
@@ -24,7 +28,15 @@ export function registerAIDecompositionWorker(): void {
 	queueManager.registerWorker<AIDecompositionJobData, JobResult>(
 		"ai:decomposition",
 		async (job: Job<AIDecompositionJobData>): Promise<JobResult> => {
-			const { taskId, workspaceId, depth: _depth = 1, maxSubtasks = 5 } = job.data;
+			// Validate job payload with Zod schema
+			const validatedData = validateJobPayload(
+				AIDecompositionJobSchema,
+				job.data,
+				job.id,
+				"ai:decomposition"
+			);
+
+			const { taskId, workspaceId, depth: _depth = 1, maxSubtasks = 5 } = validatedData;
 
 			console.log(`Processing AI decomposition for task ${taskId}`);
 

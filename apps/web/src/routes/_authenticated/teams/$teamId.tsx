@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+	AlertTriangle,
 	Calendar,
 	Check,
 	Mail,
@@ -31,137 +32,109 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTeam, useTeamMembers } from "@/features/teams/hooks/use-teams";
+import { handleApiError } from "@/lib/api-client";
 
 export const Route = createFileRoute("/_authenticated/teams/$teamId")({
 	component: TeamDetailPage,
-	loader: async ({ params }) => {
-		// Mock team data - replace with actual API call
-		const team = {
-			id: params.teamId,
-			name: "Frontend Team",
-			description:
-				"Responsible for all client-side development and UI/UX implementation",
-			color: "bg-blue-500",
-			createdAt: "2024-06-15",
-			lead: {
-				id: "1",
-				name: "Sarah Chen",
-				email: "sarah@example.com",
-				avatar: "",
-				initials: "SC",
-			},
-			members: [
-				{
-					id: "1",
-					name: "Sarah Chen",
-					email: "sarah@example.com",
-					avatar: "",
-					initials: "SC",
-					role: "Lead",
-					joinedAt: "2024-06-15",
-				},
-				{
-					id: "2",
-					name: "Alex Rivera",
-					email: "alex@example.com",
-					avatar: "",
-					initials: "AR",
-					role: "Member",
-					joinedAt: "2024-07-01",
-				},
-				{
-					id: "3",
-					name: "Jordan Kim",
-					email: "jordan@example.com",
-					avatar: "",
-					initials: "JK",
-					role: "Member",
-					joinedAt: "2024-07-15",
-				},
-				{
-					id: "4",
-					name: "Taylor Morgan",
-					email: "taylor@example.com",
-					avatar: "",
-					initials: "TM",
-					role: "Member",
-					joinedAt: "2024-08-01",
-				},
-				{
-					id: "5",
-					name: "Casey Brooks",
-					email: "casey@example.com",
-					avatar: "",
-					initials: "CB",
-					role: "Member",
-					joinedAt: "2024-08-15",
-				},
-			],
-			permissions: [
-				{
-					id: "projects.view",
-					name: "View Projects",
-					description: "Can view all projects assigned to the team",
-					enabled: true,
-				},
-				{
-					id: "projects.edit",
-					name: "Edit Projects",
-					description: "Can edit project details and settings",
-					enabled: true,
-				},
-				{
-					id: "projects.create",
-					name: "Create Projects",
-					description: "Can create new projects",
-					enabled: false,
-				},
-				{
-					id: "tasks.view",
-					name: "View Tasks",
-					description: "Can view all tasks in assigned projects",
-					enabled: true,
-				},
-				{
-					id: "tasks.manage",
-					name: "Manage Tasks",
-					description: "Can create, edit, and delete tasks",
-					enabled: true,
-				},
-				{
-					id: "members.invite",
-					name: "Invite Members",
-					description: "Can invite new members to the team",
-					enabled: false,
-				},
-				{
-					id: "settings.view",
-					name: "View Settings",
-					description: "Can view team settings",
-					enabled: true,
-				},
-				{
-					id: "settings.admin",
-					name: "Admin Settings",
-					description: "Can modify team settings and permissions",
-					enabled: false,
-				},
-			],
-		};
-		return { team };
-	},
 });
 
 const roleColors = {
-	Lead: "default",
-	Member: "secondary",
+	lead: "default",
+	member: "secondary",
 } as const;
 
+// Default color for teams without a color set
+const DEFAULT_TEAM_COLOR = "#3b82f6";
+
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((word) => word[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
+// Mock permissions data - to be replaced with real API when available
+const DEFAULT_PERMISSIONS = [
+	{
+		id: "projects.view",
+		name: "View Projects",
+		description: "Can view all projects assigned to the team",
+		enabled: true,
+	},
+	{
+		id: "projects.edit",
+		name: "Edit Projects",
+		description: "Can edit project details and settings",
+		enabled: true,
+	},
+	{
+		id: "projects.create",
+		name: "Create Projects",
+		description: "Can create new projects",
+		enabled: false,
+	},
+	{
+		id: "tasks.view",
+		name: "View Tasks",
+		description: "Can view all tasks in assigned projects",
+		enabled: true,
+	},
+	{
+		id: "tasks.manage",
+		name: "Manage Tasks",
+		description: "Can create, edit, and delete tasks",
+		enabled: true,
+	},
+	{
+		id: "members.invite",
+		name: "Invite Members",
+		description: "Can invite new members to the team",
+		enabled: false,
+	},
+	{
+		id: "settings.view",
+		name: "View Settings",
+		description: "Can view team settings",
+		enabled: true,
+	},
+	{
+		id: "settings.admin",
+		name: "Admin Settings",
+		description: "Can modify team settings and permissions",
+		enabled: false,
+	},
+];
+
 function TeamDetailPage() {
-	const { team } = Route.useLoaderData();
-	const [permissions, setPermissions] = useState(team.permissions);
+	const { teamId } = Route.useParams();
+	const {
+		data: team,
+		isLoading: isLoadingTeam,
+		isError: isTeamError,
+		error: teamError,
+		refetch: refetchTeam,
+	} = useTeam(teamId);
+	const {
+		data: membersData,
+		isLoading: isLoadingMembers,
+		isError: isMembersError,
+		error: membersError,
+		refetch: refetchMembers,
+	} = useTeamMembers(teamId);
+
+	const [permissions, setPermissions] = useState(DEFAULT_PERMISSIONS);
+
+	const members = membersData?.members ?? [];
+	const teamLead = members.find((m) => m.role === "lead");
+	const isLoading = isLoadingTeam || isLoadingMembers;
+	const isError = isTeamError || isMembersError;
+	const error = teamError || membersError;
 
 	const togglePermission = (permissionId: string) => {
 		setPermissions((prev) =>
@@ -171,11 +144,93 @@ function TeamDetailPage() {
 		);
 	};
 
+	const handleRefetch = () => {
+		refetchTeam();
+		refetchMembers();
+	};
+
+	// Loading state
+	if (isLoading) {
+		return (
+			<ContentContainer>
+				<div className="space-y-6">
+					{/* Header skeleton */}
+					<div className="space-y-4">
+						<Skeleton className="h-8 w-48" />
+						<Skeleton className="h-4 w-96" />
+						<div className="flex items-center gap-4">
+							<Skeleton className="size-10 rounded-md" />
+							<Skeleton className="h-4 w-32" />
+							<Skeleton className="h-4 w-24" />
+						</div>
+					</div>
+
+					{/* Tabs skeleton */}
+					<div className="flex gap-4 border-b pb-2">
+						<Skeleton className="h-8 w-24" />
+						<Skeleton className="h-8 w-24" />
+						<Skeleton className="h-8 w-24" />
+					</div>
+
+					{/* Members skeleton */}
+					<div className="space-y-2">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<Card key={i}>
+								<CardContent className="flex items-center gap-4 p-4">
+									<Skeleton className="size-10 rounded-full" />
+									<div className="flex-1 space-y-2">
+										<Skeleton className="h-4 w-32" />
+										<Skeleton className="h-3 w-48" />
+									</div>
+								</CardContent>
+							</Card>
+						))}
+					</div>
+				</div>
+			</ContentContainer>
+		);
+	}
+
+	// Error state
+	if (isError) {
+		return (
+			<ContentContainer>
+				<div className="mt-12 flex flex-col items-center justify-center text-center">
+					<AlertTriangle className="size-12 text-destructive" />
+					<h3 className="mt-4 font-medium text-lg">Failed to load team</h3>
+					<p className="mt-2 text-muted-foreground text-sm">
+						{handleApiError(error)}
+					</p>
+					<Button variant="outline" className="mt-4" onClick={handleRefetch}>
+						Try Again
+					</Button>
+				</div>
+			</ContentContainer>
+		);
+	}
+
+	// Team not found
+	if (!team) {
+		return (
+			<ContentContainer>
+				<div className="mt-12 flex flex-col items-center justify-center text-center">
+					<Users className="size-12 text-muted-foreground" />
+					<h3 className="mt-4 font-medium text-lg">Team not found</h3>
+					<p className="mt-2 text-muted-foreground text-sm">
+						The team you're looking for doesn't exist or you don't have access.
+					</p>
+				</div>
+			</ContentContainer>
+		);
+	}
+
+	const teamColor = team.color || DEFAULT_TEAM_COLOR;
+
 	return (
 		<ContentContainer>
 			<PageHeader
 				title={team.name}
-				description={team.description}
+				description={team.description ?? undefined}
 				breadcrumbs={[{ label: "Teams", href: "/teams" }, { label: team.name }]}
 				actions={
 					<div className="flex items-center gap-2">
@@ -206,18 +261,21 @@ function TeamDetailPage() {
 			>
 				<div className="flex items-center gap-4">
 					<div
-						className={`flex size-10 items-center justify-center rounded-md ${team.color}`}
+						className="flex size-10 items-center justify-center rounded-md"
+						style={{ backgroundColor: teamColor }}
 					>
 						<Users className="size-5 text-white" />
 					</div>
-					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground text-sm">Lead:</span>
-						<Avatar size="sm">
-							<AvatarImage src={team.lead.avatar} />
-							<AvatarFallback>{team.lead.initials}</AvatarFallback>
-						</Avatar>
-						<span className="font-medium text-sm">{team.lead.name}</span>
-					</div>
+					{teamLead && (
+						<div className="flex items-center gap-2">
+							<span className="text-muted-foreground text-sm">Lead:</span>
+							<Avatar size="sm">
+								<AvatarImage src={teamLead.user.image ?? undefined} />
+								<AvatarFallback>{getInitials(teamLead.user.name)}</AvatarFallback>
+							</Avatar>
+							<span className="font-medium text-sm">{teamLead.user.name}</span>
+						</div>
+					)}
 					<span className="text-muted-foreground text-sm">
 						Created {new Date(team.createdAt).toLocaleDateString()}
 					</span>
@@ -228,7 +286,7 @@ function TeamDetailPage() {
 				<TabsList variant="line">
 					<TabsTrigger value="members">
 						<Users className="mr-1.5 size-4" />
-						Members ({team.members.length})
+						Members ({members.length})
 					</TabsTrigger>
 					<TabsTrigger value="permissions">
 						<Shield className="mr-1.5 size-4" />
@@ -248,60 +306,70 @@ function TeamDetailPage() {
 							Add Member
 						</Button>
 					</div>
-					<div className="mt-4 space-y-2">
-						{team.members.map((member) => (
-							<Card key={member.id}>
-								<CardContent className="flex items-center gap-4 p-4">
-									<Avatar>
-										<AvatarImage src={member.avatar} />
-										<AvatarFallback>{member.initials}</AvatarFallback>
-									</Avatar>
-									<div className="min-w-0 flex-1">
-										<div className="flex items-center gap-2">
-											<p className="font-medium">{member.name}</p>
-											<Badge
-												variant={
-													roleColors[member.role as keyof typeof roleColors]
-												}
-											>
-												{member.role}
-											</Badge>
+					{members.length === 0 ? (
+						<div className="mt-8 flex flex-col items-center justify-center text-center">
+							<Users className="size-12 text-muted-foreground" />
+							<h3 className="mt-4 font-medium text-lg">No members yet</h3>
+							<p className="mt-2 text-muted-foreground text-sm">
+								Add members to get started
+							</p>
+						</div>
+					) : (
+						<div className="mt-4 space-y-2">
+							{members.map((member) => (
+								<Card key={member.id}>
+									<CardContent className="flex items-center gap-4 p-4">
+										<Avatar>
+											<AvatarImage src={member.user.image ?? undefined} />
+											<AvatarFallback>{getInitials(member.user.name)}</AvatarFallback>
+										</Avatar>
+										<div className="min-w-0 flex-1">
+											<div className="flex items-center gap-2">
+												<p className="font-medium">{member.user.name}</p>
+												<Badge
+													variant={
+														roleColors[member.role as keyof typeof roleColors]
+													}
+												>
+													{member.role === "lead" ? "Lead" : "Member"}
+												</Badge>
+											</div>
+											<div className="flex items-center gap-4 text-muted-foreground text-sm">
+												<span className="flex items-center gap-1">
+													<Mail className="size-3" />
+													{member.user.email}
+												</span>
+												<span className="flex items-center gap-1">
+													<Calendar className="size-3" />
+													Joined {new Date(member.createdAt).toLocaleDateString()}
+												</span>
+											</div>
 										</div>
-										<div className="flex items-center gap-4 text-muted-foreground text-sm">
-											<span className="flex items-center gap-1">
-												<Mail className="size-3" />
-												{member.email}
-											</span>
-											<span className="flex items-center gap-1">
-												<Calendar className="size-3" />
-												Joined {new Date(member.joinedAt).toLocaleDateString()}
-											</span>
-										</div>
-									</div>
-									<DropdownMenu>
-										<DropdownMenuTrigger>
-											<Button variant="ghost" size="icon-sm">
-												<MoreHorizontal className="size-4" />
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent align="end">
-											{member.role !== "Lead" && (
-												<DropdownMenuItem>
-													<Shield className="mr-2 size-4" />
-													Make Team Lead
+										<DropdownMenu>
+											<DropdownMenuTrigger>
+												<Button variant="ghost" size="icon-sm">
+													<MoreHorizontal className="size-4" />
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												{member.role !== "lead" && (
+													<DropdownMenuItem>
+														<Shield className="mr-2 size-4" />
+														Make Team Lead
+													</DropdownMenuItem>
+												)}
+												<DropdownMenuSeparator />
+												<DropdownMenuItem className="text-destructive">
+													<UserMinus className="mr-2 size-4" />
+													Remove from Team
 												</DropdownMenuItem>
-											)}
-											<DropdownMenuSeparator />
-											<DropdownMenuItem className="text-destructive">
-												<UserMinus className="mr-2 size-4" />
-												Remove from Team
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
-								</CardContent>
-							</Card>
-						))}
-					</div>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</CardContent>
+								</Card>
+							))}
+						</div>
+					)}
 				</TabsContent>
 
 				<TabsContent value="permissions" className="mt-6">
@@ -370,18 +438,24 @@ function TeamDetailPage() {
 								<div>
 									<label className="font-medium text-sm">Description</label>
 									<p className="mt-1 text-muted-foreground text-sm">
-										{team.description}
+										{team.description || "No description"}
 									</p>
 								</div>
 								<div>
 									<label className="font-medium text-sm">Team Lead</label>
-									<div className="mt-1 flex items-center gap-2">
-										<Avatar size="sm">
-											<AvatarImage src={team.lead.avatar} />
-											<AvatarFallback>{team.lead.initials}</AvatarFallback>
-										</Avatar>
-										<span className="text-sm">{team.lead.name}</span>
-									</div>
+									{teamLead ? (
+										<div className="mt-1 flex items-center gap-2">
+											<Avatar size="sm">
+												<AvatarImage src={teamLead.user.image ?? undefined} />
+												<AvatarFallback>{getInitials(teamLead.user.name)}</AvatarFallback>
+											</Avatar>
+											<span className="text-sm">{teamLead.user.name}</span>
+										</div>
+									) : (
+										<p className="mt-1 text-muted-foreground text-sm">
+											No lead assigned
+										</p>
+									)}
 								</div>
 								<Button variant="outline">Edit Team Details</Button>
 							</CardContent>

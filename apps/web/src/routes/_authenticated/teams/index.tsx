@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MoreHorizontal, Plus, Search, Shield, Users } from "lucide-react";
+import { AlertTriangle, MoreHorizontal, Plus, Search, Users } from "lucide-react";
 import { useState } from "react";
 
 import { ContentContainer, PageHeader } from "@/components/layout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -21,94 +20,48 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useTeams } from "@/features/teams/hooks/use-teams";
+import { handleApiError } from "@/lib/api-client";
 
 export const Route = createFileRoute("/_authenticated/teams/")({
 	component: TeamsPage,
 });
 
-type Team = {
-	id: string;
-	name: string;
-	description: string;
-	memberCount: number;
-	members: Array<{
-		id: string;
-		name: string;
-		avatar: string;
-		initials: string;
-	}>;
-	lead: {
-		id: string;
-		name: string;
-		avatar: string;
-		initials: string;
-	};
-	color: string;
-	permissions: string[];
-};
-
-const mockTeams: Team[] = [
-	{
-		id: "1",
-		name: "Frontend Team",
-		description:
-			"Responsible for all client-side development and UI/UX implementation",
-		memberCount: 5,
-		members: [
-			{ id: "1", name: "Sarah Chen", avatar: "", initials: "SC" },
-			{ id: "2", name: "Alex Rivera", avatar: "", initials: "AR" },
-			{ id: "3", name: "Jordan Kim", avatar: "", initials: "JK" },
-		],
-		lead: { id: "1", name: "Sarah Chen", avatar: "", initials: "SC" },
-		color: "bg-blue-500",
-		permissions: ["projects.edit", "tasks.manage"],
-	},
-	{
-		id: "2",
-		name: "Backend Team",
-		description:
-			"API development, database management, and server infrastructure",
-		memberCount: 4,
-		members: [
-			{ id: "4", name: "Taylor Morgan", avatar: "", initials: "TM" },
-			{ id: "5", name: "Casey Brooks", avatar: "", initials: "CB" },
-		],
-		lead: { id: "4", name: "Taylor Morgan", avatar: "", initials: "TM" },
-		color: "bg-green-500",
-		permissions: ["projects.edit", "tasks.manage", "settings.view"],
-	},
-	{
-		id: "3",
-		name: "Design Team",
-		description: "Product design, branding, and user experience",
-		memberCount: 3,
-		members: [
-			{ id: "6", name: "Morgan Lee", avatar: "", initials: "ML" },
-			{ id: "7", name: "Riley Park", avatar: "", initials: "RP" },
-		],
-		lead: { id: "6", name: "Morgan Lee", avatar: "", initials: "ML" },
-		color: "bg-purple-500",
-		permissions: ["projects.view", "tasks.create"],
-	},
-	{
-		id: "4",
-		name: "DevOps",
-		description: "CI/CD, infrastructure, and deployment automation",
-		memberCount: 2,
-		members: [{ id: "8", name: "Jamie Chen", avatar: "", initials: "JC" }],
-		lead: { id: "8", name: "Jamie Chen", avatar: "", initials: "JC" },
-		color: "bg-orange-500",
-		permissions: ["projects.admin", "settings.admin"],
-	},
+// Default colors for teams without a color set
+const DEFAULT_TEAM_COLORS = [
+	"#3b82f6", // blue
+	"#22c55e", // green
+	"#a855f7", // purple
+	"#f97316", // orange
+	"#ef4444", // red
+	"#14b8a6", // teal
 ];
+
+function getTeamColor(color: string | null | undefined, index: number): string {
+	if (color) return color;
+	return DEFAULT_TEAM_COLORS[index % DEFAULT_TEAM_COLORS.length];
+}
+
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((word) => word[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
 
 function TeamsPage() {
 	const [searchQuery, setSearchQuery] = useState("");
+	const { data, isLoading, isError, error, refetch } = useTeams();
 
-	const filteredTeams = mockTeams.filter(
+	const teams = data?.teams ?? [];
+
+	const filteredTeams = teams.filter(
 		(team) =>
 			team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			team.description.toLowerCase().includes(searchQuery.toLowerCase()),
+			(team.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false),
 	);
 
 	return (
@@ -137,8 +90,50 @@ function TeamsPage() {
 				</div>
 			</div>
 
-			{/* Teams Grid */}
-			{filteredTeams.length === 0 ? (
+			{/* Loading State */}
+			{isLoading && (
+				<div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{Array.from({ length: 6 }).map((_, i) => (
+						<Card key={i} className="h-full">
+							<CardHeader>
+								<div className="flex items-center gap-3">
+									<Skeleton className="size-10 rounded-md" />
+									<div className="flex-1 space-y-2">
+										<Skeleton className="h-5 w-32" />
+										<Skeleton className="h-3 w-20" />
+									</div>
+								</div>
+							</CardHeader>
+							<CardContent className="space-y-4">
+								<Skeleton className="h-4 w-full" />
+								<Skeleton className="h-4 w-3/4" />
+								<div className="flex -space-x-2">
+									{Array.from({ length: 3 }).map((_, j) => (
+										<Skeleton key={j} className="size-6 rounded-full" />
+									))}
+								</div>
+							</CardContent>
+						</Card>
+					))}
+				</div>
+			)}
+
+			{/* Error State */}
+			{isError && (
+				<div className="mt-12 flex flex-col items-center justify-center text-center">
+					<AlertTriangle className="size-12 text-destructive" />
+					<h3 className="mt-4 font-medium text-lg">Failed to load teams</h3>
+					<p className="mt-2 text-muted-foreground text-sm">
+						{handleApiError(error)}
+					</p>
+					<Button variant="outline" className="mt-4" onClick={() => refetch()}>
+						Try Again
+					</Button>
+				</div>
+			)}
+
+			{/* Empty State */}
+			{!isLoading && !isError && filteredTeams.length === 0 && (
 				<div className="mt-12 flex flex-col items-center justify-center text-center">
 					<Users className="size-12 text-muted-foreground" />
 					<h3 className="mt-4 font-medium text-lg">No teams found</h3>
@@ -154,9 +149,12 @@ function TeamsPage() {
 						</Button>
 					)}
 				</div>
-			) : (
+			)}
+
+			{/* Teams Grid */}
+			{!isLoading && !isError && filteredTeams.length > 0 && (
 				<div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{filteredTeams.map((team) => (
+					{filteredTeams.map((team, index) => (
 						<Link
 							key={team.id}
 							to="/teams/$teamId"
@@ -167,15 +165,15 @@ function TeamsPage() {
 									<div className="flex items-start justify-between">
 										<div className="flex items-center gap-3">
 											<div
-												className={`flex size-10 items-center justify-center rounded-md ${team.color}`}
+												className="flex size-10 items-center justify-center rounded-md"
+												style={{ backgroundColor: getTeamColor(team.color, index) }}
 											>
 												<Users className="size-5 text-white" />
 											</div>
 											<div>
 												<CardTitle>{team.name}</CardTitle>
-												<CardDescription className="flex items-center gap-1 text-xs">
-													<Users className="size-3" />
-													{team.memberCount} members
+												<CardDescription className="text-xs">
+													/{team.slug}
 												</CardDescription>
 											</div>
 										</div>
@@ -201,56 +199,20 @@ function TeamsPage() {
 									</div>
 								</CardHeader>
 								<CardContent className="space-y-4">
-									<p className="line-clamp-2 text-muted-foreground text-sm">
-										{team.description}
-									</p>
+									{team.description && (
+										<p className="line-clamp-2 text-muted-foreground text-sm">
+											{team.description}
+										</p>
+									)}
 
-									{/* Team Lead */}
+									{/* Team Icon Placeholder */}
 									<div className="flex items-center gap-2">
-										<span className="text-muted-foreground text-xs">Lead:</span>
-										<div className="flex items-center gap-2">
-											<Avatar size="sm">
-												<AvatarImage src={team.lead.avatar} />
-												<AvatarFallback>{team.lead.initials}</AvatarFallback>
-											</Avatar>
-											<span className="text-sm">{team.lead.name}</span>
-										</div>
-									</div>
-
-									{/* Members */}
-									<div className="flex items-center justify-between">
-										<div className="flex -space-x-2">
-											{team.members.slice(0, 4).map((member) => (
-												<Avatar key={member.id} size="sm">
-													<AvatarImage src={member.avatar} />
-													<AvatarFallback>{member.initials}</AvatarFallback>
-												</Avatar>
-											))}
-											{team.memberCount > 4 && (
-												<div className="flex size-6 items-center justify-center rounded-full bg-muted text-xs ring-2 ring-background">
-													+{team.memberCount - 4}
-												</div>
-											)}
-										</div>
-									</div>
-
-									{/* Permissions */}
-									<div className="flex flex-wrap gap-1">
-										{team.permissions.slice(0, 2).map((permission) => (
-											<Badge
-												key={permission}
-												variant="secondary"
-												className="text-xs"
-											>
-												<Shield className="mr-1 size-3" />
-												{permission}
-											</Badge>
-										))}
-										{team.permissions.length > 2 && (
-											<Badge variant="secondary" className="text-xs">
-												+{team.permissions.length - 2}
-											</Badge>
-										)}
+										<Avatar size="sm">
+											<AvatarFallback>{getInitials(team.name)}</AvatarFallback>
+										</Avatar>
+										<span className="text-muted-foreground text-xs">
+											View team details
+										</span>
 									</div>
 								</CardContent>
 							</Card>

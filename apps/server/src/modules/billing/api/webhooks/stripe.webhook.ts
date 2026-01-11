@@ -132,7 +132,7 @@ export type StripeWebhookEvent = (typeof STRIPE_WEBHOOK_EVENTS)[number];
  */
 export function stripeRawBodyMiddleware(
 	req: Request,
-	res: Response,
+	_res: Response,
 	next: NextFunction,
 ): void {
 	if (req.path === "/api/webhooks/stripe") {

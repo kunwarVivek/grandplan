@@ -15,7 +15,7 @@ import {
 } from "@grandplan/ai";
 import { ForbiddenError, NotFoundError } from "@grandplan/core";
 import { db } from "@grandplan/db";
-import { queueManager } from "@grandplan/queue";
+import { queueManager as _queueManager } from "@grandplan/queue";
 
 export interface AIOperationContext {
 	userId: string;
@@ -229,7 +229,7 @@ export class AIOrchestrator {
 
 		switch (decision.decisionType) {
 			case "DECOMPOSITION": {
-				const decompositionResult = response as DecompositionResult;
+				const decompositionResult = response as unknown as DecompositionResult;
 				await decompositionService.applyDecomposition(
 					decision.taskId,
 					decisionId,
@@ -240,7 +240,7 @@ export class AIOrchestrator {
 			}
 
 			case "ESTIMATION": {
-				const estimationResult = response as EstimationResult;
+				const estimationResult = response as unknown as EstimationResult;
 				await estimationService.applyEstimation(
 					decision.taskId,
 					decisionId,
@@ -452,7 +452,7 @@ export class AIOrchestrator {
 	 */
 	private async checkUsageLimits(
 		organizationId: string,
-		operationType: "decomposition" | "estimation" | "suggestion",
+		_operationType: "decomposition" | "estimation" | "suggestion",
 	): Promise<void> {
 		const subscription = await db.subscription.findUnique({
 			where: { organizationId },

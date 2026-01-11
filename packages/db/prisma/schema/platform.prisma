@@ -4,44 +4,44 @@
 
 // Platform administrators (separate from org admins)
 model PlatformAdmin {
-  id              String            @id @default(cuid())
-  userId          String            @unique
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  role            PlatformRole      @default(ADMIN)
-  permissions     String[]          // Additional granular permissions
+  role        PlatformRole @default(ADMIN)
+  permissions String[] // Additional granular permissions
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([role])
   @@map("platform_admin")
 }
 
 enum PlatformRole {
-  SUPER_ADMIN     // Full access to everything
-  ADMIN           // Standard admin (most operations)
-  SUPPORT         // Read access + limited support actions
-  BILLING_ADMIN   // Billing-focused access only
-  ANALYST         // Read-only analytics access
+  SUPER_ADMIN // Full access to everything
+  ADMIN // Standard admin (most operations)
+  SUPPORT // Read access + limited support actions
+  BILLING_ADMIN // Billing-focused access only
+  ANALYST // Read-only analytics access
 }
 
 // System configuration (key-value store)
 model SystemConfig {
-  id              String          @id @default(cuid())
-  key             String          @unique
-  value           Json
-  description     String?
+  id          String  @id @default(cuid())
+  key         String  @unique
+  value       Json
+  description String?
 
   // Grouping
-  category        String          @default("general")
+  category String @default("general")
 
   // Validation
-  valueType       String          @default("string") // string, number, boolean, json
-  isSecret        Boolean         @default(false)    // Mask in UI
+  valueType String  @default("string") // string, number, boolean, json
+  isSecret  Boolean @default(false) // Mask in UI
 
-  updatedAt       DateTime        @updatedAt
-  updatedById     String?
+  updatedAt   DateTime @updatedAt
+  updatedById String?
 
   @@index([category])
   @@map("system_config")
@@ -49,29 +49,29 @@ model SystemConfig {
 
 // Platform announcements and notifications
 model Announcement {
-  id              String            @id @default(cuid())
-  title           String
-  content         String            @db.Text
-  type            AnnouncementType  @default(INFO)
+  id      String           @id @default(cuid())
+  title   String
+  content String           @db.Text
+  type    AnnouncementType @default(INFO)
 
   // Targeting
-  targetAudience  String[]          // ["all", "enterprise", "free", "trial", etc.]
-  targetOrgIds    String[]          // Specific org IDs if needed
+  targetAudience String[] // ["all", "enterprise", "free", "trial", etc.]
+  targetOrgIds   String[] // Specific org IDs if needed
 
   // Scheduling
-  startsAt        DateTime
-  endsAt          DateTime?
+  startsAt DateTime
+  endsAt   DateTime?
 
   // Display options
-  dismissible     Boolean           @default(true)
-  showBanner      Boolean           @default(true)
-  priority        Int               @default(0)      // Higher = more prominent
+  dismissible Boolean @default(true)
+  showBanner  Boolean @default(true)
+  priority    Int     @default(0) // Higher = more prominent
 
-  isActive        Boolean           @default(true)
+  isActive Boolean @default(true)
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  createdById     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
 
   @@index([isActive, startsAt])
   @@index([type])
@@ -89,10 +89,10 @@ enum AnnouncementType {
 
 // Track which users have dismissed announcements
 model AnnouncementDismissal {
-  id              String          @id @default(cuid())
-  announcementId  String
-  userId          String
-  dismissedAt     DateTime        @default(now())
+  id             String   @id @default(cuid())
+  announcementId String
+  userId         String
+  dismissedAt    DateTime @default(now())
 
   @@unique([announcementId, userId])
   @@index([userId])
@@ -101,31 +101,31 @@ model AnnouncementDismissal {
 
 // API Keys for programmatic access
 model ApiKey {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
-  name            String
-  description     String?
+  name        String
+  description String?
 
   // Key is hashed, prefix stored for identification
-  keyHash         String          @unique
-  keyPrefix       String          // First 8 chars for identification
+  keyHash   String @unique
+  keyPrefix String // First 8 chars for identification
 
   // Ownership
-  userId          String
-  organizationId  String?
+  userId         String
+  organizationId String?
 
   // Permissions/Scopes
-  scopes          String[]        // ["read:tasks", "write:tasks", etc.]
+  scopes String[] // ["read:tasks", "write:tasks", etc.]
 
   // Limits
-  rateLimit       Int             @default(1000)    // Requests per hour
+  rateLimit Int @default(1000) // Requests per hour
 
   // Lifecycle
-  expiresAt       DateTime?
-  lastUsedAt      DateTime?
-  revokedAt       DateTime?
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
 
-  createdAt       DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([organizationId])
@@ -136,19 +136,19 @@ model ApiKey {
 
 // Waitlist for early access / beta features
 model Waitlist {
-  id              String          @id @default(cuid())
-  email           String          @unique
-  name            String?
-  company         String?
+  id      String  @id @default(cuid())
+  email   String  @unique
+  name    String?
+  company String?
 
-  source          String?         // How they heard about us
-  notes           String?
+  source String? // How they heard about us
+  notes  String?
 
-  status          WaitlistStatus  @default(PENDING)
-  invitedAt       DateTime?
-  signedUpAt      DateTime?
+  status     WaitlistStatus @default(PENDING)
+  invitedAt  DateTime?
+  signedUpAt DateTime?
 
-  createdAt       DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([status])
   @@index([createdAt])
@@ -164,36 +164,66 @@ enum WaitlistStatus {
 
 // Platform metrics snapshots (for analytics)
 model PlatformMetricsSnapshot {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
   // Counts
-  totalUsers      Int
-  totalOrganizations Int
+  totalUsers               Int
+  totalOrganizations       Int
   totalActiveSubscriptions Int
 
   // Revenue
-  mrr             Decimal         @db.Decimal(12, 2)
-  arr             Decimal         @db.Decimal(12, 2)
+  mrr Decimal @db.Decimal(12, 2)
+  arr Decimal @db.Decimal(12, 2)
 
   // Usage
-  totalTasks      Int
-  totalProjects   Int
+  totalTasks         Int
+  totalProjects      Int
   activeUsersLast24h Int
-  activeUsersLast7d Int
+  activeUsersLast7d  Int
   activeUsersLast30d Int
 
   // Growth
-  newUsersToday   Int
-  newOrgsToday    Int
+  newUsersToday    Int
+  newOrgsToday     Int
   churnedOrgsToday Int
 
   // AI Usage
-  aiRequestsToday Int
+  aiRequestsToday   Int
   aiTokensUsedToday Int
 
-  snapshotDate    DateTime        @unique
-  createdAt       DateTime        @default(now())
+  snapshotDate DateTime @unique
+  createdAt    DateTime @default(now())
 
   @@index([snapshotDate])
   @@map("platform_metrics_snapshot")
+}
+
+// User onboarding progress tracking
+model OnboardingProgress {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Onboarding steps completed
+  stepsCompleted String[] @default([]) // ["profile", "organization", "workspace", "first_task", "invite_member"]
+  currentStep    String? // Current step user is on
+
+  // Contextual data
+  metadata Json? // Additional onboarding context
+
+  // Progress tracking
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  skippedAt   DateTime? // If user skips onboarding
+
+  // Engagement tracking
+  lastActiveAt   DateTime  @default(now())
+  reminderSentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([completedAt])
+  @@index([currentStep])
+  @@map("onboarding_progress")
 }

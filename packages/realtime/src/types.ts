@@ -42,14 +42,61 @@ export interface ServerToClientEvents {
 	"presence:list": (users: PresenceData[]) => void;
 	"cursor:moved": (cursor: CursorPosition) => void;
 
+	// Project events
+	"project:created": (project: { id: string; data: Record<string, unknown> }) => void;
+	"project:updated": (data: { projectId: string; changes: Record<string, unknown>; userId: string; timestamp: Date }) => void;
+	"project:deleted": (data: { projectId: string; userId: string; timestamp: Date }) => void;
+	"project:archived": (data: { projectId: string; userId: string; timestamp: Date }) => void;
+
 	// Task events
 	"task:created": (task: { id: string; data: Record<string, unknown> }) => void;
 	"task:updated": (update: TaskUpdate) => void;
 	"task:deleted": (taskId: string) => void;
 	"task:moved": (data: {
 		taskId: string;
-		newParentId?: string;
-		newIndex: number;
+		previousParentId?: string | null;
+		newParentId?: string | null;
+		previousPath?: string;
+		newPath?: string;
+		newIndex?: number;
+		userId?: string;
+		timestamp?: Date;
+	}) => void;
+	"task:dependencyAdded": (data: {
+		dependencyId: string;
+		fromTaskId: string;
+		toTaskId: string;
+		type: string;
+		userId: string;
+		timestamp: Date;
+	}) => void;
+	"task:dependencyRemoved": (data: {
+		dependencyId: string;
+		fromTaskId: string;
+		toTaskId: string;
+		type: string;
+		userId: string;
+		timestamp: Date;
+	}) => void;
+	"task:commentAdded": (data: {
+		commentId: string;
+		taskId: string;
+		authorId: string | null;
+		content: string;
+		timestamp: Date;
+	}) => void;
+	"task:commentUpdated": (data: {
+		commentId: string;
+		taskId: string;
+		content: string;
+		userId: string;
+		timestamp: Date;
+	}) => void;
+	"task:commentDeleted": (data: {
+		commentId: string;
+		taskId: string;
+		userId: string;
+		timestamp: Date;
 	}) => void;
 
 	// CRDT sync events

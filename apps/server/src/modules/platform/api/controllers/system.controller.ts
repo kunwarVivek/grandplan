@@ -96,7 +96,7 @@ const UpdateAnnouncementSchema = z.object({
  * GET /api/platform/system/config
  */
 export async function getSettings(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -126,7 +126,7 @@ export async function updateSettings(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -163,7 +163,7 @@ export async function toggleMaintenanceMode(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -203,7 +203,7 @@ export async function toggleMaintenanceMode(
  * GET /api/platform/system/feature-flags
  */
 export async function listFeatureFlags(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -231,7 +231,7 @@ export async function getFeatureFlag(
 	try {
 		const { key } = req.params;
 
-		const flag = await systemConfigService.getFeatureFlag(key);
+		const flag = await systemConfigService.getFeatureFlag(key!);
 
 		res.status(200).json({
 			success: true,
@@ -256,7 +256,7 @@ export async function createFeatureFlag(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -294,17 +294,17 @@ export async function updateFeatureFlag(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
-		await systemConfigService.updateFeatureFlag(key, parseResult.data);
+		await systemConfigService.updateFeatureFlag(key!, parseResult.data);
 
 		await logPlatformAction(
 			req,
 			"update_feature_flag",
 			"feature_flag",
-			key,
+			key!,
 			parseResult.data,
 		);
 
@@ -329,9 +329,9 @@ export async function deleteFeatureFlag(
 	try {
 		const { key } = req.params;
 
-		await systemConfigService.deleteFeatureFlag(key);
+		await systemConfigService.deleteFeatureFlag(key!);
 
-		await logPlatformAction(req, "delete_feature_flag", "feature_flag", key);
+		await logPlatformAction(req, "delete_feature_flag", "feature_flag", key!);
 
 		res.status(200).json({
 			success: true,
@@ -392,7 +392,7 @@ export async function getAnnouncement(
 	try {
 		const { id } = req.params;
 
-		const announcement = await systemConfigService.getAnnouncement(id);
+		const announcement = await systemConfigService.getAnnouncement(id!);
 
 		res.status(200).json({
 			success: true,
@@ -417,7 +417,7 @@ export async function createAnnouncement(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -463,7 +463,7 @@ export async function updateAnnouncement(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -480,13 +480,13 @@ export async function updateAnnouncement(
 					: undefined,
 		};
 
-		await systemConfigService.updateAnnouncement(id, data);
+		await systemConfigService.updateAnnouncement(id!, data);
 
 		await logPlatformAction(
 			req,
 			"update_announcement",
 			"announcement",
-			id,
+			id!,
 			parseResult.data,
 		);
 
@@ -511,9 +511,9 @@ export async function deleteAnnouncement(
 	try {
 		const { id } = req.params;
 
-		await systemConfigService.deleteAnnouncement(id);
+		await systemConfigService.deleteAnnouncement(id!);
 
-		await logPlatformAction(req, "delete_announcement", "announcement", id);
+		await logPlatformAction(req, "delete_announcement", "announcement", id!);
 
 		res.status(200).json({
 			success: true,

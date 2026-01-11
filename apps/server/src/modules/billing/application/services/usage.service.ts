@@ -3,7 +3,7 @@
 // ============================================
 
 import { NotFoundError } from "@grandplan/core";
-import { db } from "@grandplan/db";
+import { Prisma, db } from "@grandplan/db";
 
 export interface UsageSummary {
 	period: {
@@ -92,7 +92,7 @@ export class UsageService {
 		// Group by date and metric
 		const history: Map<string, Map<string, number>> = new Map();
 		for (const record of dailyRecords) {
-			const dateKey = record.recordedAt.toISOString().split("T")[0];
+			const dateKey = record.recordedAt.toISOString().split("T")[0] ?? "";
 			if (!history.has(dateKey)) {
 				history.set(dateKey, new Map());
 			}
@@ -183,7 +183,7 @@ export class UsageService {
 				quantity,
 				periodStart: subscription.currentPeriodStart,
 				periodEnd: subscription.currentPeriodEnd,
-				metadata: metadata ?? {},
+				metadata: (metadata ?? {}) as Prisma.InputJsonValue,
 			},
 		});
 
@@ -264,7 +264,7 @@ export class UsageService {
 		// Group by date
 		const byDate: Map<string, number> = new Map();
 		for (const record of records) {
-			const dateKey = record.recordedAt.toISOString().split("T")[0];
+			const dateKey = record.recordedAt.toISOString().split("T")[0] ?? "";
 			byDate.set(dateKey, (byDate.get(dateKey) ?? 0) + Number(record.quantity));
 		}
 

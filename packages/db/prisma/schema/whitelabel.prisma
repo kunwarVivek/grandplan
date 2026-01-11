@@ -4,19 +4,19 @@
 
 // Global feature flag definitions
 model FeatureFlag {
-  id              String        @id @default(cuid())
-  key             String        @unique
-  name            String
-  description     String?
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  description String?
 
-  defaultEnabled  Boolean       @default(false)
-  isPublic        Boolean       @default(false)  // Show in UI for org admins
+  defaultEnabled Boolean @default(false)
+  isPublic       Boolean @default(false) // Show in UI for org admins
 
   // Which plans include this feature by default
-  includedInPlans String[]      // Plan names array
+  includedInPlans String[] // Plan names array
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([isPublic])
   @@map("feature_flag")
@@ -24,17 +24,17 @@ model FeatureFlag {
 
 // Organization-specific feature flag overrides
 model OrganizationFeatureFlag {
-  id              String        @id @default(cuid())
-  organizationId  String
-  featureKey      String
+  id             String @id @default(cuid())
+  organizationId String
+  featureKey     String
 
-  enabled         Boolean       @default(false)
-  config          Json?         // Feature-specific configuration
+  enabled Boolean @default(false)
+  config  Json? // Feature-specific configuration
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, featureKey])
   @@index([organizationId])
@@ -44,22 +44,22 @@ model OrganizationFeatureFlag {
 
 // Custom email templates per organization
 model EmailTemplate {
-  id              String        @id @default(cuid())
-  organizationId  String
+  id             String @id @default(cuid())
+  organizationId String
 
-  templateType    EmailTemplateType
-  subject         String
-  bodyHtml        String        @db.Text
-  bodyText        String?       @db.Text
+  templateType EmailTemplateType
+  subject      String
+  bodyHtml     String            @db.Text
+  bodyText     String?           @db.Text
 
-  variables       Json?         // Available template variables documentation
+  variables Json? // Available template variables documentation
 
-  isActive        Boolean       @default(true)
+  isActive Boolean @default(true)
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, templateType])
   @@index([organizationId])
@@ -85,18 +85,18 @@ enum EmailTemplateType {
 
 // Custom domain configuration
 model CustomDomain {
-  id              String        @id @default(cuid())
-  organizationId  String        @unique
+  id             String @id @default(cuid())
+  organizationId String @unique
 
-  domain          String        @unique
-  verificationToken String      @unique
-  verifiedAt      DateTime?
+  domain            String    @unique
+  verificationToken String    @unique
+  verifiedAt        DateTime?
 
-  sslStatus       SSLStatus     @default(PENDING)
-  sslExpiresAt    DateTime?
+  sslStatus    SSLStatus @default(PENDING)
+  sslExpiresAt DateTime?
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([domain])
   @@index([verifiedAt])

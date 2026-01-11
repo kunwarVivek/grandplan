@@ -2,4 +2,4 @@
 // PLATFORM MODULE EXPORTS
 // ============================================
 
-export { platformRoutes } from "./api/routes.js";
+export { adminRoutes, platformRoutes } from "./api/routes.js";

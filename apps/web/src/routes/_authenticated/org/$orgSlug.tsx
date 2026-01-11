@@ -8,6 +8,7 @@ import {
 	BuildingIcon,
 	CreditCardIcon,
 	PaletteIcon,
+	PlugIcon,
 	UsersIcon,
 } from "lucide-react";
 
@@ -139,6 +140,17 @@ function OrgSettingsLayout() {
 						>
 							<PaletteIcon className="size-4" />
 							Branding
+						</Link>
+						<Link
+							to="/org/$orgSlug/integrations"
+							params={{ orgSlug }}
+							className={cn(
+								"flex items-center gap-3 px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground",
+								"[&.active]:bg-muted [&.active]:text-foreground",
+							)}
+						>
+							<PlugIcon className="size-4" />
+							Integrations
 						</Link>
 					</nav>
 				</aside>

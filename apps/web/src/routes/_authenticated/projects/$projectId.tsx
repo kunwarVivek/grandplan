@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { MoreHorizontal, Settings, Users } from "lucide-react";
+import { Loader2, MoreHorizontal, Settings, Users } from "lucide-react";
 
 import { ContentContainer, PageHeader } from "@/components/layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,81 +13,79 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-interface ProjectMember {
-	id: string;
-	name: string;
-	avatar: string;
-	initials: string;
-	role: string;
-}
-
-type ProjectStatus = "active" | "on-hold" | "completed" | "archived";
+import {
+	useProject,
+	useProjectMembers,
+} from "@/features/projects/hooks/use-projects";
+import type { ProjectStatus } from "@/features/projects/types";
 
 export const Route = createFileRoute("/_authenticated/projects/$projectId")({
 	component: ProjectLayout,
-	loader: async ({ params }: { params: { projectId: string } }) => {
-		// Mock project data - replace with actual API call
-		const project: {
-			id: string;
-			name: string;
-			description: string;
-			status: ProjectStatus;
-			members: ProjectMember[];
-			createdAt: string;
-			dueDate: string;
-		} = {
-			id: params.projectId,
-			name: "Website Redesign",
-			description:
-				"Complete overhaul of the company website with new branding and improved UX",
-			status: "active",
-			members: [
-				{
-					id: "1",
-					name: "Sarah Chen",
-					avatar: "",
-					initials: "SC",
-					role: "Owner",
-				},
-				{
-					id: "2",
-					name: "Alex Rivera",
-					avatar: "",
-					initials: "AR",
-					role: "Editor",
-				},
-				{
-					id: "3",
-					name: "Jordan Kim",
-					avatar: "",
-					initials: "JK",
-					role: "Viewer",
-				},
-			],
-			createdAt: "2025-01-01",
-			dueDate: "2025-02-15",
-		};
-		return { project };
-	},
 });
 
-const statusColors = {
-	active: "default",
-	"on-hold": "secondary",
-	completed: "outline",
-	archived: "secondary",
-} as const;
+const statusColors: Record<ProjectStatus, "default" | "secondary" | "outline"> =
+	{
+		planning: "secondary",
+		active: "default",
+		on_hold: "secondary",
+		completed: "outline",
+		cancelled: "secondary",
+	};
+
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
 
 function ProjectLayout() {
-	const { project } = Route.useLoaderData();
 	const { projectId } = Route.useParams();
+	const { data: project, isLoading, error } = useProject(projectId);
+	const { data: membersData } = useProjectMembers(projectId);
+
+	const members = membersData?.members ?? [];
+
+	if (isLoading) {
+		return (
+			<ContentContainer>
+				<div className="flex h-64 items-center justify-center">
+					<Loader2 className="size-8 animate-spin text-muted-foreground" />
+				</div>
+			</ContentContainer>
+		);
+	}
+
+	if (error) {
+		return (
+			<ContentContainer>
+				<div className="flex h-64 flex-col items-center justify-center gap-2">
+					<p className="text-destructive">Failed to load project</p>
+					<p className="text-sm text-muted-foreground">
+						{error instanceof Error ? error.message : "Unknown error"}
+					</p>
+				</div>
+			</ContentContainer>
+		);
+	}
+
+	if (!project) {
+		return (
+			<ContentContainer>
+				<div className="flex h-64 items-center justify-center">
+					<p className="text-muted-foreground">Project not found</p>
+				</div>
+			</ContentContainer>
+		);
+	}
 
 	return (
 		<ContentContainer>
 			<PageHeader
 				title={project.name}
-				description={project.description}
+				description={project.description ?? undefined}
 				breadcrumbs={[
 					{ label: "Projects", href: "/projects" },
 					{ label: project.name },
@@ -96,15 +94,17 @@ function ProjectLayout() {
 					<div className="flex items-center gap-2">
 						<div className="hidden items-center gap-2 sm:flex">
 							<div className="flex -space-x-2">
-								{project.members.slice(0, 3).map((member) => (
+								{members.slice(0, 3).map((member) => (
 									<Avatar key={member.id} size="sm">
-										<AvatarImage src={member.avatar} />
-										<AvatarFallback>{member.initials}</AvatarFallback>
+										<AvatarImage src={member.user.image ?? undefined} />
+										<AvatarFallback>
+											{getInitials(member.user.name)}
+										</AvatarFallback>
 									</Avatar>
 								))}
-								{project.members.length > 3 && (
+								{members.length > 3 && (
 									<div className="flex size-6 items-center justify-center rounded-full bg-muted text-xs ring-2 ring-background">
-										+{project.members.length - 3}
+										+{members.length - 3}
 									</div>
 								)}
 							</div>
@@ -138,11 +138,13 @@ function ProjectLayout() {
 			>
 				<div className="flex items-center gap-4">
 					<Badge variant={statusColors[project.status]}>
-						{project.status.replace("-", " ")}
+						{project.status.replace("_", " ")}
 					</Badge>
-					<span className="text-muted-foreground text-sm">
-						Due {new Date(project.dueDate).toLocaleDateString()}
-					</span>
+					{project.endDate && (
+						<span className="text-muted-foreground text-sm">
+							Due {new Date(project.endDate).toLocaleDateString()}
+						</span>
+					)}
 				</div>
 			</PageHeader>
 

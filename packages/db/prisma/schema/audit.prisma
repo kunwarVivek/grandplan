@@ -4,33 +4,33 @@
 
 // Organization-scoped audit logs
 model AuditLog {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
   // Who
-  userId          String?         // null for system actions
-  organizationId  String?         // null for platform-level actions
+  userId         String? // null for system actions
+  organizationId String? // null for platform-level actions
 
   // What
-  action          String          // "user.created", "subscription.updated", etc.
-  resourceType    String          // "user", "team", "subscription", etc.
-  resourceId      String?
+  action       String // "user.created", "subscription.updated", etc.
+  resourceType String // "user", "team", "subscription", etc.
+  resourceId   String?
 
   // Details
-  description     String?
-  metadata        Json?           // Additional context
-  previousState   Json?           // State before change
-  newState        Json?           // State after change
+  description   String?
+  metadata      Json? // Additional context
+  previousState Json? // State before change
+  newState      Json? // State after change
 
   // Where
-  ipAddress       String?
-  userAgent       String?
+  ipAddress String?
+  userAgent String?
 
   // When
-  createdAt       DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   // Relations
-  user            User?           @relation("AuditLogUser", fields: [userId], references: [id], onDelete: SetNull)
-  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?         @relation("AuditLogUser", fields: [userId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([userId])
@@ -46,23 +46,23 @@ model AuditLog {
 
 // System-wide platform logs (for platform admins only)
 model PlatformLog {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
-  level           LogLevel
-  category        String          // "auth", "billing", "system", "integration", etc.
-  message         String
-  metadata        Json?
+  level    LogLevel
+  category String // "auth", "billing", "system", "integration", etc.
+  message  String
+  metadata Json?
 
   // Request context
-  requestId       String?
-  userId          String?
-  organizationId  String?
+  requestId      String?
+  userId         String?
+  organizationId String?
 
   // Error details
-  errorCode       String?
-  errorStack      String?         @db.Text
+  errorCode  String?
+  errorStack String? @db.Text
 
-  createdAt       DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([level])
   @@index([category])
@@ -82,27 +82,27 @@ enum LogLevel {
 
 // Security events for compliance
 model SecurityEvent {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
-  eventType       SecurityEventType
-  severity        SecuritySeverity
+  eventType SecurityEventType
+  severity  SecuritySeverity
 
-  userId          String?
-  organizationId  String?
+  userId         String?
+  organizationId String?
 
-  description     String
-  metadata        Json?
+  description String
+  metadata    Json?
 
-  ipAddress       String?
-  userAgent       String?
-  location        String?         // Geo-location if available
+  ipAddress String?
+  userAgent String?
+  location  String? // Geo-location if available
 
-  resolved        Boolean         @default(false)
+  resolved        Boolean   @default(false)
   resolvedAt      DateTime?
   resolvedById    String?
   resolutionNotes String?
 
-  createdAt       DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([eventType])
   @@index([severity])
@@ -136,4 +136,56 @@ enum SecuritySeverity {
   MEDIUM
   HIGH
   CRITICAL
+}
+
+// GDPR Data Export Requests
+model DataExportRequest {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Request details
+  requestType DataExportType   @default(FULL_EXPORT)
+  status      DataExportStatus @default(PENDING)
+
+  // Processing
+  startedAt   DateTime?
+  completedAt DateTime?
+  expiresAt   DateTime? // When download link expires
+
+  // Output
+  downloadUrl   String? // Secure download URL
+  fileSizeBytes BigInt?
+  fileFormat    String  @default("json") // json, csv, zip
+
+  // Error handling
+  errorMessage String?
+  retryCount   Int     @default(0)
+
+  // Audit
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("data_export_request")
+}
+
+enum DataExportType {
+  FULL_EXPORT // All user data
+  TASKS_ONLY // Just tasks
+  ORGANIZATION_DATA // Org-specific data
+  AUDIT_LOGS // User's audit trail
+}
+
+enum DataExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
 }

@@ -4,41 +4,41 @@
 
 // Subscription plans (defined by platform admins)
 model Plan {
-  id                String          @id @default(cuid())
-  name              String          @unique
-  description       String?
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
 
   // Pricing
-  priceMonthly      Decimal?        @db.Decimal(10, 2)
-  priceYearly       Decimal?        @db.Decimal(10, 2)
-  currency          String          @default("USD")
+  priceMonthly Decimal? @db.Decimal(10, 2)
+  priceYearly  Decimal? @db.Decimal(10, 2)
+  currency     String   @default("USD")
 
   // Limits
-  maxUsers          Int?            // null = unlimited
-  maxTeams          Int?
-  maxProjects       Int?
-  maxStorageGB      Int?
+  maxUsers              Int? // null = unlimited
+  maxTeams              Int?
+  maxProjects           Int?
+  maxStorageGB          Int?
   maxAIRequestsPerMonth Int?
 
   // Features included (JSON for flexibility)
-  features          Json            @default("{}") // { "feature1": true, "feature2": false, ... }
+  features Json @default("{}") // { "feature1": true, "feature2": false, ... }
 
   // External IDs for payment providers
-  polarProductId        String?
-  stripePriceIdMonthly  String?
-  stripePriceIdYearly   String?
+  polarProductId       String?
+  stripePriceIdMonthly String?
+  stripePriceIdYearly  String?
 
-  isActive          Boolean         @default(true)
-  isEnterprise      Boolean         @default(false)  // Enterprise plans have custom pricing
-  isFree            Boolean         @default(false)  // Free tier
+  isActive     Boolean @default(true)
+  isEnterprise Boolean @default(false) // Enterprise plans have custom pricing
+  isFree       Boolean @default(false) // Free tier
 
-  trialDays         Int             @default(14)
-  displayOrder      Int             @default(0)
+  trialDays    Int @default(14)
+  displayOrder Int @default(0)
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  subscriptions     Subscription[]
+  subscriptions Subscription[]
 
   @@index([isActive])
   @@index([displayOrder])
@@ -47,40 +47,40 @@ model Plan {
 
 // Organization subscriptions
 model Subscription {
-  id                String              @id @default(cuid())
-  organizationId    String              @unique
-  planId            String
+  id             String @id @default(cuid())
+  organizationId String @unique
+  planId         String
 
-  status            SubscriptionStatus  @default(TRIALING)
-  billingCycle      BillingCycle        @default(MONTHLY)
+  status       SubscriptionStatus @default(TRIALING)
+  billingCycle BillingCycle       @default(MONTHLY)
 
   // Payment provider info
-  paymentProvider   PaymentProvider?
-  externalId        String?             // Polar/Stripe subscription ID
-  customerId        String?             // Polar/Stripe customer ID
+  paymentProvider PaymentProvider?
+  externalId      String? // Polar/Stripe subscription ID
+  customerId      String? // Polar/Stripe customer ID
 
   // Dates
-  trialEndsAt         DateTime?
-  currentPeriodStart  DateTime
-  currentPeriodEnd    DateTime
-  cancelledAt         DateTime?
-  cancelAtPeriodEnd   Boolean           @default(false)
+  trialEndsAt        DateTime?
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelledAt        DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
 
   // Usage tracking
-  usedSeats         Int                 @default(0)
-  usedStorageGB     Decimal             @default(0) @db.Decimal(10, 2)
-  usedAIRequests    Int                 @default(0)
+  usedSeats      Int     @default(0)
+  usedStorageGB  Decimal @default(0) @db.Decimal(10, 2)
+  usedAIRequests Int     @default(0)
 
   // Custom overrides for enterprise
-  customLimits      Json?               // Override plan limits
+  customLimits Json? // Override plan limits
 
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  organization      Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  plan              Plan                @relation(fields: [planId], references: [id])
-  invoices          Invoice[]
-  usageRecords      UsageRecord[]
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         Plan          @relation(fields: [planId], references: [id])
+  invoices     Invoice[]
+  usageRecords UsageRecord[]
 
   @@index([organizationId])
   @@index([status])
@@ -110,26 +110,26 @@ enum PaymentProvider {
 
 // Invoice tracking
 model Invoice {
-  id                String          @id @default(cuid())
-  subscriptionId    String
+  id             String @id @default(cuid())
+  subscriptionId String
 
-  amount            Decimal         @db.Decimal(10, 2)
-  currency          String          @default("USD")
-  status            InvoiceStatus
+  amount   Decimal       @db.Decimal(10, 2)
+  currency String        @default("USD")
+  status   InvoiceStatus
 
-  externalId        String?         // Polar/Stripe invoice ID
-  invoiceUrl        String?
-  pdfUrl            String?
-  hostedInvoiceUrl  String?
+  externalId       String? // Polar/Stripe invoice ID
+  invoiceUrl       String?
+  pdfUrl           String?
+  hostedInvoiceUrl String?
 
-  periodStart       DateTime
-  periodEnd         DateTime
-  dueDate           DateTime?
-  paidAt            DateTime?
+  periodStart DateTime
+  periodEnd   DateTime
+  dueDate     DateTime?
+  paidAt      DateTime?
 
-  createdAt         DateTime        @default(now())
+  createdAt DateTime @default(now())
 
-  subscription      Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@index([subscriptionId])
   @@index([status])
@@ -149,19 +149,19 @@ enum InvoiceStatus {
 
 // Usage tracking for metered billing
 model UsageRecord {
-  id                String          @id @default(cuid())
-  subscriptionId    String
+  id             String @id @default(cuid())
+  subscriptionId String
 
-  metric            String          // "api_calls", "storage_gb", "seats", "ai_requests", etc.
-  quantity          Decimal         @db.Decimal(10, 4)
+  metric   String // "api_calls", "storage_gb", "seats", "ai_requests", etc.
+  quantity Decimal @db.Decimal(10, 4)
 
-  recordedAt        DateTime        @default(now())
-  periodStart       DateTime
-  periodEnd         DateTime
+  recordedAt  DateTime @default(now())
+  periodStart DateTime
+  periodEnd   DateTime
 
-  metadata          Json?           // Additional context
+  metadata Json? // Additional context
 
-  subscription      Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@index([subscriptionId, metric])
   @@index([periodStart, periodEnd])

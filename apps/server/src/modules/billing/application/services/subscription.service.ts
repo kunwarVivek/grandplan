@@ -280,6 +280,9 @@ export class SubscriptionService {
 		};
 
 		const limit = limits[limitType];
+		if (!limit) {
+			return { allowed: false, current: 0, max: 0 };
+		}
 		const allowed = limit.max === null || limit.current < limit.max;
 
 		return {

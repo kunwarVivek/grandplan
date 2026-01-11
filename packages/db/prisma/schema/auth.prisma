@@ -3,35 +3,35 @@
 // ============================================
 
 model User {
-  id            String    @id
+  id            String  @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean @default(false)
   image         String?
 
   // User status
-  status        UserStatus  @default(ACTIVE)
+  status UserStatus @default(ACTIVE)
 
   // Track current active organization (for multi-org users)
   activeOrganizationId String?
 
   // User preferences/localization
-  timezone      String?     // IANA timezone (e.g., "America/New_York")
-  locale        String?     // Locale code (e.g., "en-US")
+  timezone String? // IANA timezone (e.g., "America/New_York")
+  locale   String? // Locale code (e.g., "en-US")
 
   // Security tracking
-  lastLoginAt   DateTime?
-  lastLoginIp   String?
+  lastLoginAt DateTime?
+  lastLoginIp String?
 
   // Soft delete for GDPR compliance
-  deletedAt     DateTime?
+  deletedAt DateTime?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Auth relations
-  sessions      Session[]
-  accounts      Account[]
+  sessions Session[]
+  accounts Account[]
 
   // Organization & Team relations
   organizationMemberships OrganizationMember[]
@@ -39,35 +39,40 @@ model User {
   sentInvitations         OrganizationInvitation[] @relation("SentInvitations")
 
   // Workspace relations
-  ownedWorkspaces         Workspace[]              @relation("WorkspaceOwner")
-  workspaceMemberships    WorkspaceMember[]
+  ownedWorkspaces      Workspace[]       @relation("WorkspaceOwner")
+  workspaceMemberships WorkspaceMember[]
 
   // Task relations
-  createdTasks            TaskNode[]               @relation("TaskCreator")
-  assignedTasks           TaskNode[]               @relation("TaskAssignee")
-  createdDependencies     TaskDependency[]         @relation("DependencyCreator")
-  taskHistory             TaskHistory[]            @relation("TaskHistoryActor")
-  taskComments            TaskComment[]            @relation("CommentAuthor")
-  aiDecisionRequests      TaskAIDecision[]         @relation("AIDecisionRequester")
+  createdTasks        TaskNode[]       @relation("TaskCreator")
+  assignedTasks       TaskNode[]       @relation("TaskAssignee")
+  createdDependencies TaskDependency[] @relation("DependencyCreator")
+  taskHistory         TaskHistory[]    @relation("TaskHistoryActor")
+  taskComments        TaskComment[]    @relation("CommentAuthor")
+  aiDecisionRequests  TaskAIDecision[] @relation("AIDecisionRequester")
 
   // Notification relations
-  notifications           Notification[]           @relation("UserNotifications")
-  triggeredNotifications  Notification[]           @relation("NotificationActor")
-  notificationPreference  NotificationPreference?
-  pushSubscriptions       PushSubscription[]
-  digestQueue             DigestQueue[]
+  notifications          Notification[]          @relation("UserNotifications")
+  triggeredNotifications Notification[]          @relation("NotificationActor")
+  notificationPreference NotificationPreference?
+  pushSubscriptions      PushSubscription[]
+  digestQueue            DigestQueue[]
 
   // Audit relations
-  auditLogs               AuditLog[]               @relation("AuditLogUser")
+  auditLogs AuditLog[] @relation("AuditLogUser")
 
   // Platform admin
-  platformAdmin           PlatformAdmin?
+  platformAdmin PlatformAdmin?
 
   // Integration relations
-  integrationConnections  IntegrationConnection[]
+  integrationConnections IntegrationConnection[]
+  calendarEvents         CalendarEvent[]
 
   // Attachment relations
-  uploadedAttachments     TaskAttachment[]
+  uploadedAttachments TaskAttachment[]
+
+  // Onboarding & GDPR
+  onboardingProgress OnboardingProgress?
+  dataExportRequests DataExportRequest[]
 
   @@unique([email])
   @@index([status])

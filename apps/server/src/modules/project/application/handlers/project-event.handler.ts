@@ -2,11 +2,14 @@
 // PROJECT EVENT HANDLER
 // ============================================
 
+import { createLogger } from "@grandplan/core";
 import {
 	type DomainEvent,
 	type EventHandler,
 	eventBus,
 } from "@grandplan/events";
+
+const logger = createLogger({ context: { service: "server", module: "events", handler: "project" } });
 import { realtimeServer } from "@grandplan/realtime";
 import {
 	PROJECT_EVENTS,
@@ -28,9 +31,7 @@ export class ProjectCreatedHandler
 	async handle(event: DomainEvent<ProjectCreatedEvent>): Promise<void> {
 		const { projectId, name, workspaceId, createdById } = event.payload;
 
-		console.log(
-			`[ProjectEventHandler] Project created: ${projectId} - ${name} in workspace ${workspaceId}`,
-		);
+		logger.info("Project created", { projectId, name, workspaceId });
 
 		// Emit realtime event to workspace
 		try {
@@ -57,7 +58,7 @@ export class ProjectUpdatedHandler
 		const project = await projectRepository.findById(projectId);
 		if (!project) return;
 
-		console.log(`[ProjectEventHandler] Project updated: ${projectId}`);
+		logger.debug("Project updated", { projectId });
 
 		// Emit realtime event to workspace
 		try {
@@ -86,9 +87,7 @@ export class ProjectStatusChangedHandler
 		const project = await projectRepository.findById(projectId);
 		if (!project) return;
 
-		console.log(
-			`[ProjectEventHandler] Project ${projectId} status changed: ${previousStatus} -> ${newStatus}`,
-		);
+		logger.info("Project status changed", { projectId, previousStatus, newStatus });
 
 		// Emit realtime event to workspace
 		try {
@@ -114,9 +113,7 @@ export class ProjectDeletedHandler
 	async handle(event: DomainEvent<ProjectDeletedEvent>): Promise<void> {
 		const { projectId, name, workspaceId, deletedById } = event.payload;
 
-		console.log(
-			`[ProjectEventHandler] Project deleted: ${projectId} - ${name}`,
-		);
+		logger.info("Project deleted", { projectId, name, workspaceId });
 
 		// Emit realtime event to workspace
 		try {
@@ -141,9 +138,7 @@ export class ProjectArchivedHandler
 	async handle(event: DomainEvent<ProjectArchivedEvent>): Promise<void> {
 		const { projectId, name, workspaceId, archivedById } = event.payload;
 
-		console.log(
-			`[ProjectEventHandler] Project archived: ${projectId} - ${name}`,
-		);
+		logger.info("Project archived", { projectId, name, workspaceId });
 
 		// Emit realtime event to workspace
 		try {

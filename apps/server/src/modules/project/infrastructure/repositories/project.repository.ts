@@ -3,32 +3,28 @@
 // ============================================
 
 import db from "@grandplan/db";
-import type { Prisma, ProjectStatus } from "@prisma/client";
+import type { Prisma, ProjectStatus } from "@grandplan/db";
 import type {
 	ProjectEntity,
 	ProjectWithTasks,
 	ProjectWithWorkspace,
 } from "../../domain/entities/project.entity.js";
+import type {
+	IProjectRepository,
+	IYjsDocumentRepository,
+	ProjectQueryOptions,
+	ProjectQueryResult,
+} from "./interfaces/index.js";
 
-export interface ProjectQueryOptions {
-	page?: number;
-	limit?: number;
-	workspaceId?: string;
-	status?: ProjectStatus;
-	search?: string;
-	sortBy?: "name" | "createdAt" | "updatedAt" | "status";
-	sortOrder?: "asc" | "desc";
-}
+// Re-export interfaces for backwards compatibility
+export type {
+	ProjectQueryOptions,
+	ProjectQueryResult,
+} from "./interfaces/index.js";
 
-export interface ProjectQueryResult {
-	projects: ProjectEntity[];
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-}
-
-export class ProjectRepository {
+export class ProjectRepository
+	implements IProjectRepository, IYjsDocumentRepository
+{
 	async create(data: {
 		name: string;
 		description?: string | null;
@@ -230,13 +226,18 @@ export class ProjectRepository {
 	async getYjsDocument(
 		projectId: string,
 	): Promise<{ id: string; state: Buffer } | null> {
-		return db.yjsDocument.findUnique({
+		const doc = await db.yjsDocument.findUnique({
 			where: { projectId },
 			select: {
 				id: true,
 				state: true,
 			},
 		});
+		if (!doc) return null;
+		return {
+			id: doc.id,
+			state: Buffer.from(doc.state),
+		};
 	}
 
 	async upsertYjsDocument(projectId: string, state: Buffer): Promise<void> {
@@ -244,10 +245,10 @@ export class ProjectRepository {
 			where: { projectId },
 			create: {
 				projectId,
-				state,
+				state: Buffer.from(state),
 			},
 			update: {
-				state,
+				state: Buffer.from(state),
 			},
 		});
 	}

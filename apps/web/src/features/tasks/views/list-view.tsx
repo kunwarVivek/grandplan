@@ -26,6 +26,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -493,20 +494,23 @@ export function ListView({
 	);
 
 	const handleBulkDelete = useCallback(() => {
-		// Placeholder for bulk delete - would call API
-		console.log("Delete tasks:", selectedRowIds);
+		toast.info("Bulk delete coming soon", {
+			description: `${selectedRowIds.length} task(s) selected`,
+		});
 		setRowSelection({});
 	}, [selectedRowIds]);
 
 	const handleBulkDuplicate = useCallback(() => {
-		// Placeholder for bulk duplicate
-		console.log("Duplicate tasks:", selectedRowIds);
+		toast.info("Bulk duplicate coming soon", {
+			description: `${selectedRowIds.length} task(s) selected`,
+		});
 		setRowSelection({});
 	}, [selectedRowIds]);
 
 	const handleBulkArchive = useCallback(() => {
-		// Placeholder for bulk archive
-		console.log("Archive tasks:", selectedRowIds);
+		toast.info("Bulk archive coming soon", {
+			description: `${selectedRowIds.length} task(s) selected`,
+		});
 		setRowSelection({});
 	}, [selectedRowIds]);
 

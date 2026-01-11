@@ -84,9 +84,8 @@ export class OrganizationMemberService {
 		await eventBus.emit(ORGANIZATION_EVENTS.MEMBER_ROLE_CHANGED, {
 			organizationId,
 			userId,
-			memberId: member.id,
-			previousRoleId,
-			newRoleId: dto.roleId,
+			previousRole: previousRoleId,
+			newRole: dto.roleId,
 			changedById: tenant.userId,
 		});
 
@@ -148,7 +147,6 @@ export class OrganizationMemberService {
 		await eventBus.emit(ORGANIZATION_EVENTS.MEMBER_REMOVED, {
 			organizationId,
 			userId,
-			memberId: member.id,
 			removedById: tenant.userId,
 		});
 

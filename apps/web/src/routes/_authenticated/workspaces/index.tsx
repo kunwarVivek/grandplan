@@ -1,16 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+	AlertTriangle,
 	Building2,
-	FolderKanban,
 	MoreHorizontal,
 	Plus,
 	Search,
-	Users,
 } from "lucide-react";
 import { useState } from "react";
 
 import { ContentContainer, PageHeader } from "@/components/layout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,92 +26,27 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkspaces } from "@/features/workspaces/hooks/use-workspaces";
+import { handleApiError } from "@/lib/api-client";
 
 export const Route = createFileRoute("/_authenticated/workspaces/")({
 	component: WorkspacesPage,
 });
 
-type Workspace = {
-	id: string;
-	name: string;
-	description: string;
-	projectCount: number;
-	memberCount: number;
-	members: Array<{
-		id: string;
-		name: string;
-		avatar: string;
-		initials: string;
-	}>;
-	color: string;
-	isDefault: boolean;
-};
-
-const mockWorkspaces: Workspace[] = [
-	{
-		id: "1",
-		name: "Engineering",
-		description: "All engineering and development projects",
-		projectCount: 8,
-		memberCount: 12,
-		members: [
-			{ id: "1", name: "Sarah Chen", avatar: "", initials: "SC" },
-			{ id: "2", name: "Alex Rivera", avatar: "", initials: "AR" },
-			{ id: "3", name: "Jordan Kim", avatar: "", initials: "JK" },
-			{ id: "4", name: "Taylor Morgan", avatar: "", initials: "TM" },
-		],
-		color: "bg-blue-500",
-		isDefault: true,
-	},
-	{
-		id: "2",
-		name: "Marketing",
-		description: "Marketing campaigns and content projects",
-		projectCount: 5,
-		memberCount: 6,
-		members: [
-			{ id: "5", name: "Casey Brooks", avatar: "", initials: "CB" },
-			{ id: "6", name: "Morgan Lee", avatar: "", initials: "ML" },
-		],
-		color: "bg-purple-500",
-		isDefault: false,
-	},
-	{
-		id: "3",
-		name: "Design",
-		description: "UI/UX design and brand projects",
-		projectCount: 4,
-		memberCount: 4,
-		members: [
-			{ id: "1", name: "Sarah Chen", avatar: "", initials: "SC" },
-			{ id: "7", name: "Riley Park", avatar: "", initials: "RP" },
-		],
-		color: "bg-pink-500",
-		isDefault: false,
-	},
-	{
-		id: "4",
-		name: "Operations",
-		description: "Internal operations and process improvement",
-		projectCount: 3,
-		memberCount: 8,
-		members: [
-			{ id: "8", name: "Jamie Chen", avatar: "", initials: "JC" },
-			{ id: "9", name: "Sam Wilson", avatar: "", initials: "SW" },
-			{ id: "10", name: "Drew Taylor", avatar: "", initials: "DT" },
-		],
-		color: "bg-green-500",
-		isDefault: false,
-	},
-];
+// Default color when workspace has no color set
+const DEFAULT_WORKSPACE_COLOR = "#3b82f6";
 
 function WorkspacesPage() {
 	const [searchQuery, setSearchQuery] = useState("");
 
-	const filteredWorkspaces = mockWorkspaces.filter(
+	const { data, isLoading, isError, error, refetch } = useWorkspaces();
+
+	const workspaces = data?.workspaces ?? [];
+	const filteredWorkspaces = workspaces.filter(
 		(workspace) =>
 			workspace.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			workspace.description.toLowerCase().includes(searchQuery.toLowerCase()),
+			(workspace.description ?? "").toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
 	return (
@@ -142,8 +75,47 @@ function WorkspacesPage() {
 				</div>
 			</div>
 
-			{/* Workspaces Grid */}
-			{filteredWorkspaces.length === 0 ? (
+			{/* Loading State */}
+			{isLoading && (
+				<div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{Array.from({ length: 6 }).map((_, i) => (
+						<Card key={i} className="h-full">
+							<CardHeader>
+								<div className="flex items-start justify-between">
+									<div className="flex items-center gap-3">
+										<Skeleton className="size-10 rounded-md" />
+										<div className="space-y-2">
+											<Skeleton className="h-5 w-32" />
+											<Skeleton className="h-3 w-20" />
+										</div>
+									</div>
+								</div>
+								<Skeleton className="mt-2 h-4 w-full" />
+							</CardHeader>
+							<CardContent>
+								<Skeleton className="h-4 w-24" />
+							</CardContent>
+						</Card>
+					))}
+				</div>
+			)}
+
+			{/* Error State */}
+			{isError && (
+				<div className="mt-12 flex flex-col items-center justify-center text-center">
+					<AlertTriangle className="size-12 text-destructive" />
+					<h3 className="mt-4 font-medium text-lg">Failed to load workspaces</h3>
+					<p className="mt-2 text-muted-foreground text-sm">
+						{handleApiError(error)}
+					</p>
+					<Button className="mt-4" variant="outline" onClick={() => refetch()}>
+						Try Again
+					</Button>
+				</div>
+			)}
+
+			{/* Empty State */}
+			{!isLoading && !isError && filteredWorkspaces.length === 0 && (
 				<div className="mt-12 flex flex-col items-center justify-center text-center">
 					<Building2 className="size-12 text-muted-foreground" />
 					<h3 className="mt-4 font-medium text-lg">No workspaces found</h3>
@@ -159,7 +131,10 @@ function WorkspacesPage() {
 						</Button>
 					)}
 				</div>
-			) : (
+			)}
+
+			{/* Workspaces Grid */}
+			{!isLoading && !isError && filteredWorkspaces.length > 0 && (
 				<div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{filteredWorkspaces.map((workspace) => (
 						<Link
@@ -172,7 +147,8 @@ function WorkspacesPage() {
 									<div className="flex items-start justify-between">
 										<div className="flex items-center gap-3">
 											<div
-												className={`flex size-10 items-center justify-center rounded-md ${workspace.color}`}
+												className="flex size-10 items-center justify-center rounded-md"
+												style={{ backgroundColor: workspace.color ?? DEFAULT_WORKSPACE_COLOR }}
 											>
 												<Building2 className="size-5 text-white" />
 											</div>
@@ -205,38 +181,16 @@ function WorkspacesPage() {
 											</DropdownMenuContent>
 										</DropdownMenu>
 									</div>
-									<CardDescription className="mt-2">
-										{workspace.description}
-									</CardDescription>
+									{workspace.description && (
+										<CardDescription className="mt-2">
+											{workspace.description}
+										</CardDescription>
+									)}
 								</CardHeader>
 								<CardContent>
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-4 text-muted-foreground text-sm">
-											<div className="flex items-center gap-1">
-												<FolderKanban className="size-4" />
-												{workspace.projectCount} projects
-											</div>
-											<div className="flex items-center gap-1">
-												<Users className="size-4" />
-												{workspace.memberCount} members
-											</div>
-										</div>
-									</div>
-									<div className="mt-4 flex items-center justify-between">
-										<div className="flex -space-x-2">
-											{workspace.members.slice(0, 4).map((member) => (
-												<Avatar key={member.id} size="sm">
-													<AvatarImage src={member.avatar} />
-													<AvatarFallback>{member.initials}</AvatarFallback>
-												</Avatar>
-											))}
-											{workspace.memberCount > 4 && (
-												<div className="flex size-6 items-center justify-center rounded-full bg-muted text-xs ring-2 ring-background">
-													+{workspace.memberCount - 4}
-												</div>
-											)}
-										</div>
-									</div>
+									<p className="text-muted-foreground text-sm">
+										/{workspace.slug}
+									</p>
 								</CardContent>
 							</Card>
 						</Link>

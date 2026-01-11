@@ -1,4 +1,6 @@
 import { createServer } from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { auth } from "@grandplan/auth";
 import { db } from "@grandplan/db";
 import { env } from "@grandplan/env/server";
@@ -7,6 +9,8 @@ import { toNodeHandler } from "better-auth/node";
 import cors from "cors";
 import express from "express";
 import Redis from "ioredis";
+import * as swaggerUi from "swagger-ui-express";
+import * as YAML from "yamljs";
 
 // Import middleware
 import {
@@ -14,12 +18,14 @@ import {
 	closeRateLimiter,
 	errorHandler,
 	notFoundHandler,
+	requestIdMiddleware,
 	standardRateLimit,
 	tenantMiddleware,
 } from "./middleware/index.js";
 
 // Import module routes
 import {
+	adminRoutes,
 	aiRoutes,
 	billingRoutes,
 	integrationRoutes,
@@ -31,6 +37,7 @@ import {
 	registerTaskEventHandlers,
 	taskRoutes,
 	teamRoutes,
+	uploadRoutes,
 	webhookRoutes,
 	workspaceRoutes,
 } from "./modules/index.js";
@@ -49,6 +56,9 @@ function getRedis(): Redis {
 	return redis;
 }
 
+// Request ID middleware - must be first for consistent tracing
+app.use(requestIdMiddleware());
+
 // CORS configuration
 const corsOrigins = env.CORS_ORIGIN.split(",").map((o) => o.trim());
 app.use(
@@ -60,7 +70,9 @@ app.use(
 			"Authorization",
 			"X-User-Id",
 			"X-Organization-Id",
+			"X-Request-Id",
 		],
+		exposedHeaders: ["X-Request-Id"],
 		credentials: true,
 	}),
 );
@@ -68,6 +80,30 @@ app.use(
 // Body parsing
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files statically
+const uploadsDir = process.env.UPLOAD_DIR || "uploads";
+app.use("/uploads", express.static(path.resolve(process.cwd(), uploadsDir)));
+
+// API Documentation with Swagger UI
+try {
+	const __filename = fileURLToPath(import.meta.url);
+	const __dirname = path.dirname(__filename);
+	const openapiPath = path.resolve(__dirname, "../../openapi.yaml");
+	const swaggerDocument = YAML.load(openapiPath);
+
+	app.use(
+		"/api/docs",
+		swaggerUi.serve,
+		swaggerUi.setup(swaggerDocument, {
+			customCss: ".swagger-ui .topbar { display: none }",
+			customSiteTitle: "GrandPlan API Documentation",
+		}),
+	);
+	console.log("API documentation available at /api/docs");
+} catch (error) {
+	console.warn("Could not load OpenAPI spec for Swagger UI:", error);
+}
 
 // Health check endpoints (before auth middleware)
 app.get("/", (_req, res) => {
@@ -140,6 +176,8 @@ app.use("/api/billing", billingRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/integrations", integrationRoutes);
 app.use("/api/platform", platformRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 // 404 handler for API routes
 app.use("/api", notFoundHandler);
@@ -154,7 +192,7 @@ registerProjectEventHandlers();
 // Create HTTP server for both Express and Socket.io
 const httpServer = createServer(app);
 
-const port = env.PORT;
+const port = process.env.PORT ?? 3001;
 httpServer.listen(port, async () => {
 	console.log(`Server is running on port ${port}`);
 	console.log(`Environment: ${process.env.NODE_ENV || "development"}`);

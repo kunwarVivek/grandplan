@@ -15,20 +15,27 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { usePlatformStats } from "../hooks/use-admin";
+import {
+	useAnalyticsOverview,
+	useAnalyticsRevenue,
+} from "../hooks/use-admin";
 
 type AdminStatsCardsProps = {
 	className?: string;
 };
 
 export function AdminStatsCards({ className }: AdminStatsCardsProps) {
-	const { data, isLoading, error } = usePlatformStats();
+	const { data: overview, isLoading: overviewLoading, error: overviewError } = useAnalyticsOverview();
+	const { data: revenue, isLoading: revenueLoading, error: revenueError } = useAnalyticsRevenue();
+
+	const isLoading = overviewLoading || revenueLoading;
+	const hasError = overviewError || revenueError;
 
 	if (isLoading) {
 		return <AdminStatsCardsSkeleton className={className} />;
 	}
 
-	if (error || !data) {
+	if (hasError || (!overview && !revenue)) {
 		return (
 			<div
 				className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-4", className)}
@@ -62,58 +69,44 @@ export function AdminStatsCards({ className }: AdminStatsCardsProps) {
 		return num.toLocaleString();
 	};
 
-	// Calculate growth percentages from data
-	const calculateGrowth = (
-		growthData: { date: string; count?: number; amount?: number }[],
-	): number => {
-		if (growthData.length < 2) return 0;
-		const current = growthData[growthData.length - 1];
-		const previous = growthData[growthData.length - 2];
-		const currentValue = current.count ?? current.amount ?? 0;
-		const previousValue = previous.count ?? previous.amount ?? 0;
-		if (previousValue === 0) return 0;
-		return ((currentValue - previousValue) / previousValue) * 100;
-	};
-
-	const userGrowthPercent = calculateGrowth(data.userGrowth);
-	const revenueGrowthPercent = calculateGrowth(data.revenueGrowth);
+	// Calculate percentages from real data
 	const activeUserPercent =
-		data.totalUsers > 0
-			? ((data.activeUsers / data.totalUsers) * 100).toFixed(1)
+		overview && overview.totalUsers > 0
+			? ((overview.activeUsers / overview.totalUsers) * 100).toFixed(1)
 			: 0;
 	const activeOrgPercent =
-		data.totalOrganizations > 0
-			? ((data.activeOrganizations / data.totalOrganizations) * 100).toFixed(1)
+		overview && overview.totalOrganizations > 0
+			? ((overview.activeOrganizations / overview.totalOrganizations) * 100).toFixed(1)
 			: 0;
 
 	const stats = [
 		{
 			title: "Total Users",
-			value: formatNumber(data.totalUsers),
-			description: `${activeUserPercent}% active`,
+			value: formatNumber(overview?.totalUsers ?? 0),
+			description: `${activeUserPercent}% active (30 days)`,
 			icon: Users,
-			trend: userGrowthPercent,
+			trend: overview?.userGrowthPercent ?? null,
 		},
 		{
 			title: "Organizations",
-			value: formatNumber(data.totalOrganizations),
+			value: formatNumber(overview?.totalOrganizations ?? 0),
 			description: `${activeOrgPercent}% active`,
 			icon: Building2,
-			trend: null,
+			trend: overview?.orgGrowthPercent ?? null,
 		},
 		{
 			title: "Total Revenue",
-			value: formatCurrency(data.totalRevenue),
+			value: formatCurrency(revenue?.totalRevenue ?? 0),
 			description: "All time",
 			icon: DollarSign,
-			trend: null,
+			trend: revenue?.revenueGrowthPercent ?? null,
 		},
 		{
 			title: "MRR",
-			value: formatCurrency(data.monthlyRecurringRevenue),
-			description: "Monthly recurring revenue",
+			value: formatCurrency(revenue?.mrr ?? 0),
+			description: `ARR: ${formatCurrency(revenue?.arr ?? 0)}`,
 			icon: TrendingUp,
-			trend: revenueGrowthPercent,
+			trend: revenue?.mrrGrowthPercent ?? null,
 		},
 	];
 
@@ -141,6 +134,7 @@ function StatCard({
 	icon: Icon,
 	trend,
 }: StatCardProps) {
+	const hasTrend = trend !== null && trend !== 0;
 	const isPositive = trend !== null && trend >= 0;
 	const TrendIcon = isPositive ? ArrowUpRight : ArrowDownRight;
 
@@ -155,7 +149,7 @@ function StatCard({
 			<CardContent>
 				<div className="font-bold text-2xl">{value}</div>
 				<div className="flex items-center gap-1 text-muted-foreground text-xs">
-					{trend !== null && (
+					{hasTrend && (
 						<span
 							className={cn(
 								"flex items-center gap-0.5 font-medium",

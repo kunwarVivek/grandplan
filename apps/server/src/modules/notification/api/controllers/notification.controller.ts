@@ -50,6 +50,7 @@ const UpdatePreferencesSchema = z.object({
 	timezone: z.string().optional(),
 	typeSettings: z
 		.record(
+			z.string(),
 			z.object({
 				email: z.boolean().optional(),
 				push: z.boolean().optional(),
@@ -91,7 +92,7 @@ export async function listNotifications(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid query parameters", {
-				query: parseResult.error.errors.map((e) => e.message),
+				query: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -135,7 +136,7 @@ export async function getNotification(
 		const tenant = getCurrentTenant();
 
 		const notification = await serverNotificationService.getNotification(
-			id,
+			id!,
 			tenant.userId,
 		);
 
@@ -161,7 +162,7 @@ export async function markAsRead(
 		const { id } = req.params;
 		const tenant = getCurrentTenant();
 
-		await serverNotificationService.markAsRead(id, tenant.userId);
+		await serverNotificationService.markAsRead(id!, tenant.userId);
 
 		res.status(200).json({
 			success: true,
@@ -186,7 +187,7 @@ export async function markMultipleAsRead(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -211,7 +212,7 @@ export async function markMultipleAsRead(
  * POST /api/notifications/read-all
  */
 export async function markAllAsRead(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -242,7 +243,7 @@ export async function archiveNotification(
 		const { id } = req.params;
 		const tenant = getCurrentTenant();
 
-		await serverNotificationService.archiveNotification(id, tenant.userId);
+		await serverNotificationService.archiveNotification(id!, tenant.userId);
 
 		res.status(200).json({
 			success: true,
@@ -266,7 +267,7 @@ export async function deleteNotification(
 		const { id } = req.params;
 		const tenant = getCurrentTenant();
 
-		await serverNotificationService.deleteNotification(id, tenant.userId);
+		await serverNotificationService.deleteNotification(id!, tenant.userId);
 
 		res.status(200).json({
 			success: true,
@@ -282,7 +283,7 @@ export async function deleteNotification(
  * GET /api/notifications/preferences
  */
 export async function getPreferences(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -316,7 +317,7 @@ export async function updatePreferences(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -345,7 +346,7 @@ export async function updatePreferences(
  * GET /api/notifications/unread-count
  */
 export async function getUnreadCount(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -368,7 +369,7 @@ export async function getUnreadCount(
  * GET /api/notifications/summary
  */
 export async function getNotificationSummary(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {
@@ -402,7 +403,7 @@ export async function registerPushSubscription(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -437,7 +438,7 @@ export async function unregisterPushSubscription(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -462,7 +463,7 @@ export async function unregisterPushSubscription(
  * GET /api/notifications/push/subscriptions
  */
 export async function getPushSubscriptions(
-	req: Request,
+	_req: Request,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> {

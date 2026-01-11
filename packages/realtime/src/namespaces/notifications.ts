@@ -2,12 +2,15 @@
 // NOTIFICATIONS NAMESPACE - Real-time notifications
 // ============================================
 
+import { createLogger } from "@grandplan/core";
 import type { Namespace } from "socket.io";
 import type {
 	ClientToServerEvents,
 	ServerToClientEvents,
 	SocketData,
 } from "../types.js";
+
+const logger = createLogger({ context: { service: 'realtime', namespace: 'notifications' } });
 
 export function setupNotificationsNamespace(
 	namespace: Namespace<
@@ -24,7 +27,7 @@ export function setupNotificationsNamespace(
 		socket.join(`notifications:${userId}`);
 		socket.join(`org-notifications:${organizationId}`);
 
-		console.log(`Notifications: User ${userId} connected`);
+		logger.info("User connected to notifications", { userId });
 
 		// Handle marking notification as read
 		socket.on("notification:markRead", async (notificationId) => {
@@ -40,7 +43,7 @@ export function setupNotificationsNamespace(
 		});
 
 		socket.on("disconnect", () => {
-			console.log(`Notifications: User ${userId} disconnected`);
+			logger.info("User disconnected from notifications", { userId });
 		});
 	});
 }

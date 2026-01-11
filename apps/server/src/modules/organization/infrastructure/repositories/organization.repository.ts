@@ -4,7 +4,7 @@
 
 import { addDays, generateToken } from "@grandplan/core/utils";
 import db from "@grandplan/db";
-import type { InvitationStatus, MemberStatus, Prisma } from "@prisma/client";
+import type { InvitationStatus, MemberStatus, Prisma } from "@grandplan/db";
 import type {
 	BrandingConfig,
 	OrganizationEntity,

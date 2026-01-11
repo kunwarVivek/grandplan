@@ -6,7 +6,7 @@ import type {
 	InvitationStatus,
 	MemberStatus,
 	OrganizationStatus,
-} from "@prisma/client";
+} from "@grandplan/db";
 import type {
 	BrandingConfig,
 	OrganizationEntity,

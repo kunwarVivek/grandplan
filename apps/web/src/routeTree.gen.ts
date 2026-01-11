@@ -35,6 +35,7 @@ import { Route as AuthenticatedAdminOrganizationsRouteImport } from './routes/_a
 import { Route as AuthenticatedProjectsProjectIdIndexRouteImport } from './routes/_authenticated/projects/$projectId/index'
 import { Route as AuthenticatedOrgOrgSlugIndexRouteImport } from './routes/_authenticated/org/$orgSlug/index'
 import { Route as AuthenticatedOrgOrgSlugMembersRouteImport } from './routes/_authenticated/org/$orgSlug/members'
+import { Route as AuthenticatedOrgOrgSlugIntegrationsRouteImport } from './routes/_authenticated/org/$orgSlug/integrations'
 import { Route as AuthenticatedOrgOrgSlugBrandingRouteImport } from './routes/_authenticated/org/$orgSlug/branding'
 import { Route as AuthenticatedOrgOrgSlugBillingRouteImport } from './routes/_authenticated/org/$orgSlug/billing'
 
@@ -181,6 +182,12 @@ const AuthenticatedOrgOrgSlugMembersRoute =
     path: '/members',
     getParentRoute: () => AuthenticatedOrgOrgSlugRoute,
   } as any)
+const AuthenticatedOrgOrgSlugIntegrationsRoute =
+  AuthenticatedOrgOrgSlugIntegrationsRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => AuthenticatedOrgOrgSlugRoute,
+  } as any)
 const AuthenticatedOrgOrgSlugBrandingRoute =
   AuthenticatedOrgOrgSlugBrandingRouteImport.update({
     id: '/branding',
@@ -219,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/workspaces': typeof AuthenticatedWorkspacesIndexRoute
   '/org/$orgSlug/billing': typeof AuthenticatedOrgOrgSlugBillingRoute
   '/org/$orgSlug/branding': typeof AuthenticatedOrgOrgSlugBrandingRoute
+  '/org/$orgSlug/integrations': typeof AuthenticatedOrgOrgSlugIntegrationsRoute
   '/org/$orgSlug/members': typeof AuthenticatedOrgOrgSlugMembersRoute
   '/org/$orgSlug/': typeof AuthenticatedOrgOrgSlugIndexRoute
   '/projects/$projectId/': typeof AuthenticatedProjectsProjectIdIndexRoute
@@ -244,6 +252,7 @@ export interface FileRoutesByTo {
   '/workspaces': typeof AuthenticatedWorkspacesIndexRoute
   '/org/$orgSlug/billing': typeof AuthenticatedOrgOrgSlugBillingRoute
   '/org/$orgSlug/branding': typeof AuthenticatedOrgOrgSlugBrandingRoute
+  '/org/$orgSlug/integrations': typeof AuthenticatedOrgOrgSlugIntegrationsRoute
   '/org/$orgSlug/members': typeof AuthenticatedOrgOrgSlugMembersRoute
   '/org/$orgSlug': typeof AuthenticatedOrgOrgSlugIndexRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdIndexRoute
@@ -275,6 +284,7 @@ export interface FileRoutesById {
   '/_authenticated/workspaces/': typeof AuthenticatedWorkspacesIndexRoute
   '/_authenticated/org/$orgSlug/billing': typeof AuthenticatedOrgOrgSlugBillingRoute
   '/_authenticated/org/$orgSlug/branding': typeof AuthenticatedOrgOrgSlugBrandingRoute
+  '/_authenticated/org/$orgSlug/integrations': typeof AuthenticatedOrgOrgSlugIntegrationsRoute
   '/_authenticated/org/$orgSlug/members': typeof AuthenticatedOrgOrgSlugMembersRoute
   '/_authenticated/org/$orgSlug/': typeof AuthenticatedOrgOrgSlugIndexRoute
   '/_authenticated/projects/$projectId/': typeof AuthenticatedProjectsProjectIdIndexRoute
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/workspaces'
     | '/org/$orgSlug/billing'
     | '/org/$orgSlug/branding'
+    | '/org/$orgSlug/integrations'
     | '/org/$orgSlug/members'
     | '/org/$orgSlug/'
     | '/projects/$projectId/'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/workspaces'
     | '/org/$orgSlug/billing'
     | '/org/$orgSlug/branding'
+    | '/org/$orgSlug/integrations'
     | '/org/$orgSlug/members'
     | '/org/$orgSlug'
     | '/projects/$projectId'
@@ -361,6 +373,7 @@ export interface FileRouteTypes {
     | '/_authenticated/workspaces/'
     | '/_authenticated/org/$orgSlug/billing'
     | '/_authenticated/org/$orgSlug/branding'
+    | '/_authenticated/org/$orgSlug/integrations'
     | '/_authenticated/org/$orgSlug/members'
     | '/_authenticated/org/$orgSlug/'
     | '/_authenticated/projects/$projectId/'
@@ -557,6 +570,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgOrgSlugMembersRouteImport
       parentRoute: typeof AuthenticatedOrgOrgSlugRoute
     }
+    '/_authenticated/org/$orgSlug/integrations': {
+      id: '/_authenticated/org/$orgSlug/integrations'
+      path: '/integrations'
+      fullPath: '/org/$orgSlug/integrations'
+      preLoaderRoute: typeof AuthenticatedOrgOrgSlugIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedOrgOrgSlugRoute
+    }
     '/_authenticated/org/$orgSlug/branding': {
       id: '/_authenticated/org/$orgSlug/branding'
       path: '/branding'
@@ -616,6 +636,7 @@ const AuthenticatedSettingsRouteWithChildren =
 interface AuthenticatedOrgOrgSlugRouteChildren {
   AuthenticatedOrgOrgSlugBillingRoute: typeof AuthenticatedOrgOrgSlugBillingRoute
   AuthenticatedOrgOrgSlugBrandingRoute: typeof AuthenticatedOrgOrgSlugBrandingRoute
+  AuthenticatedOrgOrgSlugIntegrationsRoute: typeof AuthenticatedOrgOrgSlugIntegrationsRoute
   AuthenticatedOrgOrgSlugMembersRoute: typeof AuthenticatedOrgOrgSlugMembersRoute
   AuthenticatedOrgOrgSlugIndexRoute: typeof AuthenticatedOrgOrgSlugIndexRoute
 }
@@ -624,6 +645,8 @@ const AuthenticatedOrgOrgSlugRouteChildren: AuthenticatedOrgOrgSlugRouteChildren
   {
     AuthenticatedOrgOrgSlugBillingRoute: AuthenticatedOrgOrgSlugBillingRoute,
     AuthenticatedOrgOrgSlugBrandingRoute: AuthenticatedOrgOrgSlugBrandingRoute,
+    AuthenticatedOrgOrgSlugIntegrationsRoute:
+      AuthenticatedOrgOrgSlugIntegrationsRoute,
     AuthenticatedOrgOrgSlugMembersRoute: AuthenticatedOrgOrgSlugMembersRoute,
     AuthenticatedOrgOrgSlugIndexRoute: AuthenticatedOrgOrgSlugIndexRoute,
   }

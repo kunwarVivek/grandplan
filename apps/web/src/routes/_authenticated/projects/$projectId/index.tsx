@@ -7,7 +7,6 @@ import {
 	MoreHorizontal,
 	Plus,
 } from "lucide-react";
-import { useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,102 +19,69 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useTasks, type TaskStatus } from "@/features/tasks";
 
 export const Route = createFileRoute("/_authenticated/projects/$projectId/")({
 	component: ProjectTasksPage,
 });
 
-type TaskStatus = "todo" | "in-progress" | "done";
-
-type Task = {
-	id: string;
-	title: string;
-	description: string;
-	status: TaskStatus;
-	priority: "low" | "medium" | "high";
-	assignee: {
-		id: string;
-		name: string;
-		avatar: string;
-		initials: string;
-	} | null;
-	dueDate: string | null;
-};
-
-const mockTasks: Task[] = [
-	{
-		id: "1",
-		title: "Design homepage mockups",
-		description: "Create initial mockups for the new homepage layout",
-		status: "done",
-		priority: "high",
-		assignee: { id: "1", name: "Sarah Chen", avatar: "", initials: "SC" },
-		dueDate: "2025-01-20",
-	},
-	{
-		id: "2",
-		title: "Implement navigation component",
-		description: "Build responsive navigation with mobile menu",
-		status: "in-progress",
-		priority: "high",
-		assignee: { id: "2", name: "Alex Rivera", avatar: "", initials: "AR" },
-		dueDate: "2025-01-25",
-	},
-	{
-		id: "3",
-		title: "Set up authentication",
-		description: "Configure auth providers and user sessions",
-		status: "in-progress",
-		priority: "medium",
-		assignee: { id: "3", name: "Jordan Kim", avatar: "", initials: "JK" },
-		dueDate: "2025-01-28",
-	},
-	{
-		id: "4",
-		title: "Create footer component",
-		description: "Design and implement site footer",
-		status: "todo",
-		priority: "low",
-		assignee: null,
-		dueDate: "2025-02-01",
-	},
-	{
-		id: "5",
-		title: "Write API documentation",
-		description: "Document all REST API endpoints",
-		status: "todo",
-		priority: "medium",
-		assignee: { id: "1", name: "Sarah Chen", avatar: "", initials: "SC" },
-		dueDate: "2025-02-05",
-	},
-	{
-		id: "6",
-		title: "Performance optimization",
-		description: "Optimize bundle size and loading times",
-		status: "todo",
-		priority: "high",
-		assignee: null,
-		dueDate: null,
-	},
-];
-
 const columns: { id: TaskStatus; title: string; icon: React.ElementType }[] = [
 	{ id: "todo", title: "To Do", icon: Circle },
-	{ id: "in-progress", title: "In Progress", icon: Clock },
-	{ id: "done", title: "Done", icon: CheckCircle2 },
+	{ id: "in_progress", title: "In Progress", icon: Clock },
+	{ id: "completed", title: "Done", icon: CheckCircle2 },
 ];
 
 const priorityColors = {
-	low: "secondary",
-	medium: "outline",
+	urgent: "destructive",
 	high: "destructive",
+	medium: "outline",
+	low: "secondary",
 } as const;
 
+function TaskCardSkeleton() {
+	return (
+		<Card>
+			<CardHeader className="p-3 pb-2">
+				<Skeleton className="h-4 w-3/4" />
+			</CardHeader>
+			<CardContent className="p-3 pt-0">
+				<Skeleton className="h-3 w-full mb-1" />
+				<Skeleton className="h-3 w-2/3 mb-3" />
+				<div className="flex items-center justify-between">
+					<Skeleton className="h-5 w-16 rounded-full" />
+					<Skeleton className="h-6 w-6 rounded-full" />
+				</div>
+			</CardContent>
+		</Card>
+	);
+}
+
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((part) => part[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
 function ProjectTasksPage() {
-	const [tasks] = useState(mockTasks);
+	const { projectId } = Route.useParams();
+	const { data, isLoading, error } = useTasks(projectId);
+
+	const tasks = data?.tasks ?? [];
 
 	const getTasksByStatus = (status: TaskStatus) =>
 		tasks.filter((task) => task.status === status);
+
+	if (error) {
+		return (
+			<div className="flex h-48 items-center justify-center rounded-md border border-dashed text-muted-foreground">
+				Failed to load tasks. Please try again.
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-4">
@@ -145,86 +111,99 @@ function ProjectTasksPage() {
 								<div className="flex items-center gap-2">
 									<Icon className="size-4 text-muted-foreground" />
 									<h3 className="font-medium">{column.title}</h3>
-									<Badge variant="secondary" className="ml-1">
-										{columnTasks.length}
-									</Badge>
+									{!isLoading && (
+										<Badge variant="secondary" className="ml-1">
+											{columnTasks.length}
+										</Badge>
+									)}
 								</div>
 								<Button variant="ghost" size="icon-sm">
 									<Plus className="size-4" />
 								</Button>
 							</div>
 							<div className="space-y-2">
-								{columnTasks.map((task) => (
-									<Card
-										key={task.id}
-										className="cursor-pointer transition-colors hover:bg-muted/50"
-									>
-										<CardHeader className="p-3 pb-2">
-											<div className="flex items-start justify-between gap-2">
-												<CardTitle className="font-medium text-sm leading-tight">
-													{task.title}
-												</CardTitle>
-												<DropdownMenu>
-													<DropdownMenuTrigger
-														render={
-															<Button
-																variant="ghost"
-																size="icon-xs"
-																className="shrink-0"
-															/>
-														}
-													>
-														<MoreHorizontal className="size-3" />
-													</DropdownMenuTrigger>
-													<DropdownMenuContent align="end">
-														<DropdownMenuItem>Edit</DropdownMenuItem>
-														<DropdownMenuItem>Move to...</DropdownMenuItem>
-														<DropdownMenuSeparator />
-														<DropdownMenuItem className="text-destructive">
-															Delete
-														</DropdownMenuItem>
-													</DropdownMenuContent>
-												</DropdownMenu>
-											</div>
-										</CardHeader>
-										<CardContent className="p-3 pt-0">
-											<p className="line-clamp-2 text-muted-foreground text-xs">
-												{task.description}
-											</p>
-											<div className="mt-3 flex items-center justify-between">
-												<Badge variant={priorityColors[task.priority]}>
-													{task.priority}
-												</Badge>
-												<div className="flex items-center gap-2">
-													{task.dueDate && (
-														<span className="text-muted-foreground text-xs">
-															{new Date(task.dueDate).toLocaleDateString(
-																undefined,
-																{ month: "short", day: "numeric" },
+								{isLoading ? (
+									<>
+										<TaskCardSkeleton />
+										<TaskCardSkeleton />
+									</>
+								) : (
+									<>
+										{columnTasks.map((task) => (
+											<Card
+												key={task.id}
+												className="cursor-pointer transition-colors hover:bg-muted/50"
+											>
+												<CardHeader className="p-3 pb-2">
+													<div className="flex items-start justify-between gap-2">
+														<CardTitle className="font-medium text-sm leading-tight">
+															{task.title}
+														</CardTitle>
+														<DropdownMenu>
+															<DropdownMenuTrigger
+																render={
+																	<Button
+																		variant="ghost"
+																		size="icon-xs"
+																		className="shrink-0"
+																	/>
+																}
+															>
+																<MoreHorizontal className="size-3" />
+															</DropdownMenuTrigger>
+															<DropdownMenuContent align="end">
+																<DropdownMenuItem>Edit</DropdownMenuItem>
+																<DropdownMenuItem>Move to...</DropdownMenuItem>
+																<DropdownMenuSeparator />
+																<DropdownMenuItem className="text-destructive">
+																	Delete
+																</DropdownMenuItem>
+															</DropdownMenuContent>
+														</DropdownMenu>
+													</div>
+												</CardHeader>
+												<CardContent className="p-3 pt-0">
+													<p className="line-clamp-2 text-muted-foreground text-xs">
+														{task.description}
+													</p>
+													<div className="mt-3 flex items-center justify-between">
+														<Badge variant={priorityColors[task.priority]}>
+															{task.priority}
+														</Badge>
+														<div className="flex items-center gap-2">
+															{task.dueDate && (
+																<span className="text-muted-foreground text-xs">
+																	{new Date(task.dueDate).toLocaleDateString(
+																		undefined,
+																		{ month: "short", day: "numeric" },
+																	)}
+																</span>
 															)}
-														</span>
-													)}
-													{task.assignee ? (
-														<Avatar size="sm">
-															<AvatarImage src={task.assignee.avatar} />
-															<AvatarFallback>
-																{task.assignee.initials}
-															</AvatarFallback>
-														</Avatar>
-													) : (
-														<div className="flex size-6 items-center justify-center rounded-full border-2 border-muted-foreground/30 border-dashed">
-															<Plus className="size-3 text-muted-foreground" />
+															{task.assignee ? (
+																<Avatar size="sm">
+																	<AvatarImage
+																		src={task.assignee.avatar ?? undefined}
+																	/>
+																	<AvatarFallback>
+																		{getInitials(task.assignee.name)}
+																	</AvatarFallback>
+																</Avatar>
+															) : (
+																<div className="flex size-6 items-center justify-center rounded-full border-2 border-muted-foreground/30 border-dashed">
+																	<Plus className="size-3 text-muted-foreground" />
+																</div>
+															)}
 														</div>
-													)}
-												</div>
+													</div>
+												</CardContent>
+											</Card>
+										))}
+										{columnTasks.length === 0 && (
+											<div className="flex h-24 items-center justify-center rounded-md border border-dashed text-muted-foreground text-sm">
+												No tasks
 											</div>
-										</CardContent>
-									</Card>
-								))}
-								{columnTasks.length === 0 && (
-									<div className="flex h-24 items-center justify-center rounded-md border border-dashed text-muted-foreground text-sm">
-										No tasks
-									</div>
+										)}
+									</>
 								)}
 							</div>
 						</div>

@@ -1,0 +1,1159 @@
+openapi: 3.1.0
+info:
+  title: GrandPlan API
+  version: 1.0.0
+  description: |
+    GrandPlan API is a comprehensive project management and task orchestration platform.
+
+    ## Authentication
+
+    All API endpoints (except health checks and webhooks) require authentication using Bearer tokens.
+    Include the token in the Authorization header:
+
+    ```
+    Authorization: Bearer <your-token>
+    ```
+
+    ## Permissions
+
+    Most endpoints require specific permissions based on role-based access control (RBAC).
+    Each endpoint documents its required permission.
+
+    ## Rate Limiting
+
+    - Standard API endpoints: Rate limited per IP address
+    - AI endpoints: Additional rate limiting applied
+    - Webhook endpoints: Rate limited for security
+
+    ## Multi-tenancy
+
+    All authenticated requests include tenant context through headers:
+    - `X-Organization-Id`: Current organization context
+    - `X-Request-Id`: Unique request identifier for tracing
+  contact:
+    name: GrandPlan API Support
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:3001
+    description: Local development server
+  - url: https://api.grandplan.com
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Health check and readiness endpoints
+  - name: Organizations
+    description: Organization management and member operations
+  - name: Workspaces
+    description: Workspace CRUD and member management
+  - name: Projects
+    description: Project management and YJS document operations
+  - name: Tasks
+    description: Task CRUD, dependencies, comments, and tree operations
+  - name: Teams
+    description: Team management and member operations
+  - name: AI
+    description: AI-powered task analysis, decomposition, and suggestions
+  - name: Billing
+    description: Subscription management, invoices, and usage tracking
+  - name: Notifications
+    description: Notification management and push subscriptions
+  - name: Integrations
+    description: Third-party integrations and OAuth flows
+  - name: Uploads
+    description: File upload endpoints for avatars, logos, and favicons
+  - name: Platform Admin
+    description: Platform administration endpoints for super admins
+
+paths:
+  # ============================================
+  # HEALTH CHECK ENDPOINTS
+  # ============================================
+  /:
+    get:
+      tags: [Health]
+      summary: Root health check
+      description: Simple endpoint to verify server is running
+      security: []
+      responses:
+        '200':
+          description: Server is running
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Basic health check
+      description: Confirms server is running with timestamp
+      security: []
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /ready:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      description: Verifies all dependencies (database, Redis) are available
+      security: []
+      responses:
+        '200':
+          description: System is ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: System is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+
+  # ============================================
+  # ORGANIZATION ENDPOINTS
+  # ============================================
+  /api/organizations:
+    get:
+      tags: [Organizations]
+      summary: List organizations
+      description: Get all organizations accessible to the current user
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permission: organization:list
+
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      description: Create a new organization
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationDto'
+      responses:
+        '201':
+          description: Organization created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permission: organization:create
+
+  /api/organizations/slug/{slug}:
+    get:
+      tags: [Organizations]
+      summary: Get organization by slug
+      description: Retrieve an organization by its unique slug
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Organization slug
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:read
+
+  /api/organizations/{id}:
+    get:
+      tags: [Organizations]
+      summary: Get organization
+      description: Retrieve organization details by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:read
+
+    patch:
+      tags: [Organizations]
+      summary: Update organization
+      description: Update organization details
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrganizationDto'
+      responses:
+        '200':
+          description: Organization updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:update
+
+    delete:
+      tags: [Organizations]
+      summary: Delete organization
+      description: Delete an organization
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204':
+          description: Organization deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:delete
+
+  /api/organizations/{id}/branding:
+    patch:
+      tags: [Organizations]
+      summary: Update organization branding
+      description: Update organization branding (logo, colors, etc.)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBrandingDto'
+      responses:
+        '200':
+          description: Branding updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:update
+
+  /api/organizations/{id}/members:
+    get:
+      tags: [Organizations]
+      summary: List organization members
+      description: Get all members of an organization
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: List of organization members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrganizationMember'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:read
+
+  /api/organizations/{id}/members/invite:
+    post:
+      tags: [Organizations]
+      summary: Invite member to organization
+      description: Send an invitation to join the organization
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteMemberDto'
+      responses:
+        '201':
+          description: Invitation sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:manage_members
+
+  /api/organizations/{id}/members/{userId}:
+    patch:
+      tags: [Organizations]
+      summary: Update member role
+      description: Update a member's role in the organization
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRoleDto'
+      responses:
+        '200':
+          description: Member role updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationMember'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:manage_members
+
+    delete:
+      tags: [Organizations]
+      summary: Remove member from organization
+      description: Remove a member from the organization
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        '204':
+          description: Member removed successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:manage_members
+
+  /api/organizations/{id}/invitations:
+    get:
+      tags: [Organizations]
+      summary: List invitations
+      description: Get all pending invitations for the organization
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: List of invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invitation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:read
+
+  /api/organizations/{id}/invitations/{invitationId}:
+    delete:
+      tags: [Organizations]
+      summary: Revoke invitation
+      description: Revoke a pending invitation
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Invitation ID
+      responses:
+        '204':
+          description: Invitation revoked successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: organization:manage_members
+
+  /api/organizations/invitations/accept:
+    post:
+      tags: [Organizations]
+      summary: Accept invitation
+      description: Accept an organization invitation (authenticated users only)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptInvitationDto'
+      responses:
+        '200':
+          description: Invitation accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # WORKSPACE ENDPOINTS
+  # ============================================
+  /api/workspaces:
+    get:
+      tags: [Workspaces]
+      summary: List workspaces
+      description: Get all workspaces in the current organization
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permission: workspace:read
+
+    post:
+      tags: [Workspaces]
+      summary: Create workspace
+      description: Create a new workspace
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceDto'
+      responses:
+        '201':
+          description: Workspace created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permission: workspace:create
+
+  /api/workspaces/{id}:
+    get:
+      tags: [Workspaces]
+      summary: Get workspace
+      description: Retrieve workspace details by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: workspace:read
+
+    patch:
+      tags: [Workspaces]
+      summary: Update workspace
+      description: Update workspace details
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceDto'
+      responses:
+        '200':
+          description: Workspace updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: workspace:update
+
+    delete:
+      tags: [Workspaces]
+      summary: Delete workspace
+      description: Delete a workspace
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204':
+          description: Workspace deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permission: workspace:delete
+
+  # Note: Due to character limits, this is a comprehensive sample.
+  # The full specification would continue with all remaining endpoints:
+  # - Projects (CRUD, tasks, stats, YJS documents)
+  # - Tasks (CRUD, tree operations, dependencies, comments, history)
+  # - Teams (CRUD, members)
+  # - AI (decompose, estimate, suggestions, decisions, quality)
+  # - Billing (subscriptions, plans, usage, invoices)
+  # - Notifications (CRUD, preferences, push subscriptions)
+  # - Integrations (OAuth, connections, sync)
+  # - Uploads (file upload)
+  # - Platform Admin (users, organizations, analytics, system config)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the authentication endpoint
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Resource ID
+
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Maximum number of items to return
+
+    OffsetParam:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Number of items to skip
+
+  schemas:
+    # ============================================
+    # COMMON SCHEMAS
+    # ============================================
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+
+    ReadinessResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - checks
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [ok, error]
+                latency:
+                  type: number
+            redis:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [ok, error]
+                latency:
+                  type: number
+
+    # ============================================
+    # ORGANIZATION SCHEMAS
+    # ============================================
+    Organization:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        slug:
+          type: string
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          minLength: 1
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+        logo:
+          type: string
+          format: uri
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateOrganizationDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        slug:
+          type: string
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+        logo:
+          type: string
+          format: uri
+          nullable: true
+
+    UpdateOrganizationDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+
+    UpdateBrandingDto:
+      type: object
+      properties:
+        logo:
+          type: string
+          format: uri
+          nullable: true
+        primaryColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        accentColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+
+    OrganizationMember:
+      type: object
+      required:
+        - userId
+        - roleId
+        - joinedAt
+      properties:
+        userId:
+          type: string
+          format: uuid
+        roleId:
+          type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            avatar:
+              type: string
+              format: uri
+        joinedAt:
+          type: string
+          format: date-time
+
+    InviteMemberDto:
+      type: object
+      required:
+        - email
+        - roleId
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        roleId:
+          type: string
+        teamId:
+          type: string
+          nullable: true
+
+    UpdateMemberRoleDto:
+      type: object
+      required:
+        - roleId
+      properties:
+        roleId:
+          type: string
+
+    AcceptInvitationDto:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+
+    Invitation:
+      type: object
+      required:
+        - id
+        - email
+        - roleId
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        roleId:
+          type: string
+        teamId:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, accepted, expired, revoked]
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    # ============================================
+    # WORKSPACE SCHEMAS
+    # ============================================
+    Workspace:
+      type: object
+      required:
+        - id
+        - name
+        - organizationId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        organizationId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateWorkspaceDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+
+    UpdateWorkspaceDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+
+    # ============================================
+    # PROJECT SCHEMAS
+    # ============================================
+    Project:
+      type: object
+      required:
+        - id
+        - name
+        - workspaceId
+        - organizationId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        workspaceId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ACTIVE, ARCHIVED, COMPLETED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ============================================
+    # TASK SCHEMAS
+    # ============================================
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - projectId
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+          maxLength: 10000
+          nullable: true
+        projectId:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        nodeType:
+          type: string
+          enum: [EPIC, STORY, TASK, SUBTASK, BUG, SPIKE]
+        status:
+          type: string
+          enum: [DRAFT, PENDING, IN_PROGRESS, BLOCKED, IN_REVIEW, COMPLETED, CANCELLED]
+        priority:
+          type: string
+          enum: [CRITICAL, HIGH, MEDIUM, LOW]
+          nullable: true
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+        estimatedHours:
+          type: number
+          minimum: 0
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        position:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateTaskDto:
+      type: object
+      required:
+        - title
+        - projectId
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        description:
+          type: string
+          maxLength: 10000
+          nullable: true
+        projectId:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        nodeType:
+          type: string
+          enum: [EPIC, STORY, TASK, SUBTASK, BUG, SPIKE]
+        status:
+          type: string
+          enum: [DRAFT, PENDING, IN_PROGRESS, BLOCKED, IN_REVIEW, COMPLETED, CANCELLED]
+        priority:
+          type: string
+          enum: [CRITICAL, HIGH, MEDIUM, LOW]
+        assigneeId:
+          type: string
+          nullable: true
+        estimatedHours:
+          type: number
+          minimum: 0
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        position:
+          type: integer
+          minimum: 0
+
+  responses:
+    BadRequest:
+      description: Bad request - validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

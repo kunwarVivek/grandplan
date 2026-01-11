@@ -1,5 +1,8 @@
 // Integrations package - External integrations hub
 
+export { AsanaAdapter } from "./adapters/asana.js";
+export { JiraAdapter } from "./adapters/jira.js";
+export { LinearAdapter } from "./adapters/linear.js";
 export { SlackAdapter } from "./adapters/slack.js";
 export { TeamsAdapter } from "./adapters/teams.js";
 export { IntegrationHub, integrationHub } from "./hub.js";

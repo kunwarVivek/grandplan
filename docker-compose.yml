@@ -1,70 +1,263 @@
 name: grandplan
 
+# ============================================================================
+# Root Docker Compose for GrandPlan Local Development
+# ============================================================================
+# Services: PostgreSQL, Redis, Server (API), Web (Frontend), Worker (Background)
+# Network: All services on grandplan network with service discovery
+# Volumes: Mounted for hot-reload development
+# Health Checks: Enabled for all services with proper retry logic
+#
+# Usage:
+#   docker-compose up              # Start all services
+#   docker-compose up -d           # Start in background
+#   docker-compose down            # Stop and remove containers
+#   docker-compose logs -f server  # Follow server logs
+#
+# ============================================================================
+
 services:
+  # ========================================================================
+  # PostgreSQL Database
+  # ========================================================================
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
+    container_name: grandplan-postgres
     environment:
-      POSTGRES_DB: grandplan
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-grandplan}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - grandplan_postgres_data:/var/lib/postgresql/data
+    networks:
+      - grandplan
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    labels:
+      service: database
 
+  # ========================================================================
+  # Redis Cache & Message Queue
+  # ========================================================================
   redis:
     image: redis:7-alpine
+    container_name: grandplan-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
+      - grandplan_redis_data:/data
+    networks:
+      - grandplan
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    labels:
+      service: cache
 
+  # ========================================================================
+  # Server (Node.js Express API)
+  # ========================================================================
   server:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/grandplan
-      REDIS_URL: redis://redis:6379
-      NODE_ENV: development
+      target: development
+    container_name: grandplan-server
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-grandplan}
 
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
+
+      # Server
+      PORT: 3000
+      NODE_ENV: ${NODE_ENV:-development}
+
+      # Authentication
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-change-in-production}
+      BETTER_AUTH_URL: http://localhost:3000
+
+      # CORS
+      CORS_ORIGIN: http://localhost:3001
+
+      # App URL
+      APP_URL: http://localhost:3001
+
+      # AI Providers
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+
+      # Email
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-notifications@grandplan.app}
+
+      # Encryption
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+
+      # Integrations
+      SLACK_CLIENT_ID: ${SLACK_CLIENT_ID:-}
+      SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET:-}
+      JIRA_CLIENT_ID: ${JIRA_CLIENT_ID:-}
+      JIRA_CLIENT_SECRET: ${JIRA_CLIENT_SECRET:-}
+    ports:
+      - "${SERVER_PORT:-3000}:3000"
+    volumes:
+      - ./apps/server/src:/app/apps/server/src
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/server/node_modules
+      - /app/packages/*/node_modules
+    networks:
+      - grandplan
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    labels:
+      service: api
+
+  # ========================================================================
+  # Web (React Frontend / Vite)
+  # ========================================================================
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    ports:
-      - "3001:3001"
-    environment:
-      VITE_SERVER_URL: http://localhost:3000
+      target: development
+    container_name: grandplan-web
     depends_on:
-      - server
+      server:
+        condition: service_healthy
+    environment:
+      # API Endpoint
+      VITE_SERVER_URL: http://localhost:3000
 
+      # Analytics (optional)
+      VITE_POSTHOG_KEY: ${VITE_POSTHOG_KEY:-}
+      VITE_POSTHOG_HOST: ${VITE_POSTHOG_HOST:-}
+
+      # Error Tracking (optional)
+      VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    ports:
+      - "${WEB_PORT:-3001}:5173"
+    volumes:
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/index.html:/app/apps/web/index.html
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/packages/*/node_modules
+    networks:
+      - grandplan
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    labels:
+      service: frontend
+
+  # ========================================================================
+  # Worker (Background Job Processing)
+  # ========================================================================
   worker:
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/grandplan
-      REDIS_URL: redis://redis:6379
+      target: development
+    container_name: grandplan-worker
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-grandplan}
 
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
+
+      # Node
+      NODE_ENV: ${NODE_ENV:-development}
+
+      # AI Providers
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+      # Email
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-notifications@grandplan.app}
+
+      # Encryption
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+
+      # Integrations
+      SLACK_CLIENT_ID: ${SLACK_CLIENT_ID:-}
+      SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET:-}
+      JIRA_CLIENT_ID: ${JIRA_CLIENT_ID:-}
+      JIRA_CLIENT_SECRET: ${JIRA_CLIENT_SECRET:-}
+    volumes:
+      - ./apps/worker/src:/app/apps/worker/src
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/worker/node_modules
+      - /app/packages/*/node_modules
+    networks:
+      - grandplan
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    labels:
+      service: worker
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  grandplan:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ============================================================================
+# Volumes (Persistent Data)
+# ============================================================================
 volumes:
-  postgres_data:
-  redis_data:
+  grandplan_postgres_data:
+    driver: local
+  grandplan_redis_data:
+    driver: local

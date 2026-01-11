@@ -55,7 +55,7 @@ export function PlanSelector({ onSuccess }: PlanSelectorProps) {
 		return <PlanSelectorSkeleton />;
 	}
 
-	const plans = plansData?.plans ?? [];
+	const plans: Plan[] = plansData ?? [];
 	const currentPlanId = subscription?.planId;
 
 	const formatPrice = (amount: number) => {

@@ -3,35 +3,35 @@
 // ============================================
 
 model Notification {
-  id            String           @id @default(cuid())
-  userId        String
-  user          User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
-  type          NotificationType
-  title         String
-  body          String?
-  data          Json?            // Flexible payload (links, context, action data)
+  type  NotificationType
+  title String
+  body  String?
+  data  Json? // Flexible payload (links, context, action data)
 
-  read          Boolean          @default(false)
-  readAt        DateTime?
-  archivedAt    DateTime?
+  read       Boolean   @default(false)
+  readAt     DateTime?
+  archivedAt DateTime?
 
-  createdAt     DateTime         @default(now())
+  createdAt DateTime @default(now())
 
   // For grouping/deduplication
-  groupKey      String?
+  groupKey String?
 
   // Context
-  actorId       String?          // Who triggered this notification
-  actor         User?            @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
-  resourceType  String?          // "task", "project", "comment", etc.
-  resourceId    String?
+  actorId        String? // Who triggered this notification
+  actor          User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  resourceType   String? // "task", "project", "comment", etc.
+  resourceId     String?
   organizationId String?
 
   // Delivery tracking
-  emailSentAt   DateTime?
-  pushSentAt    DateTime?
-  slackSentAt   DateTime?
+  emailSentAt DateTime?
+  pushSentAt  DateTime?
+  slackSentAt DateTime?
 
   @@index([userId, read, createdAt])
   @@index([userId, archivedAt])
@@ -97,33 +97,33 @@ enum NotificationType {
 
 // User notification preferences
 model NotificationPreference {
-  id               String          @id @default(cuid())
-  userId           String          @unique
-  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Global channel preferences
-  emailEnabled     Boolean         @default(true)
-  pushEnabled      Boolean         @default(true)
-  inAppEnabled     Boolean         @default(true)
-  slackEnabled     Boolean         @default(false)
+  emailEnabled Boolean @default(true)
+  pushEnabled  Boolean @default(true)
+  inAppEnabled Boolean @default(true)
+  slackEnabled Boolean @default(false)
 
   // Digest settings
-  digestEnabled    Boolean         @default(false)
-  digestFrequency  DigestFrequency @default(DAILY)
-  digestTime       String?         // "09:00" in user's timezone
+  digestEnabled   Boolean         @default(false)
+  digestFrequency DigestFrequency @default(DAILY)
+  digestTime      String? // "09:00" in user's timezone
 
   // Per-type settings (JSON for flexibility)
   // Format: { "TASK_ASSIGNED": { "email": true, "push": true }, ... }
-  typeSettings     Json            @default("{}")
+  typeSettings Json @default("{}")
 
   // Quiet hours
-  quietHoursEnabled Boolean        @default(false)
-  quietHoursStart  String?         // "22:00"
-  quietHoursEnd    String?         // "08:00"
-  timezone         String          @default("UTC")
+  quietHoursEnabled Boolean @default(false)
+  quietHoursStart   String? // "22:00"
+  quietHoursEnd     String? // "08:00"
+  timezone          String  @default("UTC")
 
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("notification_preference")
 }
@@ -136,19 +136,19 @@ enum DigestFrequency {
 
 // Push notification subscriptions (Web Push)
 model PushSubscription {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  endpoint     String   @unique
-  p256dh       String   // Public key
-  auth         String   // Auth secret
+  endpoint String @unique
+  p256dh   String // Public key
+  auth     String // Auth secret
 
-  userAgent    String?
-  deviceName   String?
+  userAgent  String?
+  deviceName String?
 
-  createdAt    DateTime @default(now())
-  lastUsedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
 
   @@index([userId])
   @@map("push_subscription")
@@ -156,19 +156,100 @@ model PushSubscription {
 
 // Digest queue for batched notifications
 model DigestQueue {
-  id           String          @id @default(cuid())
-  userId       String
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  frequency    DigestFrequency
-  notifications Json           // Array of notification data to include
+  frequency     DigestFrequency
+  notifications Json // Array of notification data to include
 
   scheduledFor DateTime
   processedAt  DateTime?
 
-  createdAt    DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([scheduledFor, processedAt])
   @@index([userId])
+  // Composite index for fetching pending digests by frequency
+  @@index([frequency, scheduledFor])
+  // Composite index for fetching user's pending digests
+  @@index([userId, processedAt])
+  // Composite index for processing queue ordered by schedule
+  @@index([processedAt, scheduledFor])
   @@map("digest_queue")
+}
+
+// ============================================
+// NOTIFICATION TEMPLATES
+// Customizable templates for notifications
+// ============================================
+
+model NotificationTemplate {
+  id String @id @default(cuid())
+
+  // Template identification
+  code        String // Unique template code (e.g., "task_assigned", "comment_mention")
+  name        String // Human-readable name
+  description String? // Description of when this template is used
+
+  // Template type
+  type    NotificationType // Which notification type this template is for
+  channel NotificationChannel // Which channel this template is for (email, push, in-app, slack)
+
+  // Template content
+  subject       String? // Subject line (for email/push)
+  titleTemplate String // Title template with variables (e.g., "{{actor.name}} assigned you a task")
+  bodyTemplate  String  @db.Text // Body template with variables
+  bodyHtml      String? @db.Text // HTML version for email
+  ctaText       String? // Call-to-action button text
+  ctaUrl        String? // Call-to-action URL template
+
+  // Template variables documentation
+  variables Json? // { "actor": { "type": "User", "fields": ["name", "email"] }, ... }
+
+  // Categorization
+  category TemplateCategory @default(TRANSACTIONAL)
+  priority Int              @default(0) // Higher = more important
+
+  // Organization-specific override (null = system default)
+  organizationId String?
+
+  // Status
+  isActive Boolean @default(true)
+  isSystem Boolean @default(false) // System templates cannot be deleted
+
+  // Localization
+  locale String @default("en") // Language code (e.g., "en", "es", "fr")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([code, channel, organizationId, locale])
+  @@index([type])
+  @@index([channel])
+  @@index([organizationId])
+  @@index([isActive])
+  @@index([category])
+  @@index([locale])
+  // Composite index for finding active templates for a notification type and channel
+  @@index([type, channel, isActive])
+  // Composite index for org-specific template lookup
+  @@index([organizationId, type, channel, locale])
+  @@map("notification_template")
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  IN_APP
+  SLACK
+  SMS
+}
+
+enum TemplateCategory {
+  TRANSACTIONAL // Essential notifications (assignments, mentions)
+  INFORMATIONAL // Updates and activity (status changes, comments)
+  MARKETING // Promotional (new features, tips)
+  DIGEST // Digest/summary notifications
+  SYSTEM // System alerts (maintenance, security)
 }

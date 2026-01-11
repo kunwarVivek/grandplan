@@ -13,7 +13,7 @@ import { slugify } from "@grandplan/core/utils";
 import db from "@grandplan/db";
 import { eventBus } from "@grandplan/events";
 import { getCurrentTenant, tryGetCurrentTenant } from "@grandplan/tenant";
-import type { OrganizationStatus } from "@prisma/client";
+import type { OrganizationStatus } from "@grandplan/db";
 import type { CreateOrganizationDto } from "../../api/dto/create-organization.dto.js";
 import type {
 	UpdateBrandingDto,
@@ -238,11 +238,11 @@ export class OrganizationCoreService {
 		}
 
 		const brandingConfig = {
-			primaryColor: dto.primaryColor,
-			secondaryColor: dto.secondaryColor,
-			fontFamily: dto.fontFamily,
-			logo: dto.logo,
-			favicon: dto.favicon,
+			primaryColor: dto.primaryColor ?? undefined,
+			secondaryColor: dto.secondaryColor ?? undefined,
+			fontFamily: dto.fontFamily ?? undefined,
+			logo: dto.logo ?? undefined,
+			favicon: dto.favicon ?? undefined,
 		};
 
 		const updated = await this.repository.updateBranding(

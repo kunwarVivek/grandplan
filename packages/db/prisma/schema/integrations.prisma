@@ -38,55 +38,59 @@ model IntegrationDefinition {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
-  connections IntegrationConnection[]
+  connections   IntegrationConnection[]
   externalLinks TaskExternalLink[]
   webhookEvents IntegrationWebhookEvent[]
-  oauthStates IntegrationOAuthState[]
+  oauthStates   IntegrationOAuthState[]
 
   @@map("integration_definition")
 }
 
 // Integration connection per user/organization
 model IntegrationConnection {
-  id              String              @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId          String
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  organizationId  String?             // Optional org-level connection
+  organizationId String? // Optional org-level connection
 
-  integrationId   String
-  integration     IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  integrationId String
+  integration   IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
 
   // Encrypted credentials
-  accessToken     String?             @db.Text
-  refreshToken    String?             @db.Text
-  tokenExpiresAt  DateTime?
+  accessToken    String?   @db.Text
+  refreshToken   String?   @db.Text
+  tokenExpiresAt DateTime?
 
   // Provider-specific data
-  externalUserId  String?             // User ID in external system
-  externalTeamId  String?             // Team/Workspace ID in external system
-  metadata        Json?               // Provider-specific metadata
+  externalUserId String? // User ID in external system
+  externalTeamId String? // Team/Workspace ID in external system
+  metadata       Json? // Provider-specific metadata
 
-  status          IntegrationStatus   @default(ACTIVE)
-  lastSyncAt      DateTime?
-  lastErrorAt     DateTime?
-  lastError       String?
+  status      IntegrationStatus @default(ACTIVE)
+  lastSyncAt  DateTime?
+  lastErrorAt DateTime?
+  lastError   String?
 
   // Webhook configuration (if applicable)
-  webhookId       String?
-  webhookSecret   String?
+  webhookId     String?
+  webhookSecret String?
 
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  syncConfigs     IntegrationSyncConfig[]
+  // Soft delete for audit trail and data recovery
+  deletedAt DateTime?
+
+  syncConfigs IntegrationSyncConfig[]
 
   @@unique([userId, integrationId, organizationId])
   @@index([userId])
   @@index([organizationId])
   @@index([integrationId])
   @@index([status])
+  @@index([deletedAt])
   @@map("integration_connection")
 }
 
@@ -100,70 +104,70 @@ enum IntegrationStatus {
 
 // Sync configuration for bidirectional integrations
 model IntegrationSyncConfig {
-  id                  String              @id @default(cuid())
-  connectionId        String
-  connection          IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  id           String                @id @default(cuid())
+  connectionId String
+  connection   IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
   // What to sync
-  syncDirection       SyncDirection       @default(BIDIRECTIONAL)
-  syncTasks           Boolean             @default(true)
-  syncComments        Boolean             @default(false)
-  syncAttachments     Boolean             @default(false)
+  syncDirection   SyncDirection @default(BIDIRECTIONAL)
+  syncTasks       Boolean       @default(true)
+  syncComments    Boolean       @default(false)
+  syncAttachments Boolean       @default(false)
 
   // Mapping configuration
-  projectMapping      Json?               // { localProjectId: externalProjectKey }
-  statusMapping       Json?               // { "IN_PROGRESS": "In Progress", ... }
-  priorityMapping     Json?               // { "HIGH": "Highest", ... }
-  typeMapping         Json?               // { "TASK": "Task", "BUG": "Bug", ... }
-  customFieldMapping  Json?               // Custom field mappings
+  projectMapping     Json? // { localProjectId: externalProjectKey }
+  statusMapping      Json? // { "IN_PROGRESS": "In Progress", ... }
+  priorityMapping    Json? // { "HIGH": "Highest", ... }
+  typeMapping        Json? // { "TASK": "Task", "BUG": "Bug", ... }
+  customFieldMapping Json? // Custom field mappings
 
   // Filter which items to sync
-  filterQuery         String?             // JQL for Jira, etc.
+  filterQuery String? // JQL for Jira, etc.
 
   // Sync schedule
-  autoSync            Boolean             @default(true)
-  syncIntervalMinutes Int                 @default(15)
+  autoSync            Boolean   @default(true)
+  syncIntervalMinutes Int       @default(15)
   lastSyncAt          DateTime?
 
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([connectionId])
   @@map("integration_sync_config")
 }
 
 enum SyncDirection {
-  TO_EXTERNAL       // GrandPlan -> External
-  FROM_EXTERNAL     // External -> GrandPlan
-  BIDIRECTIONAL     // Both ways
+  TO_EXTERNAL // GrandPlan -> External
+  FROM_EXTERNAL // External -> GrandPlan
+  BIDIRECTIONAL // Both ways
 }
 
 // Link between GrandPlan tasks and external system items
 model TaskExternalLink {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
-  taskId          String
-  task            TaskNode        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
+  task   TaskNode @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  integrationId   String
-  integration     IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  externalId      String          // Issue key/ID in external system
-  externalUrl     String?         // Direct link to external item
+  integrationId String
+  integration   IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  externalId    String // Issue key/ID in external system
+  externalUrl   String? // Direct link to external item
 
   // Sync tracking
-  lastSyncedAt    DateTime
+  lastSyncedAt      DateTime
   lastSyncDirection SyncDirection
-  syncStatus      ExternalLinkSyncStatus @default(SYNCED)
-  lastSyncError   String?
+  syncStatus        ExternalLinkSyncStatus @default(SYNCED)
+  lastSyncError     String?
 
   // Version tracking for conflict detection
-  localVersion    Int             @default(0)
-  externalVersion String?         // Version/ETag from external system
+  localVersion    Int     @default(0)
+  externalVersion String? // Version/ETag from external system
 
-  metadata        Json?           // Additional external data
+  metadata Json? // Additional external data
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([taskId, integrationId])
   @@unique([integrationId, externalId])
@@ -182,24 +186,24 @@ enum ExternalLinkSyncStatus {
 
 // Webhook events received from external systems
 model IntegrationWebhookEvent {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
-  integrationId   String
-  integration     IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  eventType       String          // Provider-specific event type
-  payload         Json            // Raw webhook payload
+  integrationId String
+  integration   IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  eventType     String // Provider-specific event type
+  payload       Json // Raw webhook payload
 
   // Processing status
-  status          WebhookEventStatus @default(PENDING)
-  processedAt     DateTime?
-  error           String?
-  retryCount      Int             @default(0)
+  status      WebhookEventStatus @default(PENDING)
+  processedAt DateTime?
+  error       String?
+  retryCount  Int                @default(0)
 
   // Verification
-  signature       String?
-  verified        Boolean         @default(false)
+  signature String?
+  verified  Boolean @default(false)
 
-  receivedAt      DateTime        @default(now())
+  receivedAt DateTime @default(now())
 
   @@index([integrationId, eventType])
   @@index([status])
@@ -217,25 +221,144 @@ enum WebhookEventStatus {
   SKIPPED
 }
 
+// Calendar events synced from external calendars
+model CalendarEvent {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  organizationId String?
+
+  // Event details
+  title       String
+  description String? @db.Text
+  location    String?
+
+  // Timing
+  startTime DateTime
+  endTime   DateTime
+  isAllDay  Boolean  @default(false)
+  timezone  String?
+
+  // External sync
+  externalId         String // ID in external calendar
+  externalCalendarId String? // Calendar ID in external system
+  provider           IntegrationType // GOOGLE_CALENDAR, OUTLOOK_CALENDAR
+  syncStatus         CalendarSyncStatus @default(SYNCED)
+  lastSyncedAt       DateTime?
+
+  // Recurrence
+  isRecurring    Boolean @default(false)
+  recurrenceRule String? // iCal RRULE format
+  parentEventId  String? // For recurring event instances
+
+  // Attendees
+  attendees      Json? // [{ email, name, status }]
+  organizerEmail String?
+
+  // Metadata
+  metadata Json? // Provider-specific data
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, provider, externalId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([startTime, endTime])
+  @@index([provider, externalId])
+  @@index([syncStatus])
+  @@map("calendar_event")
+}
+
+enum CalendarSyncStatus {
+  SYNCED
+  PENDING_SYNC
+  SYNC_ERROR
+  DELETED_EXTERNAL // Deleted in external calendar
+}
+
 // OAuth state management
 model IntegrationOAuthState {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId          String
-  integrationId   String
-  integration     IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  state           String          @unique
+  userId        String
+  integrationId String
+  integration   IntegrationDefinition @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  state         String                @unique
 
-  redirectUri     String?
-  scopes          String[]
+  redirectUri String?
+  scopes      String[]
 
-  expiresAt       DateTime
-  usedAt          DateTime?
+  expiresAt DateTime
+  usedAt    DateTime?
 
-  createdAt       DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([state])
   @@index([userId, integrationId])
   @@index([expiresAt])
   @@map("integration_oauth_state")
+}
+
+// ============================================
+// SLACK INTEGRATION
+// ============================================
+
+// Slack channels connected for notifications and integrations
+model SlackChannel {
+  id String @id @default(cuid())
+
+  // Slack identifiers
+  slackChannelId   String // Slack's channel ID (e.g., C1234567890)
+  slackChannelName String // Channel name (e.g., #general)
+  slackTeamId      String // Slack workspace/team ID
+
+  // Organization link
+  organizationId String
+
+  // Channel configuration
+  channelType SlackChannelType @default(PUBLIC)
+  isDefault   Boolean          @default(false) // Default channel for org notifications
+
+  // Notification settings for this channel
+  notifyTaskCreated   Boolean @default(true)
+  notifyTaskCompleted Boolean @default(true)
+  notifyTaskAssigned  Boolean @default(true)
+  notifyComments      Boolean @default(false)
+  notifyMentions      Boolean @default(true)
+
+  // Filtering
+  projectIds String[] @default([]) // Limit to specific projects (empty = all)
+  teamIds    String[] @default([]) // Limit to specific teams (empty = all)
+
+  // Status tracking
+  isActive      Boolean   @default(true)
+  lastMessageAt DateTime? // Last time a message was sent to this channel
+  errorCount    Int       @default(0) // Count of consecutive errors
+  lastError     String?
+
+  // Soft delete
+  deletedAt DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String? // Who connected this channel
+
+  @@unique([organizationId, slackChannelId])
+  @@index([organizationId])
+  @@index([slackTeamId])
+  @@index([isActive])
+  @@index([isDefault])
+  @@index([deletedAt])
+  // Composite index for finding active channels for an org
+  @@index([organizationId, isActive])
+  @@map("slack_channel")
+}
+
+enum SlackChannelType {
+  PUBLIC // Public channel
+  PRIVATE // Private channel
+  DIRECT_MESSAGE // DM channel
 }

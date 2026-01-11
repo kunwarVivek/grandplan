@@ -55,7 +55,7 @@ export async function listUsers(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid query parameters", {
-				query: parseResult.error.errors.map((e) => e.message),
+				query: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
@@ -97,7 +97,7 @@ export async function getUser(
 	try {
 		const { id } = req.params;
 
-		const user = await platformUserService.getUser(id);
+		const user = await platformUserService.getUser(id!);
 
 		res.status(200).json({
 			success: true,
@@ -123,13 +123,13 @@ export async function updateUser(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
-		await platformUserService.updateUser(id, parseResult.data);
+		await platformUserService.updateUser(id!, parseResult.data);
 
-		await logPlatformAction(req, "update_user", "user", id, parseResult.data);
+		await logPlatformAction(req, "update_user", "user", id!, parseResult.data);
 
 		res.status(200).json({
 			success: true,
@@ -155,19 +155,19 @@ export async function banUser(
 
 		if (!parseResult.success) {
 			throw new ValidationError("Invalid request body", {
-				body: parseResult.error.errors.map((e) => e.message),
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
 			});
 		}
 
 		await platformUserService.banUser(
-			id,
+			id!,
 			parseResult.data.reason,
 			parseResult.data.expiresAt
 				? new Date(parseResult.data.expiresAt)
 				: undefined,
 		);
 
-		await logPlatformAction(req, "ban_user", "user", id, {
+		await logPlatformAction(req, "ban_user", "user", id!, {
 			reason: parseResult.data.reason,
 			expiresAt: parseResult.data.expiresAt,
 		});
@@ -193,9 +193,9 @@ export async function unbanUser(
 	try {
 		const { id } = req.params;
 
-		await platformUserService.unbanUser(id);
+		await platformUserService.unbanUser(id!);
 
-		await logPlatformAction(req, "unban_user", "user", id);
+		await logPlatformAction(req, "unban_user", "user", id!);
 
 		res.status(200).json({
 			success: true,
@@ -218,9 +218,9 @@ export async function deleteUser(
 	try {
 		const { id } = req.params;
 
-		await platformUserService.deleteUser(id);
+		await platformUserService.deleteUser(id!);
 
-		await logPlatformAction(req, "delete_user", "user", id);
+		await logPlatformAction(req, "delete_user", "user", id!);
 
 		res.status(200).json({
 			success: true,
@@ -245,11 +245,11 @@ export async function impersonateUser(
 		const adminId = req.platformUser!.id;
 
 		const session = await platformUserService.createImpersonationSession(
-			id,
+			id!,
 			adminId,
 		);
 
-		await logPlatformAction(req, "impersonate_user", "user", id, {
+		await logPlatformAction(req, "impersonate_user", "user", id!, {
 			sessionExpiresAt: session.expiresAt.toISOString(),
 		});
 
@@ -275,7 +275,7 @@ export async function getUserActivity(
 		const { id } = req.params;
 		const limit = req.query.limit ? Number(req.query.limit) : 50;
 
-		const activity = await platformUserService.getUserActivityLog(id, limit);
+		const activity = await platformUserService.getUserActivityLog(id!, limit);
 
 		res.status(200).json({
 			success: true,
