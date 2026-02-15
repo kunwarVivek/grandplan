@@ -12,6 +12,11 @@ import { logPlatformAction } from "../middleware/platform-auth.middleware.js";
 // REQUEST VALIDATION SCHEMAS
 // ============================================
 
+const CreateUserSchema = z.object({
+	email: z.string().email(),
+	name: z.string().min(1).max(255).optional(),
+});
+
 const ListUsersQuerySchema = z.object({
 	search: z.string().optional(),
 	status: z.enum(["all", "active", "banned"]).optional(),
@@ -40,6 +45,40 @@ const BanUserSchema = z.object({
 // ============================================
 // CONTROLLER METHODS
 // ============================================
+
+/**
+ * Create a new user
+ * POST /api/platform/users
+ */
+export async function createUser(
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> {
+	try {
+		const parseResult = CreateUserSchema.safeParse(req.body);
+
+		if (!parseResult.success) {
+			throw new ValidationError("Invalid request body", {
+				body: parseResult.error.issues.map((e: z.ZodIssue) => e.message),
+			});
+		}
+
+		const user = await platformUserService.createUser(parseResult.data);
+
+		await logPlatformAction(req, "create_user", "user", user.id, {
+			email: user.email,
+			name: user.name,
+		});
+
+		res.status(201).json({
+			success: true,
+			data: user,
+		});
+	} catch (error) {
+		next(error);
+	}
+}
 
 /**
  * List all users

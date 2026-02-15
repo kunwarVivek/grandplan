@@ -45,6 +45,7 @@ import {
 } from "./controllers/system.controller.js";
 import {
 	banUser,
+	createUser,
 	deleteUser,
 	getUser,
 	getUserActivity,
@@ -95,6 +96,12 @@ router.use(requirePlatformAuth);
 // ============================================
 // USER MANAGEMENT ROUTES
 // ============================================
+
+router.post(
+	"/users",
+	requirePlatformPermission("platform:users:write"),
+	createUser,
+);
 
 router.get(
 	"/users",
