@@ -97,7 +97,7 @@ export class TeamController {
 	}
 
 	async listUserTeams(
-		req: Request,
+		_req: Request,
 		res: Response,
 		next: NextFunction,
 	): Promise<void> {

@@ -53,6 +53,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useBulkArchiveTasks, useBulkDeleteTasks } from "../hooks/use-tasks";
 import {
 	TASK_PRIORITY_CONFIG as PRIORITY_CONFIG,
 	TASK_STATUS_CONFIG as STATUS_CONFIG,
@@ -493,12 +494,27 @@ export function ListView({
 		[rowSelection],
 	);
 
+	const projectId = tasks[0]?.projectId ?? "";
+
+	const bulkDelete = useBulkDeleteTasks(projectId);
+	const bulkArchive = useBulkArchiveTasks(projectId);
+
 	const handleBulkDelete = useCallback(() => {
-		toast.info("Bulk delete coming soon", {
-			description: `${selectedRowIds.length} task(s) selected`,
+		if (!projectId || selectedRowIds.length === 0) return;
+		bulkDelete.mutate(selectedRowIds, {
+			onSuccess: () => {
+				toast.success("Tasks deleted", {
+					description: `${selectedRowIds.length} task(s) have been deleted`,
+				});
+				setRowSelection({});
+			},
+			onError: (error) => {
+				toast.error("Failed to delete tasks", {
+					description: error.message,
+				});
+			},
 		});
-		setRowSelection({});
-	}, [selectedRowIds]);
+	}, [selectedRowIds, projectId, bulkDelete]);
 
 	const handleBulkDuplicate = useCallback(() => {
 		toast.info("Bulk duplicate coming soon", {
@@ -508,11 +524,21 @@ export function ListView({
 	}, [selectedRowIds]);
 
 	const handleBulkArchive = useCallback(() => {
-		toast.info("Bulk archive coming soon", {
-			description: `${selectedRowIds.length} task(s) selected`,
+		if (!projectId || selectedRowIds.length === 0) return;
+		bulkArchive.mutate(selectedRowIds, {
+			onSuccess: () => {
+				toast.success("Tasks archived", {
+					description: `${selectedRowIds.length} task(s) have been archived`,
+				});
+				setRowSelection({});
+			},
+			onError: (error) => {
+				toast.error("Failed to archive tasks", {
+					description: error.message,
+				});
+			},
 		});
-		setRowSelection({});
-	}, [selectedRowIds]);
+	}, [selectedRowIds, projectId, bulkArchive]);
 
 	if (isLoading) {
 		return <ListSkeleton />;

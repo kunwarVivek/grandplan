@@ -9,14 +9,14 @@ import {
 	NotFoundError,
 	ValidationError,
 } from "@grandplan/core/errors";
-import { eventBus } from "@grandplan/events";
-import { getCurrentTenant } from "@grandplan/tenant";
 import type {
 	DependencyType,
 	TaskNodeType,
 	TaskPriority,
 	TaskStatus,
 } from "@grandplan/db";
+import { eventBus } from "@grandplan/events";
+import { getCurrentTenant } from "@grandplan/tenant";
 import { projectRepository } from "../../../project/infrastructure/repositories/project.repository.js";
 import { workspaceRepository } from "../../../workspace/infrastructure/repositories/workspace.repository.js";
 import type {
@@ -68,7 +68,7 @@ export class TaskService {
 	}
 
 	async create(dto: CreateTaskDto) {
-		const { project, tenant } = await this.verifyProjectAccess(dto.projectId);
+		const { tenant } = await this.verifyProjectAccess(dto.projectId);
 
 		// Calculate depth and get parent info
 		let depth = 0;
@@ -153,8 +153,6 @@ export class TaskService {
 	}
 
 	async list(options: TaskQueryOptions = {}) {
-		const tenant = getCurrentTenant();
-
 		if (options.projectId) {
 			await this.verifyProjectAccess(options.projectId);
 			return taskRepository.findByProject(options.projectId, options);
@@ -272,11 +270,11 @@ export class TaskService {
 			}
 
 			// Emit specific events
-			if (statusChanged) {
+			if (statusChanged && previousStatus && dto.status) {
 				await eventBus.emit(TASK_EVENTS.STATUS_CHANGED, {
 					taskId: id,
-					previousStatus: previousStatus!,
-					newStatus: dto.status!,
+					previousStatus,
+					newStatus: dto.status,
 					changedById: tenant.userId,
 					aiTriggered: false,
 				});
@@ -451,6 +449,45 @@ export class TaskService {
 		}
 
 		return { updated: count };
+	}
+
+	async bulkDelete(dto: { taskIds: string[] }) {
+		for (const taskId of dto.taskIds) {
+			const task = await taskRepository.findById(taskId);
+			if (!task) {
+				throw new NotFoundError("Task", taskId);
+			}
+			await this.verifyProjectAccess(task.projectId);
+		}
+
+		const deleted = await taskRepository.bulkDelete(dto.taskIds);
+		return { deleted };
+	}
+
+	async bulkArchive(dto: { taskIds: string[] }) {
+		const tenant = getCurrentTenant();
+
+		for (const taskId of dto.taskIds) {
+			const task = await taskRepository.findById(taskId);
+			if (!task) {
+				throw new NotFoundError("Task", taskId);
+			}
+			await this.verifyProjectAccess(task.projectId);
+		}
+
+		const archived = await taskRepository.bulkArchive(dto.taskIds);
+
+		for (const taskId of dto.taskIds) {
+			await taskRepository.addHistory({
+				taskId,
+				action: "STATUS_CHANGED",
+				field: "status",
+				newValue: "CANCELLED",
+				actorId: tenant.userId,
+			});
+		}
+
+		return { archived };
 	}
 
 	// Dependencies

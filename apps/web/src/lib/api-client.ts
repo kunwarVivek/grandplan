@@ -73,8 +73,8 @@ export const api = {
 	put: <T>(endpoint: string, body?: unknown, signal?: AbortSignal) =>
 		request<T>(endpoint, { method: "PUT", body, signal }),
 
-	delete: <T>(endpoint: string, signal?: AbortSignal) =>
-		request<T>(endpoint, { method: "DELETE", signal }),
+	delete: <T>(endpoint: string, body?: unknown, signal?: AbortSignal) =>
+		request<T>(endpoint, { method: "DELETE", body, signal }),
 
 	postForm: async <T>(
 		endpoint: string,

@@ -2,8 +2,8 @@
 // ORGANIZATION CORE SERVICE TESTS
 // ============================================
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OrganizationStatus } from "@grandplan/db";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OrganizationCoreService } from "./organization-core.service.js";
 
 // Mock dependencies
@@ -54,10 +54,10 @@ vi.mock("../../infrastructure/repositories/organization.repository.js", () => ({
 
 // Import mocks after defining them
 import { auditService } from "@grandplan/audit";
+import { slugify } from "@grandplan/core/utils";
+import db from "@grandplan/db";
 import { eventBus } from "@grandplan/events";
 import { getCurrentTenant, tryGetCurrentTenant } from "@grandplan/tenant";
-import db from "@grandplan/db";
-import { slugify } from "@grandplan/core/utils";
 import { organizationRepository } from "../../infrastructure/repositories/organization.repository.js";
 
 describe("OrganizationCoreService", () => {
@@ -323,6 +323,7 @@ describe("OrganizationCoreService", () => {
 
 			// Assert
 			expect(organizationRepository.updateBranding).toHaveBeenCalled();
+			expect(result).toBeDefined();
 		});
 
 		it("should check for custom domain conflicts", async () => {

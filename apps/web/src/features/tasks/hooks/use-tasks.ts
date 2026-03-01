@@ -925,3 +925,106 @@ export function useTaskHistory(
 		enabled: !!taskId,
 	});
 }
+
+type BulkOperationResponse = {
+	success: boolean;
+	data: {
+		deleted?: number;
+		archived?: number;
+	};
+};
+
+export function useBulkDeleteTasks(projectId: string) {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (taskIds: string[]) => {
+			return api.delete<BulkOperationResponse>("/api/tasks/bulk", taskIds);
+		},
+		onMutate: async (taskIds) => {
+			await queryClient.cancelQueries({
+				queryKey: queryKeys.tasks.all(projectId),
+			});
+
+			const previousTasks = queryClient.getQueryData(
+				queryKeys.tasks.all(projectId),
+			);
+
+			queryClient.setQueryData(
+				queryKeys.tasks.all(projectId),
+				(old: TasksResponse | undefined) => {
+					if (!old) return old;
+					return {
+						...old,
+						tasks: old.tasks.filter((t) => !taskIds.includes(t.id)),
+						total: old.total - taskIds.length,
+					};
+				},
+			);
+
+			return { previousTasks };
+		},
+		onError: (_1, _2, context) => {
+			if (context?.previousTasks) {
+				queryClient.setQueryData(
+					queryKeys.tasks.all(projectId),
+					context.previousTasks,
+				);
+			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.all(projectId),
+			});
+		},
+	});
+}
+
+export function useBulkArchiveTasks(projectId: string) {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (taskIds: string[]) => {
+			return api.post<BulkOperationResponse>("/api/tasks/bulk-archive", {
+				taskIds,
+			});
+		},
+		onMutate: async (taskIds) => {
+			await queryClient.cancelQueries({
+				queryKey: queryKeys.tasks.all(projectId),
+			});
+
+			const previousTasks = queryClient.getQueryData(
+				queryKeys.tasks.all(projectId),
+			);
+
+			queryClient.setQueryData(
+				queryKeys.tasks.all(projectId),
+				(old: TasksResponse | undefined) => {
+					if (!old) return old;
+					return {
+						...old,
+						tasks: old.tasks.map((t) =>
+							taskIds.includes(t.id) ? { ...t, status: "CANCELLED" } : t,
+						),
+					};
+				},
+			);
+
+			return { previousTasks };
+		},
+		onError: (_1, _2, context) => {
+			if (context?.previousTasks) {
+				queryClient.setQueryData(
+					queryKeys.tasks.all(projectId),
+					context.previousTasks,
+				);
+			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.all(projectId),
+			});
+		},
+	});
+}

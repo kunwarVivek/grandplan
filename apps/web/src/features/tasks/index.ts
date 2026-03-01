@@ -6,6 +6,8 @@ export { TaskDetailPanel } from "./components/task-detail-panel";
 export { TaskFilters as TaskFiltersComponent } from "./components/task-filters";
 // Hooks
 export {
+	useBulkArchiveTasks,
+	useBulkDeleteTasks,
 	useBulkUpdateTasks,
 	useCreateTask,
 	useDeleteTask,
