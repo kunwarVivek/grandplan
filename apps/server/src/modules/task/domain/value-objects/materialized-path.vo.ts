@@ -42,7 +42,7 @@ export class MaterializedPath {
 	}
 
 	get id(): string {
-		return this.segments[this.segments.length - 1];
+		return this.segments[this.segments.length - 1] ?? "";
 	}
 
 	get parentPath(): string | null {
@@ -56,7 +56,7 @@ export class MaterializedPath {
 		if (this.segments.length <= 1) {
 			return null;
 		}
-		return this.segments[this.segments.length - 2];
+		return this.segments[this.segments.length - 2] ?? null;
 	}
 
 	get ancestorIds(): string[] {
@@ -64,7 +64,7 @@ export class MaterializedPath {
 	}
 
 	get rootId(): string {
-		return this.segments[0];
+		return this.segments[0] ?? "";
 	}
 
 	isDescendantOf(ancestorPath: string): boolean {
@@ -163,7 +163,7 @@ export const materializedPathUtils = {
 	 */
 	getTaskId(path: string): string {
 		const parts = path.split(".");
-		return parts[parts.length - 1];
+		return parts[parts.length - 1] ?? "";
 	},
 
 	/**
@@ -171,7 +171,7 @@ export const materializedPathUtils = {
 	 */
 	getParentId(path: string): string | null {
 		const parts = path.split(".");
-		return parts.length > 1 ? parts[parts.length - 2] : null;
+		return parts.length > 1 ? (parts[parts.length - 2] ?? null) : null;
 	},
 
 	/**

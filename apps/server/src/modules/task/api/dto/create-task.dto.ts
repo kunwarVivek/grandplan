@@ -42,11 +42,7 @@ export type CreateTaskDto = z.infer<typeof createTaskSchema>;
 
 export const addDependencySchema = z.object({
 	toTaskId: z.string().min(1, "Target task ID is required"),
-	type: z.enum(["BLOCKS", "REQUIRED_BY", "RELATED_TO"], {
-		errorMap: () => ({
-			message: "Type must be BLOCKS, REQUIRED_BY, or RELATED_TO",
-		}),
-	}),
+	type: z.enum(["BLOCKS", "REQUIRED_BY", "RELATED_TO"]),
 });
 
 export type AddDependencyDto = z.infer<typeof addDependencySchema>;

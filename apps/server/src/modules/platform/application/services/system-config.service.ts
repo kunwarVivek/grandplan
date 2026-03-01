@@ -188,10 +188,10 @@ export class SystemConfigService {
 			key: f.key,
 			name: f.name,
 			description: f.description,
-			enabled: f.enabled,
-			rolloutPercentage: f.rolloutPercentage,
-			targetOrganizations: (f.targetOrganizations as string[]) ?? [],
-			targetUsers: (f.targetUsers as string[]) ?? [],
+			enabled: f.defaultEnabled,
+			rolloutPercentage: null,
+			targetOrganizations: [],
+			targetUsers: [],
 			createdAt: f.createdAt,
 			updatedAt: f.updatedAt,
 		}));
@@ -214,10 +214,10 @@ export class SystemConfigService {
 			key: flag.key,
 			name: flag.name,
 			description: flag.description,
-			enabled: flag.enabled,
-			rolloutPercentage: flag.rolloutPercentage,
-			targetOrganizations: (flag.targetOrganizations as string[]) ?? [],
-			targetUsers: (flag.targetUsers as string[]) ?? [],
+			enabled: flag.defaultEnabled,
+			rolloutPercentage: 0,
+			targetOrganizations: [],
+			targetUsers: [],
 			createdAt: flag.createdAt,
 			updatedAt: flag.updatedAt,
 		};
@@ -231,19 +231,13 @@ export class SystemConfigService {
 		name: string;
 		description?: string;
 		enabled?: boolean;
-		rolloutPercentage?: number;
-		targetOrganizations?: string[];
-		targetUsers?: string[];
 	}): Promise<FeatureFlag> {
 		const flag = await db.featureFlag.create({
 			data: {
 				key: data.key,
 				name: data.name,
 				description: data.description,
-				enabled: data.enabled ?? false,
-				rolloutPercentage: data.rolloutPercentage ?? 0,
-				targetOrganizations: data.targetOrganizations ?? [],
-				targetUsers: data.targetUsers ?? [],
+				defaultEnabled: data.enabled ?? false,
 			},
 		});
 
@@ -252,10 +246,10 @@ export class SystemConfigService {
 			key: flag.key,
 			name: flag.name,
 			description: flag.description,
-			enabled: flag.enabled,
-			rolloutPercentage: flag.rolloutPercentage,
-			targetOrganizations: (flag.targetOrganizations as string[]) ?? [],
-			targetUsers: (flag.targetUsers as string[]) ?? [],
+			enabled: flag.defaultEnabled,
+			rolloutPercentage: 0,
+			targetOrganizations: [],
+			targetUsers: [],
 			createdAt: flag.createdAt,
 			updatedAt: flag.updatedAt,
 		};

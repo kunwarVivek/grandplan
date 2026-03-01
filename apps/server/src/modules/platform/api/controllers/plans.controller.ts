@@ -18,7 +18,7 @@ const CreatePlanSchema = z.object({
 	price: z.number().min(0),
 	interval: z.enum(["monthly", "yearly"]),
 	features: z.array(z.string()),
-	limits: z.record(z.number()).optional(),
+	limits: z.record(z.string(), z.number()).optional(),
 	isActive: z.boolean().optional(),
 });
 
@@ -28,7 +28,7 @@ const UpdatePlanSchema = z.object({
 	price: z.number().min(0).optional(),
 	interval: z.enum(["monthly", "yearly"]).optional(),
 	features: z.array(z.string()).optional(),
-	limits: z.record(z.number()).optional(),
+	limits: z.record(z.string(), z.number()).optional(),
 	isActive: z.boolean().optional(),
 });
 
@@ -55,11 +55,7 @@ function transformPlan(plan: {
 	let tier: "free" | "starter" | "pro" | "enterprise" = "starter";
 	if (plan.isFree) tier = "free";
 	else if (plan.isEnterprise) tier = "enterprise";
-	else if (
-		plan.priceMonthly &&
-		Number(plan.priceMonthly) >= 50
-	)
-		tier = "pro";
+	else if (plan.priceMonthly && Number(plan.priceMonthly) >= 50) tier = "pro";
 
 	// Get price based on what's available
 	const price = plan.priceMonthly
@@ -69,7 +65,10 @@ function transformPlan(plan: {
 			: 0;
 
 	// Parse features from JSON
-	const featuresJson = plan.features as Record<string, boolean> | string[] | null;
+	const featuresJson = plan.features as
+		| Record<string, boolean>
+		| string[]
+		| null;
 	let features: string[] = [];
 	if (Array.isArray(featuresJson)) {
 		features = featuresJson;

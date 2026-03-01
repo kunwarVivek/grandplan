@@ -156,6 +156,8 @@ export interface ITaskRepository {
 
 	// Bulk operations
 	bulkUpdateStatus(taskIds: string[], status: TaskStatus): Promise<number>;
+	bulkDelete(taskIds: string[]): Promise<number>;
+	bulkArchive(taskIds: string[]): Promise<number>;
 
 	countChildrenByStatus(parentId: string): Promise<Record<TaskStatus, number>>;
 }

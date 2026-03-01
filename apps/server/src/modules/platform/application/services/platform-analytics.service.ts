@@ -142,7 +142,7 @@ export class PlatformAnalyticsService {
 				.groupBy({
 					by: ["organizationId"],
 					where: {
-						timestamp: {
+						createdAt: {
 							gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
 						},
 						organizationId: { not: null },
@@ -166,10 +166,11 @@ export class PlatformAnalyticsService {
 			// AI credits used this period
 			db.usageRecord.aggregate({
 				where: {
+					metric: "ai_requests",
 					periodStart: { gte: startDate },
 					periodEnd: { lte: endDate },
 				},
-				_sum: { aiCreditsUsed: true },
+				_sum: { quantity: true },
 			}),
 		]);
 
@@ -193,7 +194,8 @@ export class PlatformAnalyticsService {
 
 		// Get total AI credits used ever
 		const totalAICreditsResult = await db.usageRecord.aggregate({
-			_sum: { aiCreditsUsed: true },
+			where: { metric: "ai_requests" },
+			_sum: { quantity: true },
 		});
 
 		return {
@@ -210,8 +212,8 @@ export class PlatformAnalyticsService {
 			completedTasks,
 			taskCompletionRate:
 				totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0,
-			totalAICreditsUsed: totalAICreditsResult._sum.aiCreditsUsed ?? 0,
-			aiCreditsUsedThisPeriod: aiCreditsUsed._sum.aiCreditsUsed ?? 0,
+			totalAICreditsUsed: Number(totalAICreditsResult._sum.quantity ?? 0),
+			aiCreditsUsedThisPeriod: Number(aiCreditsUsed._sum.quantity ?? 0),
 		};
 	}
 
@@ -241,7 +243,7 @@ export class PlatformAnalyticsService {
 
 		// Calculate MRR
 		const mrr = activeSubscriptions.reduce(
-			(sum, sub) => sum + (sub.plan.priceMonthly ?? 0),
+			(sum, sub) => sum + Number(sub.plan.priceMonthly ?? 0),
 			0,
 		);
 		const arr = mrr * 12;
@@ -267,14 +269,17 @@ export class PlatformAnalyticsService {
 			]);
 
 		const revenueThisPeriod = invoicesThisPeriod.reduce(
-			(sum, inv) => sum + inv.total,
+			(sum, inv) => sum + Number(inv.amount),
 			0,
 		);
 		const revenuePreviousPeriod = invoicesPreviousPeriod.reduce(
-			(sum, inv) => sum + inv.total,
+			(sum, inv) => sum + Number(inv.amount),
 			0,
 		);
-		const totalRevenue = allInvoices.reduce((sum, inv) => sum + inv.total, 0);
+		const totalRevenue = allInvoices.reduce(
+			(sum, inv) => sum + Number(inv.amount),
+			0,
+		);
 
 		const revenueGrowthPercent =
 			revenuePreviousPeriod > 0
@@ -343,7 +348,7 @@ export class PlatformAnalyticsService {
 			);
 
 			const monthRevenue = monthInvoices.reduce(
-				(sum, inv) => sum + inv.total,
+				(sum, inv) => sum + Number(inv.amount),
 				0,
 			);
 
@@ -374,7 +379,7 @@ export class PlatformAnalyticsService {
 				planId: s.planId,
 				planName: planMap.get(s.planId)?.name ?? "Unknown",
 				count: s._count,
-				revenue: (planMap.get(s.planId)?.priceMonthly ?? 0) * s._count,
+				revenue: Number(planMap.get(s.planId)?.priceMonthly ?? 0) * s._count,
 			})),
 			revenueHistory,
 		};
@@ -420,37 +425,50 @@ export class PlatformAnalyticsService {
 				},
 			}),
 			// AI decisions this period
-			db.aIDecision.count({
+			db.taskAIDecision.count({
 				where: { createdAt: { gte: startDate, lte: endDate } },
 			}),
-			// Top organizations by AI usage
+			// Top subscriptions by AI usage (group by subscriptionId)
 			db.usageRecord.groupBy({
-				by: ["organizationId"],
+				by: ["subscriptionId"],
 				where: {
+					metric: "ai_requests",
 					periodStart: { gte: startDate },
 					periodEnd: { lte: endDate },
 				},
-				_sum: { aiCreditsUsed: true },
-				orderBy: { _sum: { aiCreditsUsed: "desc" } },
+				_sum: { quantity: true },
+				orderBy: { _sum: { quantity: "desc" } },
 				take: 10,
 			}),
 		]);
 
-		// Get organization details for top organizations
+		// Get organization details via subscriptions
+		const subscriptionIds = topOrganizations.map((o) => o.subscriptionId);
+		const subscriptions = await db.subscription.findMany({
+			where: { id: { in: subscriptionIds } },
+			select: { id: true, organizationId: true },
+		});
+		const subOrgMap = new Map(
+			subscriptions.map((s) => [s.id, s.organizationId]),
+		);
+
+		const orgIds = [
+			...new Set(subscriptions.map((s) => s.organizationId).filter(Boolean)),
+		];
 		const orgDetails = await db.organization.findMany({
-			where: { id: { in: topOrganizations.map((o) => o.organizationId) } },
+			where: { id: { in: orgIds } },
 			select: { id: true, name: true },
 		});
-
 		const orgMap = new Map(orgDetails.map((o) => [o.id, o.name]));
 
 		// Get additional stats per organization
 		const usageByOrganization = await Promise.all(
 			topOrganizations.map(async (o) => {
+				const orgId = subOrgMap.get(o.subscriptionId);
 				const [tasksCreated, activeUsers] = await Promise.all([
 					db.taskNode.count({
 						where: {
-							project: { organizationId: o.organizationId },
+							project: { workspace: { organizationId: orgId ?? "" } },
 							createdAt: { gte: startDate, lte: endDate },
 						},
 					}),
@@ -458,17 +476,17 @@ export class PlatformAnalyticsService {
 						.groupBy({
 							by: ["userId"],
 							where: {
-								organizationId: o.organizationId,
-								timestamp: { gte: startDate, lte: endDate },
+								organizationId: orgId,
+								createdAt: { gte: startDate, lte: endDate },
 							},
 						})
 						.then((r) => r.length),
 				]);
 
 				return {
-					orgId: o.organizationId,
-					orgName: orgMap.get(o.organizationId) ?? "Unknown",
-					aiCreditsUsed: o._sum.aiCreditsUsed ?? 0,
+					orgId: orgId ?? "",
+					orgName: orgMap.get(orgId ?? "") ?? "Unknown",
+					aiCreditsUsed: Number(o._sum.quantity ?? 0),
 					tasksCreated,
 					activeUsers,
 				};
@@ -478,8 +496,8 @@ export class PlatformAnalyticsService {
 		// Top features (from audit log)
 		const topFeatures = await db.auditLog.groupBy({
 			by: ["action"],
-			where: { timestamp: { gte: startDate, lte: endDate } },
-			_count: true,
+			where: { createdAt: { gte: startDate, lte: endDate } },
+			_count: { action: true },
 			orderBy: { _count: { action: "desc" } },
 			take: 10,
 		});
@@ -514,7 +532,7 @@ export class PlatformAnalyticsService {
 				db.taskNode.count({
 					where: { createdAt: { gte: dayStart, lt: dayEnd } },
 				}),
-				db.aIDecision.count({
+				db.taskAIDecision.count({
 					where: { createdAt: { gte: dayStart, lt: dayEnd } },
 				}),
 			]);
@@ -535,7 +553,7 @@ export class PlatformAnalyticsService {
 			aiRequestsThisPeriod: aiDecisionsThisPeriod,
 			topFeatures: topFeatures.map((f) => ({
 				feature: f.action,
-				usageCount: f._count,
+				usageCount: f._count.action,
 			})),
 			usageByOrganization,
 			usageHistory,
@@ -563,27 +581,27 @@ export class PlatformAnalyticsService {
 		const userSignups = await db.user.groupBy({
 			by: ["createdAt"],
 			where: { createdAt: { gte: startDate, lte: endDate } },
-			_count: true,
+			_count: { id: true },
 		});
 
 		// Group by day
 		const signupsByDay = new Map<string, number>();
 		userSignups.forEach((s) => {
-			const day = s.createdAt.toISOString().split("T")[0];
-			signupsByDay.set(day, (signupsByDay.get(day) ?? 0) + s._count);
+			const day = s.createdAt.toISOString().split("T")[0] ?? "";
+			signupsByDay.set(day, (signupsByDay.get(day) ?? 0) + s._count.id);
 		});
 
 		// Org creations
 		const orgCreations = await db.organization.groupBy({
 			by: ["createdAt"],
 			where: { createdAt: { gte: startDate, lte: endDate } },
-			_count: true,
+			_count: { id: true },
 		});
 
 		const orgsByDay = new Map<string, number>();
 		orgCreations.forEach((o) => {
-			const day = o.createdAt.toISOString().split("T")[0];
-			orgsByDay.set(day, (orgsByDay.get(day) ?? 0) + o._count);
+			const day = o.createdAt.toISOString().split("T")[0] ?? "";
+			orgsByDay.set(day, (orgsByDay.get(day) ?? 0) + o._count.id);
 		});
 
 		// Subscription activations
@@ -593,13 +611,13 @@ export class PlatformAnalyticsService {
 				status: "ACTIVE",
 				createdAt: { gte: startDate, lte: endDate },
 			},
-			_count: true,
+			_count: { id: true },
 		});
 
 		const subsByDay = new Map<string, number>();
 		subscriptionActivations.forEach((s) => {
-			const day = s.createdAt.toISOString().split("T")[0];
-			subsByDay.set(day, (subsByDay.get(day) ?? 0) + s._count);
+			const day = s.createdAt.toISOString().split("T")[0] ?? "";
+			subsByDay.set(day, (subsByDay.get(day) ?? 0) + s._count.id);
 		});
 
 		// Build retention cohorts (last 6 months)
@@ -661,15 +679,15 @@ export class PlatformAnalyticsService {
 		return {
 			userSignups: days.map((d) => ({
 				date: d,
-				count: signupsByDay.get(d.toISOString().split("T")[0]) ?? 0,
+				count: signupsByDay.get(d.toISOString().split("T")[0] ?? "") ?? 0,
 			})),
 			orgCreations: days.map((d) => ({
 				date: d,
-				count: orgsByDay.get(d.toISOString().split("T")[0]) ?? 0,
+				count: orgsByDay.get(d.toISOString().split("T")[0] ?? "") ?? 0,
 			})),
 			subscriptionActivations: days.map((d) => ({
 				date: d,
-				count: subsByDay.get(d.toISOString().split("T")[0]) ?? 0,
+				count: subsByDay.get(d.toISOString().split("T")[0] ?? "") ?? 0,
 			})),
 			retentionCohorts,
 		};
@@ -698,14 +716,13 @@ export class PlatformAnalyticsService {
 						name: true,
 						createdAt: true,
 						emailVerified: true,
-						banned: true,
 					},
 					orderBy: { createdAt: "desc" },
 				});
 
-				csvContent = "ID,Email,Name,Created At,Email Verified,Banned\n";
+				csvContent = "ID,Email,Name,Created At,Email Verified\n";
 				users.forEach((u) => {
-					csvContent += `${u.id},"${u.email}","${u.name ?? ""}",${u.createdAt.toISOString()},${u.emailVerified},${u.banned}\n`;
+					csvContent += `${u.id},"${u.email}","${u.name ?? ""}",${u.createdAt.toISOString()},${u.emailVerified}\n`;
 				});
 				break;
 			}
@@ -718,14 +735,14 @@ export class PlatformAnalyticsService {
 						name: true,
 						slug: true,
 						createdAt: true,
-						_count: { select: { memberships: true } },
+						_count: { select: { members: true } },
 					},
 					orderBy: { createdAt: "desc" },
 				});
 
 				csvContent = "ID,Name,Slug,Created At,Member Count\n";
 				orgs.forEach((o) => {
-					csvContent += `${o.id},"${o.name}","${o.slug}",${o.createdAt.toISOString()},${o._count.memberships}\n`;
+					csvContent += `${o.id},"${o.name}","${o.slug}",${o.createdAt.toISOString()},${o._count.members}\n`;
 				});
 				break;
 			}
@@ -737,14 +754,32 @@ export class PlatformAnalyticsService {
 						paidAt: { gte: startDate, lte: endDate },
 					},
 					include: {
-						organization: { select: { name: true } },
+						subscription: { select: { organizationId: true } },
 					},
 					orderBy: { paidAt: "desc" },
 				});
 
+				const subIds = invoices
+					.map((i) => i.subscription.organizationId)
+					.filter(Boolean);
+				const subs = await db.subscription.findMany({
+					where: { id: { in: subIds } },
+					select: { id: true, organizationId: true },
+				});
+				const orgIds = [
+					...new Set(subs.map((s) => s.organizationId).filter(Boolean)),
+				];
+				const orgs = await db.organization.findMany({
+					where: { id: { in: orgIds } },
+					select: { id: true, name: true },
+				});
+				const orgMap = new Map(orgs.map((o) => [o.id, o.name]));
+				const subOrgMap = new Map(subs.map((s) => [s.id, s.organizationId]));
+
 				csvContent = "ID,Organization,Amount,Currency,Paid At\n";
 				invoices.forEach((i) => {
-					csvContent += `${i.id},"${i.organization?.name ?? "N/A"}",${i.total},${i.currency},${i.paidAt?.toISOString() ?? ""}\n`;
+					const orgId = subOrgMap.get(i.subscription.organizationId);
+					csvContent += `${i.id},"${orgMap.get(orgId ?? "") ?? "N/A"}",${Number(i.amount)},${i.currency},${i.paidAt?.toISOString() ?? ""}\n`;
 				});
 				break;
 			}
@@ -755,16 +790,28 @@ export class PlatformAnalyticsService {
 						periodStart: { gte: startDate },
 						periodEnd: { lte: endDate },
 					},
-					include: {
-						organization: { select: { name: true } },
-					},
 					orderBy: { periodStart: "desc" },
 				});
 
-				csvContent =
-					"Organization,Period Start,Period End,AI Credits Used,Tasks Created,Projects Created\n";
+				const subIds = usage.map((u) => u.subscriptionId);
+				const subs = await db.subscription.findMany({
+					where: { id: { in: subIds } },
+					select: { id: true, organizationId: true },
+				});
+				const orgIds = [
+					...new Set(subs.map((s) => s.organizationId).filter(Boolean)),
+				];
+				const orgs = await db.organization.findMany({
+					where: { id: { in: orgIds } },
+					select: { id: true, name: true },
+				});
+				const orgMap = new Map(orgs.map((o) => [o.id, o.name]));
+				const subOrgMap = new Map(subs.map((s) => [s.id, s.organizationId]));
+
+				csvContent = "Organization,Period Start,Period End,Metric,Quantity\n";
 				usage.forEach((u) => {
-					csvContent += `"${u.organization.name}",${u.periodStart.toISOString()},${u.periodEnd.toISOString()},${u.aiCreditsUsed},${u.tasksCreated},${u.projectsCreated}\n`;
+					const orgId = subOrgMap.get(u.subscriptionId);
+					csvContent += `"${orgMap.get(orgId ?? "") ?? "N/A"}",${u.periodStart.toISOString()},${u.periodEnd.toISOString()},${u.metric},${Number(u.quantity)}\n`;
 				});
 				break;
 			}

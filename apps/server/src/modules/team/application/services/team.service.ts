@@ -47,6 +47,7 @@ export class TeamService {
 		await eventBus.emit(TEAM_EVENTS.CREATED, {
 			teamId: team.id,
 			name: team.name,
+			workspaceId: "",
 			organizationId: team.organizationId,
 			createdById: tenant.userId,
 			createdAt: team.createdAt,
@@ -165,6 +166,7 @@ export class TeamService {
 		await eventBus.emit(TEAM_EVENTS.DELETED, {
 			teamId: id,
 			name: team.name,
+			workspaceId: "",
 			organizationId: team.organizationId,
 			deletedById: tenant.userId,
 		});
@@ -242,7 +244,7 @@ export class TeamService {
 			teamId,
 			organizationMemberId: orgMember.id,
 			userId: dto.userId,
-			teamRoleId: dto.teamRoleId ?? null,
+			role: "",
 			addedById: tenant.userId,
 		});
 
@@ -310,8 +312,8 @@ export class TeamService {
 			teamId,
 			organizationMemberId: orgMember.id,
 			userId,
-			previousRoleId,
-			newRoleId: dto.teamRoleId ?? null,
+			previousRole: previousRoleId ?? "",
+			newRole: dto.teamRoleId ?? "",
 			changedById: tenant.userId,
 		});
 

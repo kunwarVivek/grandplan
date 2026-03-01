@@ -2,7 +2,6 @@
 // TASK REPOSITORY
 // ============================================
 
-import db, { withTransaction } from "@grandplan/db";
 import type {
 	DependencyType,
 	Prisma,
@@ -11,6 +10,7 @@ import type {
 	TaskPriority,
 	TaskStatus,
 } from "@grandplan/db";
+import db, { withTransaction } from "@grandplan/db";
 import type {
 	TaskCommentEntity,
 	TaskDependencyEntity,
@@ -670,6 +670,21 @@ export class TaskRepository
 			data: updateData,
 		});
 
+		return result.count;
+	}
+
+	async bulkDelete(taskIds: string[]): Promise<number> {
+		const result = await db.taskNode.deleteMany({
+			where: { id: { in: taskIds } },
+		});
+		return result.count;
+	}
+
+	async bulkArchive(taskIds: string[]): Promise<number> {
+		const result = await db.taskNode.updateMany({
+			where: { id: { in: taskIds } },
+			data: { status: "ARCHIVED" as TaskStatus },
+		});
 		return result.count;
 	}
 

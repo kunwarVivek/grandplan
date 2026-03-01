@@ -166,6 +166,7 @@ export interface TeamCreatedPayload {
 	teamId: string;
 	name: string;
 	workspaceId: string;
+	organizationId: string;
 	createdById: string;
 	createdAt: Date;
 }
@@ -181,12 +182,14 @@ export interface TeamDeletedPayload {
 	teamId: string;
 	name: string;
 	workspaceId: string;
+	organizationId: string;
 	deletedById: string;
 }
 
 export interface TeamMemberAddedPayload {
 	teamId: string;
 	userId: string;
+	organizationMemberId: string;
 	role: string;
 	addedById: string;
 }
@@ -194,12 +197,14 @@ export interface TeamMemberAddedPayload {
 export interface TeamMemberRemovedPayload {
 	teamId: string;
 	userId: string;
+	organizationMemberId: string;
 	removedById: string;
 }
 
 export interface TeamMemberRoleChangedPayload {
 	teamId: string;
 	userId: string;
+	organizationMemberId: string;
 	previousRole: string;
 	newRole: string;
 	changedById: string;
@@ -209,8 +214,9 @@ export interface TeamMemberRoleChangedPayload {
 export interface WorkspaceCreatedPayload {
 	workspaceId: string;
 	name: string;
+	slug: string;
 	organizationId: string;
-	createdById: string;
+	ownerId: string;
 	createdAt: Date;
 }
 

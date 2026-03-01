@@ -121,13 +121,12 @@ export class TaskService {
 
 		// Emit events (after transaction commits successfully)
 		await eventBus.emit(TASK_EVENTS.CREATED, {
-			taskId: task.id,
+			id: task.id,
 			title: task.title,
 			nodeType: task.nodeType,
 			projectId: task.projectId,
-			parentId: task.parentId,
+			parentId: task.parentId ?? undefined,
 			createdById: tenant.userId,
-			createdAt: task.createdAt,
 		});
 
 		await auditService.log({
