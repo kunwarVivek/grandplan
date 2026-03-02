@@ -44,7 +44,7 @@ export interface FeatureFlag {
 	name: string;
 	description: string | null;
 	enabled: boolean;
-	rolloutPercentage: number;
+	rolloutPercentage: number | null;
 	targetOrganizations: string[];
 	targetUsers: string[];
 	createdAt: Date;
@@ -55,12 +55,20 @@ export interface Announcement {
 	id: string;
 	title: string;
 	content: string;
-	type: "info" | "warning" | "success" | "error";
-	targetAudience: "all" | "admins" | "organizations" | "users";
-	startAt: Date;
-	endAt: Date | null;
+	type:
+		| "info"
+		| "warning"
+		| "success"
+		| "error"
+		| "critical"
+		| "maintenance"
+		| "new_feature"
+		| "promotion";
+	targetAudience: string[];
+	startsAt: Date;
+	endsAt: Date | null;
 	dismissible: boolean;
-	active: boolean;
+	isActive: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -297,53 +305,14 @@ export class SystemConfigService {
 	/**
 	 * Check if a feature is enabled for a user/organization
 	 */
-	async isFeatureEnabled(
-		key: string,
-		context: { userId?: string; organizationId?: string },
-	): Promise<boolean> {
+	async isFeatureEnabled(key: string): Promise<boolean> {
 		const flag = await db.featureFlag.findUnique({ where: { key } });
 
 		if (!flag) {
 			return false;
 		}
 
-		if (!flag.enabled) {
-			return false;
-		}
-
-		// Check target lists first
-		const targetOrgs = (flag.targetOrganizations as string[]) ?? [];
-		const targetUsers = (flag.targetUsers as string[]) ?? [];
-
-		if (context.organizationId && targetOrgs.includes(context.organizationId)) {
-			return true;
-		}
-
-		if (context.userId && targetUsers.includes(context.userId)) {
-			return true;
-		}
-
-		// If targets are specified but user/org not in them, check rollout
-		if (targetOrgs.length > 0 || targetUsers.length > 0) {
-			// If there are targets and this user/org isn't in them,
-			// still check percentage rollout
-		}
-
-		// Check percentage rollout
-		if (flag.rolloutPercentage >= 100) {
-			return true;
-		}
-
-		if (flag.rolloutPercentage <= 0) {
-			return false;
-		}
-
-		// Use a deterministic hash based on user/org id
-		const id = context.userId ?? context.organizationId ?? "";
-		const hash = this.simpleHash(id + key);
-		const bucket = hash % 100;
-
-		return bucket < flag.rolloutPercentage;
+		return flag.defaultEnabled;
 	}
 
 	// ============================================
@@ -362,15 +331,15 @@ export class SystemConfigService {
 
 		if (activeOnly) {
 			const now = new Date();
-			where.active = true;
-			where.startAt = { lte: now };
-			where.OR = [{ endAt: null }, { endAt: { gte: now } }];
+			where.isActive = true;
+			where.startsAt = { lte: now };
+			where.OR = [{ endsAt: null }, { endsAt: { gte: now } }];
 		}
 
 		const [announcements, total] = await Promise.all([
 			db.announcement.findMany({
 				where,
-				orderBy: { startAt: "desc" },
+				orderBy: { startsAt: "desc" },
 				take: limit,
 				skip: offset,
 			}),
@@ -384,10 +353,10 @@ export class SystemConfigService {
 				content: a.content,
 				type: a.type as Announcement["type"],
 				targetAudience: a.targetAudience as Announcement["targetAudience"],
-				startAt: a.startAt,
-				endAt: a.endAt,
+				startsAt: a.startsAt,
+				endsAt: a.endsAt,
 				dismissible: a.dismissible,
-				active: a.active,
+				isActive: a.isActive,
 				createdAt: a.createdAt,
 				updatedAt: a.updatedAt,
 			})),
@@ -414,10 +383,10 @@ export class SystemConfigService {
 			type: announcement.type as Announcement["type"],
 			targetAudience:
 				announcement.targetAudience as Announcement["targetAudience"],
-			startAt: announcement.startAt,
-			endAt: announcement.endAt,
+			startsAt: announcement.startsAt,
+			endsAt: announcement.endsAt,
 			dismissible: announcement.dismissible,
-			active: announcement.active,
+			isActive: announcement.isActive,
 			createdAt: announcement.createdAt,
 			updatedAt: announcement.updatedAt,
 		};
@@ -429,11 +398,18 @@ export class SystemConfigService {
 	async createAnnouncement(data: {
 		title: string;
 		content: string;
-		type: "info" | "warning" | "success" | "error";
-		targetAudience: "all" | "admins" | "organizations" | "users";
-		startAt?: Date;
-		endAt?: Date | null;
+		type:
+			| "INFO"
+			| "WARNING"
+			| "CRITICAL"
+			| "MAINTENANCE"
+			| "NEW_FEATURE"
+			| "PROMOTION";
+		targetAudience: string[];
+		startsAt?: Date;
+		endsAt?: Date | null;
 		dismissible?: boolean;
+		createdById: string;
 	}): Promise<Announcement> {
 		const announcement = await db.announcement.create({
 			data: {
@@ -441,10 +417,11 @@ export class SystemConfigService {
 				content: data.content,
 				type: data.type,
 				targetAudience: data.targetAudience,
-				startAt: data.startAt ?? new Date(),
-				endAt: data.endAt ?? null,
+				startsAt: data.startsAt ?? new Date(),
+				endsAt: data.endsAt ?? null,
 				dismissible: data.dismissible ?? true,
-				active: true,
+				isActive: true,
+				createdById: data.createdById,
 			},
 		});
 
@@ -455,10 +432,10 @@ export class SystemConfigService {
 			type: announcement.type as Announcement["type"],
 			targetAudience:
 				announcement.targetAudience as Announcement["targetAudience"],
-			startAt: announcement.startAt,
-			endAt: announcement.endAt,
+			startsAt: announcement.startsAt,
+			endsAt: announcement.endsAt,
 			dismissible: announcement.dismissible,
-			active: announcement.active,
+			isActive: announcement.isActive,
 			createdAt: announcement.createdAt,
 			updatedAt: announcement.updatedAt,
 		};
@@ -472,12 +449,18 @@ export class SystemConfigService {
 		updates: {
 			title?: string;
 			content?: string;
-			type?: "info" | "warning" | "success" | "error";
-			targetAudience?: "all" | "admins" | "organizations" | "users";
-			startAt?: Date;
-			endAt?: Date | null;
+			type?:
+				| "INFO"
+				| "WARNING"
+				| "CRITICAL"
+				| "MAINTENANCE"
+				| "NEW_FEATURE"
+				| "PROMOTION";
+			targetAudience?: string[];
+			startsAt?: Date;
+			endsAt?: Date | null;
 			dismissible?: boolean;
-			active?: boolean;
+			isActive?: boolean;
 		},
 	): Promise<void> {
 		const existing = await db.announcement.findUnique({ where: { id } });
@@ -515,9 +498,9 @@ export class SystemConfigService {
 		const now = new Date();
 
 		const where: Record<string, unknown> = {
-			active: true,
-			startAt: { lte: now },
-			OR: [{ endAt: null }, { endAt: { gte: now } }],
+			isActive: true,
+			startsAt: { lte: now },
+			OR: [{ endsAt: null }, { endsAt: { gte: now } }],
 		};
 
 		// Filter by audience
@@ -541,7 +524,7 @@ export class SystemConfigService {
 
 		const announcements = await db.announcement.findMany({
 			where,
-			orderBy: { startAt: "desc" },
+			orderBy: { startsAt: "desc" },
 		});
 
 		return announcements.map((a) => ({
@@ -550,10 +533,10 @@ export class SystemConfigService {
 			content: a.content,
 			type: a.type as Announcement["type"],
 			targetAudience: a.targetAudience as Announcement["targetAudience"],
-			startAt: a.startAt,
-			endAt: a.endAt,
+			startsAt: a.startsAt,
+			endsAt: a.endsAt,
 			dismissible: a.dismissible,
-			active: a.active,
+			isActive: a.isActive,
 			createdAt: a.createdAt,
 			updatedAt: a.updatedAt,
 		}));
@@ -591,32 +574,25 @@ export class SystemConfigService {
 	// HELPERS
 	// ============================================
 
-	private parseValue(value: string, expectedType: string): unknown {
+	private parseValue(value: unknown, expectedType: string): unknown {
 		try {
-			const parsed = JSON.parse(value);
+			if (typeof value === "string") {
+				const parsed = JSON.parse(value);
 
-			if (expectedType === "boolean") {
-				return Boolean(parsed);
+				if (expectedType === "boolean") {
+					return Boolean(parsed);
+				}
+
+				if (expectedType === "number") {
+					return Number(parsed);
+				}
+
+				return parsed;
 			}
-
-			if (expectedType === "number") {
-				return Number(parsed);
-			}
-
-			return parsed;
+			return value;
 		} catch {
 			return value;
 		}
-	}
-
-	private simpleHash(str: string): number {
-		let hash = 0;
-		for (let i = 0; i < str.length; i++) {
-			const char = str.charCodeAt(i);
-			hash = (hash << 5) - hash + char;
-			hash = hash & hash; // Convert to 32-bit integer
-		}
-		return Math.abs(hash);
 	}
 }
 

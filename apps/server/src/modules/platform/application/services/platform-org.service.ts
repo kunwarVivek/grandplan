@@ -25,12 +25,7 @@ export interface OrgDetails {
 	logo: string | null;
 	createdAt: Date;
 	updatedAt: Date;
-	ownerId: string;
-	owner: {
-		id: string;
-		email: string;
-		name: string | null;
-	};
+	status: "PENDING" | "ACTIVE" | "SUSPENDED" | "CANCELLED";
 	subscription: {
 		id: string;
 		status: string;
@@ -60,7 +55,7 @@ export interface OrgDetails {
 export interface OrgUpdate {
 	name?: string;
 	slug?: string;
-	suspended?: boolean;
+	status?: "PENDING" | "ACTIVE" | "SUSPENDED" | "CANCELLED";
 	suspendedReason?: string;
 }
 
@@ -104,9 +99,9 @@ export class PlatformOrgService {
 		}
 
 		if (status === "active") {
-			where.suspended = false;
+			where.status = "ACTIVE";
 		} else if (status === "suspended") {
-			where.suspended = true;
+			where.status = "SUSPENDED";
 		}
 
 		if (createdAfter) {
@@ -140,7 +135,7 @@ export class PlatformOrgService {
 			[sortBy]: sortOrder,
 		};
 		if (sortBy === "memberCount") {
-			orderBy = { memberships: { _count: sortOrder } };
+			orderBy = [{ _count: { members: sortOrder } }];
 		}
 
 		const [organizations, total] = await Promise.all([
@@ -151,7 +146,7 @@ export class PlatformOrgService {
 				skip: offset,
 				include: {
 					_count: {
-						select: { memberships: true },
+						select: { members: true },
 					},
 					subscription: {
 						include: {
@@ -171,7 +166,7 @@ export class PlatformOrgService {
 				name: o.name,
 				slug: o.slug,
 				logo: o.logo,
-				memberCount: o._count.memberships,
+				memberCount: o._count.members,
 				planName: o.subscription?.plan?.name ?? null,
 				subscriptionStatus: o.subscription?.status ?? null,
 				createdAt: o.createdAt,
@@ -187,10 +182,7 @@ export class PlatformOrgService {
 		const org = await db.organization.findUnique({
 			where: { id: orgId },
 			include: {
-				owner: {
-					select: { id: true, email: true, name: true },
-				},
-				memberships: {
+				members: {
 					include: {
 						user: {
 							select: { id: true, email: true, name: true },
@@ -203,7 +195,7 @@ export class PlatformOrgService {
 				subscription: {
 					include: {
 						plan: {
-							select: { id: true, name: true },
+							select: { id: true, name: true, maxAIRequestsPerMonth: true },
 						},
 					},
 				},
@@ -215,24 +207,36 @@ export class PlatformOrgService {
 		}
 
 		// Get organization stats
-		const [projectCount, taskCount, completedTaskCount, usageRecord] =
+		const [projectCount, taskCount, completedTaskCount, usageRecords] =
 			await Promise.all([
-				db.project.count({ where: { organizationId: orgId } }),
+				db.project.count({ where: { workspace: { organizationId: orgId } } }),
 				db.taskNode.count({
-					where: { project: { organizationId: orgId } },
+					where: { project: { workspace: { organizationId: orgId } } },
 				}),
 				db.taskNode.count({
-					where: { project: { organizationId: orgId }, status: "COMPLETED" },
-				}),
-				db.usageRecord.findFirst({
 					where: {
-						organizationId: orgId,
+						project: { workspace: { organizationId: orgId } },
+						status: "COMPLETED",
+					},
+				}),
+				db.usageRecord.findMany({
+					where: {
+						subscription: { organizationId: orgId },
+						metric: "ai_requests",
 						periodStart: { lte: new Date() },
 						periodEnd: { gte: new Date() },
 					},
 					orderBy: { periodEnd: "desc" },
 				}),
 			]);
+
+		// Calculate total AI credits used from all usage records
+		const aiCreditsUsed = usageRecords.reduce(
+			(sum, record) => sum + Number(record.quantity),
+			0,
+		);
+		const aiCreditsLimit = org.subscription?.plan?.maxAIRequestsPerMonth ?? 0;
+		const aiCreditsRemaining = aiCreditsLimit - aiCreditsUsed;
 
 		return {
 			id: org.id,
@@ -241,8 +245,7 @@ export class PlatformOrgService {
 			logo: org.logo,
 			createdAt: org.createdAt,
 			updatedAt: org.updatedAt,
-			ownerId: org.ownerId,
-			owner: org.owner,
+			status: org.status,
 			subscription: org.subscription
 				? {
 						id: org.subscription.id,
@@ -253,7 +256,7 @@ export class PlatformOrgService {
 						currentPeriodEnd: org.subscription.currentPeriodEnd,
 					}
 				: null,
-			members: org.memberships.map((m) => ({
+			members: org.members.map((m) => ({
 				id: m.id,
 				userId: m.user.id,
 				email: m.user.email,
@@ -262,14 +265,12 @@ export class PlatformOrgService {
 				joinedAt: m.joinedAt,
 			})),
 			stats: {
-				memberCount: org.memberships.length,
+				memberCount: org.members.length,
 				projectCount,
 				taskCount,
 				completedTaskCount,
-				aiCreditsUsed: usageRecord?.aiCreditsUsed ?? 0,
-				aiCreditsRemaining:
-					(org.subscription?.plan as unknown as { aiCreditsLimit?: number })
-						?.aiCreditsLimit ?? 0 - (usageRecord?.aiCreditsUsed ?? 0),
+				aiCreditsUsed,
+				aiCreditsRemaining,
 			},
 		};
 	}
@@ -303,8 +304,11 @@ export class PlatformOrgService {
 	/**
 	 * Suspend an organization
 	 */
-	async suspendOrganization(orgId: string, reason: string): Promise<void> {
-		const org = await db.organization.findUnique({ where: { id: orgId } });
+	async suspendOrganization(orgId: string, _reason: string): Promise<void> {
+		const org = await db.organization.findUnique({
+			where: { id: orgId },
+			include: { subscription: true },
+		});
 
 		if (!org) {
 			throw new NotFoundError("Organization", orgId);
@@ -313,16 +317,13 @@ export class PlatformOrgService {
 		await db.organization.update({
 			where: { id: orgId },
 			data: {
-				suspended: true,
-				suspendedReason: reason,
-				suspendedAt: new Date(),
+				status: "SUSPENDED",
 			},
 		});
 
-		// Cancel subscription if active
-		if (org.subscriptionId) {
+		if (org.subscription) {
 			await db.subscription.update({
-				where: { id: org.subscriptionId },
+				where: { id: org.subscription.id },
 				data: { status: "CANCELLED" },
 			});
 		}
@@ -341,9 +342,7 @@ export class PlatformOrgService {
 		await db.organization.update({
 			where: { id: orgId },
 			data: {
-				suspended: false,
-				suspendedReason: null,
-				suspendedAt: null,
+				status: "ACTIVE",
 			},
 		});
 	}
@@ -365,50 +364,10 @@ export class PlatformOrgService {
 	/**
 	 * Transfer organization ownership
 	 */
-	async transferOwnership(orgId: string, newOwnerId: string): Promise<void> {
-		const [org, newOwner] = await Promise.all([
-			db.organization.findUnique({ where: { id: orgId } }),
-			db.user.findUnique({ where: { id: newOwnerId } }),
-		]);
-
-		if (!org) {
-			throw new NotFoundError("Organization", orgId);
-		}
-
-		if (!newOwner) {
-			throw new NotFoundError("User", newOwnerId);
-		}
-
-		// Check if new owner is a member
-		const membership = await db.membership.findFirst({
-			where: { organizationId: orgId, userId: newOwnerId },
-		});
-
-		if (!membership) {
-			throw new Error("New owner must be a member of the organization");
-		}
-
-		// Get owner role
-		const ownerRole = await db.role.findFirst({
-			where: { organizationId: orgId, name: "Owner" },
-		});
-
-		await db.$transaction([
-			// Update organization owner
-			db.organization.update({
-				where: { id: orgId },
-				data: { ownerId: newOwnerId },
-			}),
-			// Update new owner's role to Owner
-			...(ownerRole
-				? [
-						db.membership.update({
-							where: { id: membership.id },
-							data: { roleId: ownerRole.id },
-						}),
-					]
-				: []),
-		]);
+	async transferOwnership(_orgId: string, _newOwnerId: string): Promise<void> {
+		throw new Error(
+			"Transfer ownership not implemented - schema does not have ownerId field",
+		);
 	}
 
 	/**
@@ -430,13 +389,8 @@ export class PlatformOrgService {
 	> {
 		const logs = await db.auditLog.findMany({
 			where: { organizationId: orgId },
-			orderBy: { timestamp: "desc" },
+			orderBy: { createdAt: "desc" },
 			take: limit,
-			include: {
-				user: {
-					select: { name: true },
-				},
-			},
 		});
 
 		return logs.map((l) => ({
@@ -444,8 +398,8 @@ export class PlatformOrgService {
 			resourceType: l.resourceType,
 			resourceId: l.resourceId,
 			userId: l.userId,
-			userName: l.user?.name ?? null,
-			timestamp: l.timestamp,
+			userName: null,
+			timestamp: l.createdAt,
 			metadata: l.metadata,
 		}));
 	}
@@ -463,7 +417,10 @@ export class PlatformOrgService {
 		} = {},
 	): Promise<void> {
 		const [org, plan] = await Promise.all([
-			db.organization.findUnique({ where: { id: orgId } }),
+			db.organization.findUnique({
+				where: { id: orgId },
+				include: { subscription: true },
+			}),
 			db.plan.findUnique({ where: { id: planId } }),
 		]);
 
@@ -480,10 +437,10 @@ export class PlatformOrgService {
 			options.endDate ??
 			new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
 
-		if (org.subscriptionId) {
+		if (org.subscription) {
 			// Update existing subscription
 			await db.subscription.update({
-				where: { id: org.subscriptionId },
+				where: { id: org.subscription.id },
 				data: {
 					planId,
 					status: "ACTIVE",
@@ -493,7 +450,7 @@ export class PlatformOrgService {
 			});
 		} else {
 			// Create new subscription
-			const subscription = await db.subscription.create({
+			await db.subscription.create({
 				data: {
 					organizationId: orgId,
 					planId,
@@ -501,11 +458,6 @@ export class PlatformOrgService {
 					currentPeriodStart: options.startDate ?? now,
 					currentPeriodEnd: endDate,
 				},
-			});
-
-			await db.organization.update({
-				where: { id: orgId },
-				data: { subscriptionId: subscription.id },
 			});
 		}
 	}

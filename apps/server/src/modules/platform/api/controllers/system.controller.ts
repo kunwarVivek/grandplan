@@ -421,12 +421,30 @@ export async function createAnnouncement(
 			});
 		}
 
+		const userId = req.user?.id;
+		if (!userId) {
+			throw new ValidationError("User not authenticated", {});
+		}
+
+		const announcementType = parseResult.data.type.toUpperCase() as
+			| "INFO"
+			| "WARNING"
+			| "CRITICAL"
+			| "MAINTENANCE"
+			| "NEW_FEATURE"
+			| "PROMOTION";
+
 		const data = {
-			...parseResult.data,
-			startAt: parseResult.data.startAt
+			title: parseResult.data.title,
+			content: parseResult.data.content,
+			type: announcementType,
+			targetAudience: [parseResult.data.targetAudience] as string[],
+			startsAt: parseResult.data.startAt
 				? new Date(parseResult.data.startAt)
 				: undefined,
-			endAt: parseResult.data.endAt ? new Date(parseResult.data.endAt) : null,
+			endsAt: parseResult.data.endAt ? new Date(parseResult.data.endAt) : null,
+			dismissible: parseResult.data.dismissible,
+			createdById: userId,
 		};
 
 		const announcement = await systemConfigService.createAnnouncement(data);
@@ -467,20 +485,62 @@ export async function updateAnnouncement(
 			});
 		}
 
-		const data = {
-			...parseResult.data,
-			startAt: parseResult.data.startAt
-				? new Date(parseResult.data.startAt)
-				: undefined,
-			endAt:
-				parseResult.data.endAt !== undefined
-					? parseResult.data.endAt
-						? new Date(parseResult.data.endAt)
-						: null
-					: undefined,
-		};
+		const userId = req.user?.id;
+		if (!userId) {
+			throw new ValidationError("User not authenticated", {});
+		}
 
-		await systemConfigService.updateAnnouncement(id!, data);
+		const updateData: {
+			title?: string;
+			content?: string;
+			type?:
+				| "INFO"
+				| "WARNING"
+				| "CRITICAL"
+				| "MAINTENANCE"
+				| "NEW_FEATURE"
+				| "PROMOTION";
+			targetAudience?: string[];
+			startsAt?: Date;
+			endsAt?: Date | null;
+			dismissible?: boolean;
+			isActive?: boolean;
+		} = {};
+
+		if (parseResult.data.title !== undefined) {
+			updateData.title = parseResult.data.title;
+		}
+		if (parseResult.data.content !== undefined) {
+			updateData.content = parseResult.data.content;
+		}
+		if (parseResult.data.type !== undefined) {
+			updateData.type = parseResult.data.type.toUpperCase() as
+				| "INFO"
+				| "WARNING"
+				| "CRITICAL"
+				| "MAINTENANCE"
+				| "NEW_FEATURE"
+				| "PROMOTION";
+		}
+		if (parseResult.data.targetAudience !== undefined) {
+			updateData.targetAudience = [parseResult.data.targetAudience];
+		}
+		if (parseResult.data.startAt !== undefined) {
+			updateData.startsAt = new Date(parseResult.data.startAt);
+		}
+		if (parseResult.data.endAt !== undefined) {
+			updateData.endsAt = parseResult.data.endAt
+				? new Date(parseResult.data.endAt)
+				: null;
+		}
+		if (parseResult.data.dismissible !== undefined) {
+			updateData.dismissible = parseResult.data.dismissible;
+		}
+		if (parseResult.data.active !== undefined) {
+			updateData.isActive = parseResult.data.active;
+		}
+
+		await systemConfigService.updateAnnouncement(id!, updateData);
 
 		await logPlatformAction(
 			req,
