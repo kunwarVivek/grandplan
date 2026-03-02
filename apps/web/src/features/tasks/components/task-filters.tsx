@@ -67,6 +67,7 @@ export function TaskFilters({
 		if (filters.priority?.length) count += 1;
 		if (filters.assigneeId?.length) count += 1;
 		if (filters.dueDateFrom || filters.dueDateTo) count += 1;
+		if (filters.createdAfter || filters.createdBefore) count += 1;
 		return count;
 	}, [filters]);
 
@@ -352,10 +353,65 @@ export function TaskFilters({
 							) : null}
 						</Button>
 					</PopoverTrigger>
-					<PopoverContent align="start" className="w-64 p-3">
-						<p className="py-4 text-center text-muted-foreground text-xs">
-							More filter options coming soon...
-						</p>
+					<PopoverContent align="start" className="w-72 p-3">
+						<div className="space-y-4">
+							<div>
+								<Label className="text-muted-foreground text-xs">
+									Created After
+								</Label>
+								<Input
+									type="date"
+									className="mt-1 h-8"
+									value={
+										filters.createdAfter?.toISOString().split("T")[0] ?? ""
+									}
+									onChange={(e) =>
+										onFiltersChange({
+											...filters,
+											createdAfter: e.target.value
+												? new Date(e.target.value)
+												: undefined,
+										})
+									}
+								/>
+							</div>
+							<div>
+								<Label className="text-muted-foreground text-xs">
+									Created Before
+								</Label>
+								<Input
+									type="date"
+									className="mt-1 h-8"
+									value={
+										filters.createdBefore?.toISOString().split("T")[0] ?? ""
+									}
+									onChange={(e) =>
+										onFiltersChange({
+											...filters,
+											createdBefore: e.target.value
+												? new Date(e.target.value)
+												: undefined,
+										})
+									}
+								/>
+							</div>
+							{(filters.createdAfter || filters.createdBefore) && (
+								<Button
+									variant="ghost"
+									size="sm"
+									className="w-full"
+									onClick={() =>
+										onFiltersChange({
+											...filters,
+											createdAfter: undefined,
+											createdBefore: undefined,
+										})
+									}
+								>
+									Clear date filters
+								</Button>
+							)}
+						</div>
 					</PopoverContent>
 				</Popover>
 

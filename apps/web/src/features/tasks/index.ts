@@ -8,6 +8,7 @@ export { TaskFilters as TaskFiltersComponent } from "./components/task-filters";
 export {
 	useBulkArchiveTasks,
 	useBulkDeleteTasks,
+	useBulkDuplicateTasks,
 	useBulkUpdateTasks,
 	useCreateTask,
 	useDeleteTask,

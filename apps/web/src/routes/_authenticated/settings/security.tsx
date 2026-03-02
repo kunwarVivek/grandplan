@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ApiError, handleApiError } from "@/lib/api-client";
+import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_authenticated/settings/security")({
 	component: SecuritySettings,
@@ -522,7 +523,99 @@ function ChangePasswordCard() {
 }
 
 function TwoFactorCard() {
-	const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+	const { data: session, refetch: refetchSession } = authClient.useSession();
+	const twoFactorEnabled =
+		Boolean(
+			(session?.user as { twoFactorEnabled?: boolean } | undefined)
+				?.twoFactorEnabled,
+		) ?? false;
+
+	const [password, setPassword] = useState("");
+	const [disablePassword, setDisablePassword] = useState("");
+	const [totpCode, setTotpCode] = useState("");
+	const [totpURI, setTotpURI] = useState<string | null>(null);
+	const [backupCodes, setBackupCodes] = useState<string[]>([]);
+
+	const enableTwoFactorMutation = useMutation({
+		mutationFn: async () => {
+			const res = await authClient.twoFactor.enable({ password });
+			if (res.error) {
+				throw new Error(res.error.message || "Failed to enable 2FA");
+			}
+			return res.data as { totpURI?: string; backupCodes?: string[] } | null;
+		},
+		onSuccess: (data) => {
+			setTotpURI(data?.totpURI ?? null);
+			setBackupCodes(data?.backupCodes ?? []);
+			toast.success("Two-factor setup started. Verify code to complete.");
+		},
+		onError: (error) => {
+			toast.error(handleApiError(error) || "Failed to enable 2FA");
+		},
+	});
+
+	const verifyTotpMutation = useMutation({
+		mutationFn: async () => {
+			const res = await authClient.twoFactor.verifyTotp({
+				code: totpCode,
+				trustDevice: true,
+			});
+			if (res.error) {
+				throw new Error(res.error.message || "Failed to verify code");
+			}
+			return res.data;
+		},
+		onSuccess: async () => {
+			setTotpCode("");
+			setPassword("");
+			await refetchSession();
+			toast.success("Two-factor authentication enabled");
+		},
+		onError: (error) => {
+			toast.error(handleApiError(error) || "Invalid verification code");
+		},
+	});
+
+	const disableTwoFactorMutation = useMutation({
+		mutationFn: async () => {
+			const res = await authClient.twoFactor.disable({
+				password: disablePassword,
+			});
+			if (res.error) {
+				throw new Error(res.error.message || "Failed to disable 2FA");
+			}
+			return res.data;
+		},
+		onSuccess: async () => {
+			setDisablePassword("");
+			setTotpURI(null);
+			setBackupCodes([]);
+			await refetchSession();
+			toast.success("Two-factor authentication disabled");
+		},
+		onError: (error) => {
+			toast.error(handleApiError(error) || "Failed to disable 2FA");
+		},
+	});
+
+	const regenerateBackupCodesMutation = useMutation({
+		mutationFn: async () => {
+			const res = await authClient.twoFactor.generateBackupCodes({
+				password: disablePassword,
+			});
+			if (res.error) {
+				throw new Error(res.error.message || "Failed to generate backup codes");
+			}
+			return res.data as { backupCodes?: string[] } | null;
+		},
+		onSuccess: (data) => {
+			setBackupCodes(data?.backupCodes ?? []);
+			toast.success("New backup codes generated");
+		},
+		onError: (error) => {
+			toast.error(handleApiError(error) || "Failed to generate backup codes");
+		},
+	});
 
 	return (
 		<Card>
@@ -549,13 +642,120 @@ function TwoFactorCard() {
 					</div>
 					<Switch
 						checked={twoFactorEnabled}
-						onCheckedChange={setTwoFactorEnabled}
+						onCheckedChange={() => {}}
 						disabled
 					/>
 				</div>
-				<p className="mt-4 text-muted-foreground text-xs">
-					Two-factor authentication is coming soon.
-				</p>
+
+				{!twoFactorEnabled ? (
+					<div className="mt-4 space-y-3">
+						<div className="space-y-2">
+							<Label htmlFor="two-factor-password">Current password</Label>
+							<Input
+								id="two-factor-password"
+								type="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								placeholder="Enter password to enable 2FA"
+							/>
+						</div>
+						<Button
+							onClick={() => enableTwoFactorMutation.mutate()}
+							disabled={!password || enableTwoFactorMutation.isPending}
+						>
+							{enableTwoFactorMutation.isPending
+								? "Setting up..."
+								: "Enable Two-Factor"}
+						</Button>
+
+						{totpURI && (
+							<div className="space-y-2 rounded-md border p-3">
+								<p className="font-medium text-sm">Authenticator setup</p>
+								<p className="text-muted-foreground text-xs">
+									Add this URI to your authenticator app:
+								</p>
+								<p className="break-all rounded bg-muted p-2 font-mono text-xs">
+									{totpURI}
+								</p>
+								<div className="space-y-2">
+									<Label htmlFor="totp-code">Verification code</Label>
+									<Input
+										id="totp-code"
+										value={totpCode}
+										onChange={(e) => setTotpCode(e.target.value)}
+										placeholder="Enter 6-digit code"
+									/>
+								</div>
+								<Button
+									onClick={() => verifyTotpMutation.mutate()}
+									disabled={!totpCode || verifyTotpMutation.isPending}
+								>
+									{verifyTotpMutation.isPending
+										? "Verifying..."
+										: "Verify & Activate"}
+								</Button>
+							</div>
+						)}
+					</div>
+				) : (
+					<div className="mt-4 space-y-3">
+						<div className="space-y-2">
+							<Label htmlFor="two-factor-manage-password">
+								Password confirmation
+							</Label>
+							<Input
+								id="two-factor-manage-password"
+								type="password"
+								value={disablePassword}
+								onChange={(e) => setDisablePassword(e.target.value)}
+								placeholder="Enter password to manage 2FA"
+							/>
+						</div>
+						<div className="flex flex-wrap gap-2">
+							<Button
+								variant="outline"
+								onClick={() => regenerateBackupCodesMutation.mutate()}
+								disabled={
+									!disablePassword || regenerateBackupCodesMutation.isPending
+								}
+							>
+								{regenerateBackupCodesMutation.isPending
+									? "Generating..."
+									: "Regenerate Backup Codes"}
+							</Button>
+							<Button
+								variant="destructive"
+								onClick={() => disableTwoFactorMutation.mutate()}
+								disabled={
+									!disablePassword || disableTwoFactorMutation.isPending
+								}
+							>
+								{disableTwoFactorMutation.isPending
+									? "Disabling..."
+									: "Disable 2FA"}
+							</Button>
+						</div>
+
+						{backupCodes.length > 0 && (
+							<div className="rounded-md border p-3">
+								<p className="mb-2 font-medium text-sm">Backup codes</p>
+								<div className="grid grid-cols-2 gap-2">
+									{backupCodes.map((code) => (
+										<code
+											key={code}
+											className="rounded bg-muted px-2 py-1 text-xs"
+										>
+											{code}
+										</code>
+									))}
+								</div>
+								<p className="mt-2 text-muted-foreground text-xs">
+									Store these codes safely. Each code can be used once.
+								</p>
+							</div>
+						)}
+					</div>
+				)}
 			</CardContent>
 		</Card>
 	);

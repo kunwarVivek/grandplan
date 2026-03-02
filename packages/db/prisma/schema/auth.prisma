@@ -15,6 +15,9 @@ model User {
   // Track current active organization (for multi-org users)
   activeOrganizationId String?
 
+  // Better Auth 2FA
+  twoFactorEnabled Boolean @default(false)
+
   // User preferences/localization
   timezone String? // IANA timezone (e.g., "America/New_York")
   locale   String? // Locale code (e.g., "en-US")
@@ -74,13 +77,26 @@ model User {
   // Onboarding & GDPR
   onboardingProgress OnboardingProgress?
   dataExportRequests DataExportRequest[]
+  twoFactor          TwoFactor?
 
   @@unique([email])
   @@index([status])
   @@index([activeOrganizationId])
+  @@index([twoFactorEnabled])
   @@index([deletedAt])
   @@index([lastLoginAt])
   @@map("user")
+}
+
+model TwoFactor {
+  id          String @id
+  userId      String @unique
+  secret      String?
+  backupCodes String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("twoFactor")
 }
 
 enum UserStatus {

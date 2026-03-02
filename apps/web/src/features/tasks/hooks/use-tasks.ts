@@ -56,10 +56,16 @@ export function useTasks(projectId: string, filters?: TaskFilters) {
 				params.set("search", filters.search);
 			}
 			if (filters?.dueDateFrom) {
-				params.set("dueDateFrom", filters.dueDateFrom.toISOString());
+				params.set("dueAfter", filters.dueDateFrom.toISOString());
 			}
 			if (filters?.dueDateTo) {
-				params.set("dueDateTo", filters.dueDateTo.toISOString());
+				params.set("dueBefore", filters.dueDateTo.toISOString());
+			}
+			if (filters?.createdAfter) {
+				params.set("createdAfter", filters.createdAfter.toISOString());
+			}
+			if (filters?.createdBefore) {
+				params.set("createdBefore", filters.createdBefore.toISOString());
 			}
 
 			const query = params.toString();
@@ -103,10 +109,16 @@ export function useInfiniteTasksQuery(
 				params.set("search", filters.search);
 			}
 			if (filters?.dueDateFrom) {
-				params.set("dueDateFrom", filters.dueDateFrom.toISOString());
+				params.set("dueAfter", filters.dueDateFrom.toISOString());
 			}
 			if (filters?.dueDateTo) {
-				params.set("dueDateTo", filters.dueDateTo.toISOString());
+				params.set("dueBefore", filters.dueDateTo.toISOString());
+			}
+			if (filters?.createdAfter) {
+				params.set("createdAfter", filters.createdAfter.toISOString());
+			}
+			if (filters?.createdBefore) {
+				params.set("createdBefore", filters.createdBefore.toISOString());
 			}
 
 			const query = params.toString();
@@ -1024,6 +1036,29 @@ export function useBulkArchiveTasks(projectId: string) {
 		onSettled: () => {
 			queryClient.invalidateQueries({
 				queryKey: queryKeys.tasks.all(projectId),
+			});
+		},
+	});
+}
+
+export function useBulkDuplicateTasks(projectId: string) {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (taskIds: string[]) => {
+			return api.post<{
+				success: boolean;
+				data: { duplicated: Array<{ id: string; originalId: string }> };
+			}>("/api/tasks/bulk-duplicate", {
+				taskIds,
+			});
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.tasks.all(projectId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: queryKeys.projects.stats(projectId),
 			});
 		},
 	});

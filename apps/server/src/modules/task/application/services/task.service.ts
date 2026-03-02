@@ -26,6 +26,7 @@ import type {
 	UpdateCommentDto,
 } from "../../api/dto/create-task.dto.js";
 import type {
+	BulkDuplicateDto,
 	BulkStatusUpdateDto,
 	MoveTaskDto,
 	UpdateTaskDto,
@@ -448,6 +449,43 @@ export class TaskService {
 		}
 
 		return { updated: count };
+	}
+
+	async bulkDuplicate(dto: BulkDuplicateDto) {
+		const tenant = getCurrentTenant();
+		const duplicatedTasks: Array<{ id: string; originalId: string }> = [];
+
+		for (const taskId of dto.taskIds) {
+			const originalTask = await taskRepository.findById(taskId);
+			if (!originalTask) {
+				throw new NotFoundError("Task", taskId);
+			}
+			await this.verifyProjectAccess(originalTask.projectId);
+
+			const duplicatedTask = await taskRepository.createWithPath({
+				title: `${originalTask.title} (Copy)`,
+				description: originalTask.description,
+				projectId: originalTask.projectId,
+				parentId: originalTask.parentId,
+				parentPath: originalTask.path,
+				nodeType: originalTask.nodeType,
+				status: "PENDING",
+				priority: originalTask.priority,
+				createdById: tenant.userId,
+				assigneeId: null,
+				estimatedHours: originalTask.estimatedHours,
+				dueDate: null,
+				position: originalTask.position + 1,
+				depth: originalTask.depth,
+			});
+
+			duplicatedTasks.push({
+				id: duplicatedTask.id,
+				originalId: taskId,
+			});
+		}
+
+		return { duplicated: duplicatedTasks };
 	}
 
 	async bulkDelete(dto: { taskIds: string[] }) {

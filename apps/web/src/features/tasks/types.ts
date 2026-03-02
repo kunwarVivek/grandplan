@@ -71,6 +71,8 @@ export type TaskFilters = {
 	search?: string;
 	dueDateFrom?: Date;
 	dueDateTo?: Date;
+	createdAfter?: Date;
+	createdBefore?: Date;
 };
 
 export const TASK_STATUS_CONFIG: Record<

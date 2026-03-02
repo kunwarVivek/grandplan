@@ -25,6 +25,14 @@ router.post(
 	},
 );
 
+router.post(
+	"/bulk-duplicate",
+	requirePermission("task:create"),
+	(req, res, next) => {
+		taskController.bulkDuplicate(req, res, next);
+	},
+);
+
 router.get("/:id", requirePermission("task:read"), (req, res, next) => {
 	taskController.get(req, res, next);
 });

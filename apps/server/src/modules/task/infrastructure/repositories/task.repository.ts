@@ -192,6 +192,8 @@ export class TaskRepository
 			includeCompleted = false,
 			dueBefore,
 			dueAfter,
+			createdBefore,
+			createdAfter,
 			sortBy = "position",
 			sortOrder = "asc",
 		} = options;
@@ -217,6 +219,12 @@ export class TaskRepository
 			}),
 			...(dueBefore && { dueDate: { lte: dueBefore } }),
 			...(dueAfter && { dueDate: { gte: dueAfter } }),
+			...((createdBefore || createdAfter) && {
+				createdAt: {
+					...(createdBefore && { lte: createdBefore }),
+					...(createdAfter && { gte: createdAfter }),
+				},
+			}),
 		};
 
 		const [tasks, total] = await Promise.all([

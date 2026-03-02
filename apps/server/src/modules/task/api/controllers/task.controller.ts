@@ -12,6 +12,7 @@ import {
 	updateCommentSchema,
 } from "../dto/create-task.dto.js";
 import {
+	bulkDuplicateSchema,
 	bulkStatusUpdateSchema,
 	moveTaskSchema,
 	taskHistoryQuerySchema,
@@ -182,6 +183,33 @@ export class TaskController {
 			res.json({
 				success: true,
 				data: updateResult,
+			});
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	async bulkDuplicate(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const result = bulkDuplicateSchema.safeParse(req.body);
+			if (!result.success) {
+				throw new ValidationError(
+					"Invalid request data",
+					Object.fromEntries(
+						result.error.issues.map((e) => [e.path.join("."), [e.message]]),
+					),
+				);
+			}
+
+			const duplicateResult = await taskService.bulkDuplicate(result.data);
+
+			res.json({
+				success: true,
+				data: duplicateResult,
 			});
 		} catch (error) {
 			next(error);

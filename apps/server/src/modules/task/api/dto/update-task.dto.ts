@@ -73,6 +73,8 @@ export const taskQuerySchema = z.object({
 	includeCompleted: z.coerce.boolean().default(false),
 	dueBefore: z.coerce.date().optional(),
 	dueAfter: z.coerce.date().optional(),
+	createdBefore: z.coerce.date().optional(),
+	createdAfter: z.coerce.date().optional(),
 	sortBy: z
 		.enum([
 			"title",
@@ -102,6 +104,12 @@ export const bulkStatusUpdateSchema = z.object({
 });
 
 export type BulkStatusUpdateDto = z.infer<typeof bulkStatusUpdateSchema>;
+
+export const bulkDuplicateSchema = z.object({
+	taskIds: z.array(z.string()).min(1, "At least one task ID is required"),
+});
+
+export type BulkDuplicateDto = z.infer<typeof bulkDuplicateSchema>;
 
 export const taskHistoryQuerySchema = z.object({
 	page: z.coerce.number().int().positive().default(1),

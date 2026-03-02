@@ -633,6 +633,7 @@ export function TaskDetailPanel() {
 
 	const { data: task, isLoading } = useTask(taskId ?? "");
 	const { data: childrenData } = useTaskChildren(taskId ?? "");
+	const { data: projectTasksData } = useTasks(task?.projectId ?? "");
 	const updateTask = useUpdateTask();
 	const deleteTask = useDeleteTask();
 
@@ -645,6 +646,7 @@ export function TaskDetailPanel() {
 	const [startDate, setStartDate] = useState("");
 	const [estimatedHours, setEstimatedHours] = useState("");
 	const [actualHours, setActualHours] = useState("");
+	const [assigneePopoverOpen, setAssigneePopoverOpen] = useState(false);
 
 	// Sync form state with task data
 	useEffect(() => {
@@ -719,6 +721,35 @@ export function TaskDetailPanel() {
 	};
 
 	const subtasks = childrenData?.tasks ?? [];
+
+	const availableAssignees = useMemo(() => {
+		const map = new Map<
+			string,
+			{ id: string; name: string; avatar?: string | null }
+		>();
+		for (const projectTask of projectTasksData?.tasks ?? []) {
+			if (projectTask.assignee) {
+				map.set(projectTask.assignee.id, {
+					id: projectTask.assignee.id,
+					name: projectTask.assignee.name,
+					avatar: projectTask.assignee.avatar,
+				});
+			}
+		}
+		return Array.from(map.values()).sort((a, b) =>
+			a.name.localeCompare(b.name),
+		);
+	}, [projectTasksData]);
+
+	const handleAssigneeChange = (assigneeId: string | null) => {
+		if (!taskId || !task) return;
+		setAssigneePopoverOpen(false);
+		updateTask.mutate({
+			taskId,
+			projectId: task.projectId,
+			assigneeId: assigneeId ?? undefined,
+		});
+	};
 
 	return (
 		<Sheet open={isOpen} onOpenChange={(open) => !open && closeTaskDetail()}>
@@ -857,7 +888,10 @@ export function TaskDetailPanel() {
 									<Label className="text-muted-foreground text-xs">
 										Assignee
 									</Label>
-									<Popover>
+									<Popover
+										open={assigneePopoverOpen}
+										onOpenChange={setAssigneePopoverOpen}
+									>
 										<PopoverTrigger>
 											<Button
 												variant="outline"
@@ -890,9 +924,42 @@ export function TaskDetailPanel() {
 											</Button>
 										</PopoverTrigger>
 										<PopoverContent align="start" className="w-64 p-2">
-											<p className="p-2 text-muted-foreground text-xs">
-												Assignee selection coming soon...
-											</p>
+											<Command>
+												<CommandInput placeholder="Search assignees..." />
+												<CommandList>
+													<CommandEmpty>No assignees found.</CommandEmpty>
+													<CommandGroup>
+														<CommandItem
+															onSelect={() => handleAssigneeChange(null)}
+														>
+															<UserIcon className="mr-2 size-4 text-muted-foreground" />
+															<span>Unassigned</span>
+														</CommandItem>
+														{availableAssignees.map((assignee) => (
+															<CommandItem
+																key={assignee.id}
+																onSelect={() =>
+																	handleAssigneeChange(assignee.id)
+																}
+															>
+																<Avatar size="sm" className="mr-2">
+																	{assignee.avatar ? (
+																		<AvatarImage
+																			src={assignee.avatar}
+																			alt={assignee.name}
+																		/>
+																	) : (
+																		<AvatarFallback>
+																			{getInitials(assignee.name)}
+																		</AvatarFallback>
+																	)}
+																</Avatar>
+																<span>{assignee.name}</span>
+															</CommandItem>
+														))}
+													</CommandGroup>
+												</CommandList>
+											</Command>
 										</PopoverContent>
 									</Popover>
 								</div>

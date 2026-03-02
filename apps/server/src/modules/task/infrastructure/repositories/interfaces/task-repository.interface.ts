@@ -35,6 +35,8 @@ export interface TaskQueryOptions {
 	includeCompleted?: boolean;
 	dueBefore?: Date;
 	dueAfter?: Date;
+	createdBefore?: Date;
+	createdAfter?: Date;
 	sortBy?:
 		| "title"
 		| "createdAt"

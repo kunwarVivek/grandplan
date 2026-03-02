@@ -3,6 +3,7 @@ import { env } from "@grandplan/env/server";
 import { checkout, polar, portal } from "@polar-sh/better-auth";
 import { type Auth as BetterAuthInstance, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { twoFactor } from "better-auth/plugins";
 
 import { polarClient } from "./lib/payments";
 
@@ -37,6 +38,7 @@ const polarPlugins = [portal(), ...checkoutPlugin] as unknown as [
 // Create the auth instance with explicit type to avoid inference issues with Polar SDK types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const auth: BetterAuthInstance = betterAuth({
+	appName: "GrandPlan",
 	database: prismaAdapter(prisma, {
 		provider: "postgresql",
 	}),
@@ -52,6 +54,9 @@ export const auth: BetterAuthInstance = betterAuth({
 		},
 	},
 	plugins: [
+		twoFactor({
+			issuer: "GrandPlan",
+		}),
 		polar({
 			client: polarClient,
 			createCustomerOnSignUp: true,
@@ -68,12 +73,10 @@ export const auth: BetterAuthInstance = betterAuth({
 /**
  * The auth instance type - re-export from better-auth for typing auth-related parameters
  */
-export type { Auth } from "better-auth";
-
 /**
  * Re-export core better-auth types for consumers
  */
-export type { Session, User } from "better-auth";
+export type { Auth, Session, User } from "better-auth";
 
 /**
  * Authenticated user payload - minimal user info attached to requests

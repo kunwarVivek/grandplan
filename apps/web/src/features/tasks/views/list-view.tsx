@@ -53,7 +53,11 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useBulkArchiveTasks, useBulkDeleteTasks } from "../hooks/use-tasks";
+import {
+	useBulkArchiveTasks,
+	useBulkDeleteTasks,
+	useBulkDuplicateTasks,
+} from "../hooks/use-tasks";
 import {
 	TASK_PRIORITY_CONFIG as PRIORITY_CONFIG,
 	TASK_STATUS_CONFIG as STATUS_CONFIG,
@@ -498,6 +502,7 @@ export function ListView({
 
 	const bulkDelete = useBulkDeleteTasks(projectId);
 	const bulkArchive = useBulkArchiveTasks(projectId);
+	const bulkDuplicate = useBulkDuplicateTasks(projectId);
 
 	const handleBulkDelete = useCallback(() => {
 		if (!projectId || selectedRowIds.length === 0) return;
@@ -517,11 +522,21 @@ export function ListView({
 	}, [selectedRowIds, projectId, bulkDelete]);
 
 	const handleBulkDuplicate = useCallback(() => {
-		toast.info("Bulk duplicate coming soon", {
-			description: `${selectedRowIds.length} task(s) selected`,
+		if (!projectId || selectedRowIds.length === 0) return;
+		bulkDuplicate.mutate(selectedRowIds, {
+			onSuccess: (data) => {
+				toast.success("Tasks duplicated", {
+					description: `${data.data.duplicated.length} task(s) have been duplicated`,
+				});
+				setRowSelection({});
+			},
+			onError: (error) => {
+				toast.error("Failed to duplicate tasks", {
+					description: error.message,
+				});
+			},
 		});
-		setRowSelection({});
-	}, [selectedRowIds]);
+	}, [selectedRowIds, projectId, bulkDuplicate]);
 
 	const handleBulkArchive = useCallback(() => {
 		if (!projectId || selectedRowIds.length === 0) return;
