@@ -1,1 +1,4 @@
 packages/events
+root
+packages/integrations
+packages/core
