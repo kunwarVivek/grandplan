@@ -23,6 +23,9 @@ model Organization {
   polarCustomerId  String?
   stripeCustomerId String?
 
+  // Owner (for transfer ownership)
+  ownerId String?
+
   // Soft delete for GDPR compliance
   deletedAt DateTime?
 
@@ -30,6 +33,7 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   // Relations
+  owner            User?              @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   members        OrganizationMember[]
   teams          Team[]
   invitations    OrganizationInvitation[]

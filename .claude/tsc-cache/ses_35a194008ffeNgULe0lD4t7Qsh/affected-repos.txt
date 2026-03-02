@@ -2,3 +2,4 @@ packages/events
 root
 packages/integrations
 packages/core
+packages/db

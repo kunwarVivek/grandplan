@@ -1,4 +1,5 @@
 packages/core:tsc:cd /Users/vivek/jet/grandplan/grandplan/packages/core && npx tsc --noEmit
+packages/db:tsc:cd /Users/vivek/jet/grandplan/grandplan/packages/db && npx tsc --noEmit
 packages/events:tsc:cd /Users/vivek/jet/grandplan/grandplan/packages/events && npx tsc --noEmit
 packages/integrations:build:cd /Users/vivek/jet/grandplan/grandplan/packages/integrations && npm run build
 packages/integrations:tsc:cd /Users/vivek/jet/grandplan/grandplan/packages/integrations && npx tsc --noEmit

@@ -364,10 +364,37 @@ export class PlatformOrgService {
 	/**
 	 * Transfer organization ownership
 	 */
-	async transferOwnership(_orgId: string, _newOwnerId: string): Promise<void> {
-		throw new Error(
-			"Transfer ownership not implemented - schema does not have ownerId field",
-		);
+	async transferOwnership(orgId: string, newOwnerId: string): Promise<void> {
+		const [organization, newOwner] = await Promise.all([
+			db.organization.findUnique({
+				where: { id: orgId },
+				select: { id: true, ownerId: true },
+			}),
+			db.organizationMember.findUnique({
+				where: {
+					userId_organizationId: {
+						userId: newOwnerId,
+						organizationId: orgId,
+					},
+				},
+			}),
+		]);
+
+		if (!organization) {
+			throw new NotFoundError("Organization", orgId);
+		}
+
+		if (!newOwner) {
+			throw new NotFoundError(
+				`User ${newOwnerId} is not a member of this organization`,
+			);
+		}
+
+		// Update the owner
+		await db.organization.update({
+			where: { id: orgId },
+			data: { ownerId: newOwnerId },
+		});
 	}
 
 	/**
